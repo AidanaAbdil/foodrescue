@@ -4,6 +4,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Logo } from "@/components/Logo";
 import { MobileMenu } from "@/components/MobileMenu";
 import { getI18n } from "@/i18n/server";
+import { startOfToday } from "@/i18n/shared";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
@@ -14,11 +15,20 @@ export async function Header() {
   const t = dict.header;
   const pendingStores =
     user?.role === "ADMIN" ? await prisma.store.count({ where: { status: "PENDING" } }) : 0;
+  // Store owners: paid orders waiting for pickup today, shown as "Dashboard (2)".
+  const waitingOrders =
+    user?.role === "STORE_OWNER"
+      ? await prisma.order.count({
+          where: { status: "RESERVED", bag: { pickupEnd: { gte: startOfToday() }, store: { ownerId: user.id } } },
+        })
+      : 0;
 
   // The same links power the desktop nav and the phone menu.
   const links = [
     { href: "/#how-it-works", label: t.howItWorks },
-    ...(user?.role === "STORE_OWNER" ? [{ href: "/dashboard", label: t.dashboard }] : []),
+    ...(user?.role === "STORE_OWNER"
+      ? [{ href: "/dashboard", label: waitingOrders > 0 ? `${t.dashboard} (${waitingOrders})` : t.dashboard }]
+      : []),
     ...(user?.role === "ADMIN"
       ? [{ href: "/admin", label: pendingStores > 0 ? `${t.admin} (${pendingStores})` : t.admin }]
       : []),

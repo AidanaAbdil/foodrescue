@@ -436,6 +436,17 @@ export const en: Dictionary = {
     activeOrders: "Please collect or cancel your active orders first.",
     storeActiveOrders: "Your stores have orders waiting for pickup. Hand them over or cancel them first.",
   },
+  push: {
+    newOrderTitle: "🔔 New order {code}",
+    newOrderBody: "{bag} × {n} · pickup {window}",
+    enable: "🔔 Notifications on this device",
+    enabled: "🔔 Notifications on",
+    disable: "Turn off",
+    hint: "New orders arrive as a notification, even when the site is closed.",
+    blocked: "Notifications are blocked for this site in your browser settings.",
+    unsupported: "This browser doesn't support notifications.",
+    iosInstall: "On iPhone, first add the site to your Home Screen (Share → Add to Home Screen) and open it from there.",
+  },
   location: {
     label: "Location on the map (optional)",
     hint: "Lets nearby customers find you. Best done while you're at the store.",

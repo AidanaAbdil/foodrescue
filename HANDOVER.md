@@ -207,6 +207,23 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Push notifications for stores
+- Web Push (`web-push`), keys in `.env` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`;
+  generated locally, git-ignored — a new server needs its own keys, and changing keys invalidates
+  existing subscriptions). `PushSubscription` per device with its locale.
+- Dashboard `PushToggle` ("🔔 Notifications on this device"): asks permission, subscribes via the
+  service worker, saves with `savePushSubscription`. iPhone needs the site installed to the Home
+  Screen first (iOS 16.4+); the toggle explains this.
+- `confirmPayment` → `notifyNewOrder` (src/lib/push.ts) → "🔔 New order CODE · bag × n · pickup …"
+  to all the owner's devices; tapping opens /dashboard (`public/sw.js`, cache `offline-v3`).
+  Expired subscriptions (404/410) are deleted. Sending never breaks a payment.
+- The service worker is now registered in development too (push needs it).
+- Verified with a real (non-headless) Chrome window: notification arrived via FCM. Headless Chrome
+  has no push service.
+- Header shows "Dashboard (n)" for owners with paid orders waiting today.
+- This is the start of the "staff app" direction she chose; next: a "pack N bags" reminder before
+  pickup (needs a scheduled job on the server), customer notifications.
+
 ### Account, store contact, store-side cancel, error screens (2026-10-02)
 - `/account` (`AccountForms`, `src/app/actions/account.ts`): change name, email (password needed),
   password (logs out other devices via `deleteOtherSessions`), and delete the account: refused while
@@ -368,8 +385,8 @@ Still open:
   500 error by design (no stock is held).
 - No background jobs: expiries, refund retries and upload clean-up run during page requests.
   Fine at this size; use a scheduled job once deployed.
-- **Store notifications (decided direction, not built):** today stores only see new orders while the
-  dashboard is open. She prefers a **staff app** approach (like Too Good To Go's store app): staff
+- **Store notifications:** push for new orders is built (see "Push notifications for stores").
+  Still to do from the staff-app idea: She prefers a **staff app** approach (like Too Good To Go's store app): staff
   install the app on a phone/tablet, get push notifications for new orders and a "pack N bags
   today" reminder before pickup, and confirm pickups there. Telegram bot was discussed as an
   alternative; cash-register (POS) integration only for big chains, much later. Needs the site

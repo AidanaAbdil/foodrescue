@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cantHandOver, deleteSchedule, markCollected, noShow, toggleBagActive, toggleSchedule } from "@/app/actions/dashboard";
 import { NewOrderAlert } from "@/components/dashboard/NewOrderAlert";
+import { PushToggle } from "@/components/dashboard/PushToggle";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreForm } from "@/components/dashboard/StoreForm";
 import { StatCard } from "@/components/StatCard";
@@ -10,6 +11,7 @@ import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { latestPaidOrder } from "@/lib/new-orders";
+import { pushPublicKey } from "@/lib/push";
 import { nextWindow, parseWeekdays } from "@/lib/schedules";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
@@ -99,6 +101,7 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-bold">{t.title}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PushToggle publicKey={pushPublicKey()} />
           <NewOrderAlert initial={latestOrder} />
           <Link
             href="/dashboard/bags/new"

@@ -73,11 +73,27 @@ model User {
 
   // Relation fields: not real columns, they let you write
   // `prisma.user.findUnique({ include: { orders: true } })`.
-  stores         Store[] // stores this user owns (if STORE_OWNER)
-  orders         Order[] // bags this user has reserved
-  sessions       Session[] // one per device the user is logged in on
-  passwordResets PasswordResetToken[]
-  favorites      Favorite[]
+  stores            Store[] // stores this user owns (if STORE_OWNER)
+  orders            Order[] // bags this user has reserved
+  sessions          Session[] // one per device the user is logged in on
+  passwordResets    PasswordResetToken[]
+  favorites         Favorite[]
+  pushSubscriptions PushSubscription[]
+}
+
+// A device (phone/computer browser) that asked for push notifications.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique // the browser's push address
+  p256dh    String // encryption keys from the browser
+  auth      String
+  locale    String   @default("ru") // language of the notifications
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // A customer's favourite store (♡).

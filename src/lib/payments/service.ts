@@ -11,6 +11,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { notifyNewOrder } from "@/lib/push";
 import { getPaymentProvider } from "./provider";
 
 export const HOLD_MINUTES = 15;
@@ -89,6 +90,11 @@ export async function confirmPayment(paymentId: string): Promise<"RESERVED" | "R
   if (outcome === "NEEDS_REFUND") {
     await refundPayment(paymentId);
     return "REFUNDED";
+  }
+  if (outcome === "RESERVED") {
+    // Tell the store (push notification). Never fails the payment.
+    const payment = await prisma.payment.findUnique({ where: { id: paymentId }, select: { orderId: true } });
+    if (payment) await notifyNewOrder(payment.orderId);
   }
   return outcome;
 }
