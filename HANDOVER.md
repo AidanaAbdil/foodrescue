@@ -207,6 +207,18 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Store approval & admin
+- `Store.status` PENDING → APPROVED / REJECTED (+ `rejectionReason`). New stores start PENDING; only
+  APPROVED stores' bags reach the homepage, bag pages (owner/admin can preview) and `reserveBag`.
+  Saving a REJECTED store's details puts it back to PENDING. Existing stores were set APPROVED by
+  the migration.
+- `/admin` (role ADMIN, `requireAdmin`): approve/reject/hide stores (reason required, owner sees it
+  on the dashboard), and "cancel & refund" paid orders a store can't hand over (`adminCancelOrder`,
+  no restock). Header shows "Admin (n)" with the pending count.
+- Make an admin: sign up normally, then `npm run make-admin -- email` (refuses store-owner accounts;
+  `--remove` reverts). Seed adds a demo admin `admin@example.com` (password123).
+- Test gotcha: admin pages also contain the Log out form — pick forms by content, not position.
+
 ### Legal pages & consent
 - `/privacy` and `/terms` render `src/content/legal/{ru,kk,en}.ts` (DRAFTS with `[placeholders]` for
   the ИП details and contact email; lawyer review needed; `LEGAL_IS_DRAFT` shows a draft note).

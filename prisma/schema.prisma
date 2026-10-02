@@ -39,6 +39,12 @@ enum OrderStatus {
   EXPIRED // not paid in time, or payment failed; the bag went back on sale
 }
 
+enum StoreStatus {
+  PENDING // new store, waiting for an admin to check it; invisible to customers
+  APPROVED // visible to customers
+  REJECTED // not approved (or hidden later); Store.rejectionReason says why
+}
+
 enum PaymentStatus {
   PENDING // customer is on the payment page
   PAID
@@ -120,6 +126,11 @@ model Store {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Admin review: only APPROVED stores' bags are shown to customers.
+  status          StoreStatus @default(PENDING)
+  rejectionReason String?
+  reviewedAt      DateTime?
+
   // Foreign key: each store belongs to one user (its owner).
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
@@ -128,6 +139,7 @@ model Store {
 
   @@index([ownerId])
   @@index([city])
+  @@index([status])
 }
 
 model SurpriseBag {

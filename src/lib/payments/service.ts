@@ -128,6 +128,19 @@ export async function cancelPaidOrder(orderId: string, userId: string): Promise<
   return result;
 }
 
+// Admin: the store couldn't hand over a paid order → cancel it and refund in
+// full, at any time. Stock isn't put back (the store had nothing to give).
+export async function adminCancelOrder(orderId: string) {
+  const { count } = await prisma.order.updateMany({
+    where: { id: orderId, status: "RESERVED" },
+    data: { status: "CANCELLED" },
+  });
+  if (count === 0) return false;
+  const payment = await prisma.payment.findUnique({ where: { orderId } });
+  if (payment) await refundPayment(payment.id);
+  return true;
+}
+
 // Ask the provider for the money back, then record it. PAID → REFUNDED once.
 // If the provider fails, the payment stays PAID and paymentHousekeeping()
 // retries later; the customer sees "refund in progress" meanwhile.

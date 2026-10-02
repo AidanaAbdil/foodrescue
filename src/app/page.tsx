@@ -37,7 +37,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   await paymentHousekeeping(); // bags held by unpaid orders past their deadline go back on sale
 
   const bags = await prisma.surpriseBag.findMany({
-    where: { isActive: true, quantityAvailable: { gt: 0 }, pickupEnd: { gt: new Date() } },
+    where: {
+      isActive: true,
+      quantityAvailable: { gt: 0 },
+      pickupEnd: { gt: new Date() },
+      store: { status: "APPROVED" }, // stores under review stay hidden
+    },
     include: { store: true },
     orderBy: { pickupStart: "asc" },
   });

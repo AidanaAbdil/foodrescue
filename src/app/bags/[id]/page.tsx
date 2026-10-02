@@ -30,17 +30,25 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
     getI18n(),
   ]);
   if (!bag) notFound();
+  const isOwnStore = user?.id === bag.store.ownerId;
+  // A store under review is invisible to everyone except its owner and admins.
+  const approved = bag.store.status === "APPROVED";
+  if (!approved && !isOwnStore && user?.role !== "ADMIN") notFound();
 
   const t = dict.bag;
   const emoji = CATEGORY_EMOJI[bag.category];
-  const available = bag.isActive && bag.quantityAvailable > 0 && bag.pickupEnd > new Date();
-  const isOwnStore = user?.id === bag.store.ownerId;
+  const available = approved && bag.isActive && bag.quantityAvailable > 0 && bag.pickupEnd > new Date();
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
       <Link href="/" className="text-sm font-medium text-stone-600 hover:text-brand-dark">
         {t.back}
       </Link>
+      {!approved && (
+        <p role="note" className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
+          {t.notApproved}
+        </p>
+      )}
 
       <div className="mt-4 grid gap-8 lg:grid-cols-[1.2fr_1fr]">
         <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-brand-light">

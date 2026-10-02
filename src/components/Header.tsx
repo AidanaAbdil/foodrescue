@@ -4,6 +4,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Logo } from "@/components/Logo";
 import { MobileMenu } from "@/components/MobileMenu";
 import { getI18n } from "@/i18n/server";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 
 const linkClass = "rounded-lg px-3 py-2 hover:bg-stone-100 hover:text-stone-900";
@@ -11,11 +12,16 @@ const linkClass = "rounded-lg px-3 py-2 hover:bg-stone-100 hover:text-stone-900"
 export async function Header() {
   const [user, { locale, dict }] = await Promise.all([getCurrentUser(), getI18n()]);
   const t = dict.header;
+  const pendingStores =
+    user?.role === "ADMIN" ? await prisma.store.count({ where: { status: "PENDING" } }) : 0;
 
   // The same links power the desktop nav and the phone menu.
   const links = [
     { href: "/#how-it-works", label: t.howItWorks },
     ...(user?.role === "STORE_OWNER" ? [{ href: "/dashboard", label: t.dashboard }] : []),
+    ...(user?.role === "ADMIN"
+      ? [{ href: "/admin", label: pendingStores > 0 ? `${t.admin} (${pendingStores})` : t.admin }]
+      : []),
     // "My orders" is for customers; store accounts don't order.
     ...(user?.role === "CUSTOMER" ? [{ href: "/orders", label: t.myOrders }] : []),
     ...(user

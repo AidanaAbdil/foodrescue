@@ -49,6 +49,11 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
   if (storeId) {
     // updateMany with ownerId: only changes the store if it's this owner's.
     await prisma.store.updateMany({ where: { id: storeId, ownerId: user.id }, data });
+    // A rejected store that's been fixed goes back into the review queue.
+    await prisma.store.updateMany({
+      where: { id: storeId, ownerId: user.id, status: "REJECTED" },
+      data: { status: "PENDING", rejectionReason: null },
+    });
   } else {
     await prisma.store.create({ data: { ...data, ownerId: user.id } });
   }

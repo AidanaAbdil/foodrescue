@@ -19,7 +19,7 @@ const photo = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&q=7
 // Helper: tenge → tiyn, the unit prices are stored in (1 ₸ = 100 tiyn).
 const tenge = (amount: number) => amount * 100;
 
-const DEMO_EMAILS = ["owner@example.com", "customer@example.com"];
+const DEMO_EMAILS = ["owner@example.com", "customer@example.com", "admin@example.com"];
 
 async function main() {
   // Remove only the demo data. Delete orders first: an order blocks deleting
@@ -38,10 +38,14 @@ async function main() {
   const owner = await prisma.user.create({
     data: { email: "owner@example.com", name: "Ерлан Сейтжанов", passwordHash, role: "STORE_OWNER", ...consent },
   });
+  await prisma.user.create({
+    data: { email: "admin@example.com", name: "Админ", passwordHash, role: "ADMIN", ...consent },
+  });
   const customer = await prisma.user.create({
     data: { email: "customer@example.com", name: "Алия Нурланова", passwordHash, ...consent },
   });
 
+  // Demo stores are already reviewed and visible.
   // ── Almaty ────────────────────────────────────────────────────────────────
   // Nested create: makes the store AND its bags in one call.
   const bakery = await prisma.store.create({
@@ -53,6 +57,7 @@ async function main() {
       latitude: 43.2405,
       longitude: 76.9286,
       ownerId: owner.id,
+      status: "APPROVED",
       bags: {
         create: [
           {
@@ -97,6 +102,7 @@ async function main() {
       latitude: 43.2615,
       longitude: 76.945,
       ownerId: owner.id,
+      status: "APPROVED",
       bags: {
         create: [
           {
@@ -138,6 +144,7 @@ async function main() {
       latitude: 51.0905,
       longitude: 71.4185,
       ownerId: owner.id,
+      status: "APPROVED",
       bags: {
         create: {
           title: "Обед-сюрприз",
@@ -164,6 +171,7 @@ async function main() {
       latitude: 51.1694,
       longitude: 71.43,
       ownerId: owner.id,
+      status: "APPROVED",
       bags: {
         create: {
           title: "Пицца в конце дня",

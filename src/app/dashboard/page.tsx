@@ -100,6 +100,23 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
+      {/* Review status: new stores wait for an admin; rejected ones say why. */}
+      {stores
+        .filter((store) => store.status !== "APPROVED")
+        .map((store) => (
+          <p
+            key={store.id}
+            role="note"
+            className={`mt-6 rounded-2xl p-4 text-sm ring-1 ${
+              store.status === "PENDING" ? "bg-amber-50 text-amber-900 ring-amber-200" : "bg-red-50 text-red-800 ring-red-200"
+            }`}
+          >
+            {store.status === "PENDING"
+              ? fill(t.pendingNotice, { store: store.name })
+              : fill(t.rejectedNotice, { store: store.name, reason: store.rejectionReason ?? "" })}
+          </p>
+        ))}
+
       {stores
         .filter((store) => store.latitude == null || store.longitude == null)
         .map((store) => (

@@ -22,6 +22,10 @@ Demo accounts (password `password123`):
 
 - `customer@example.com`: a customer
 - `owner@example.com`: owns the sample stores in Almaty and Astana
+- `admin@example.com`: admin (reviews stores at `/admin`) — created by `npm run db:seed`
+
+To make your own account an admin: sign up on the site, then run
+`npm run make-admin -- you@example.com`.
 
 ## Useful commands
 
@@ -32,6 +36,7 @@ Demo accounts (password `password123`):
 | `npm run db:migrate` | Apply changes made in `prisma/schema.prisma`              |
 | `npm run db:studio`  | Browse and edit the database in your browser              |
 | `npm run lint`       | Check the code for common mistakes                        |
+| `npm run make-admin -- email` | Give an account admin rights (`--remove` to undo) |
 
 ## Project layout
 

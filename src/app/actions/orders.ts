@@ -60,6 +60,7 @@ export async function reserveBag(_prev: ReserveState, formData: FormData): Promi
           where: {
             id: bagId,
             isActive: true,
+            store: { status: "APPROVED" },
             pickupEnd: { gt: new Date() },
             quantityAvailable: { gte: quantity },
           },

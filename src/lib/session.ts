@@ -66,6 +66,13 @@ export async function requireUser(returnTo = "/") {
   return user;
 }
 
+// For admin pages and actions. Everyone else is sent to the homepage.
+export async function requireAdmin(returnTo = "/admin") {
+  const user = await requireUser(returnTo);
+  if (user.role !== "ADMIN") redirect("/");
+  return user;
+}
+
 // For store-owner pages and actions. Customers are sent to the homepage.
 export async function requireOwner(returnTo = "/dashboard") {
   const user = await requireUser(returnTo);
