@@ -3,7 +3,7 @@
 // hand over. Every action checks the ADMIN role first.
 
 import { redirect } from "next/navigation";
-import { adminCancelOrder } from "@/lib/payments/service";
+import { storeCancelOrder } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
@@ -32,6 +32,6 @@ export async function rejectStore(formData: FormData) {
 
 export async function cancelAndRefund(formData: FormData) {
   await requireAdmin();
-  await adminCancelOrder(text(formData, "orderId"));
+  await storeCancelOrder(text(formData, "orderId"), "admin");
   redirect("/admin#orders");
 }

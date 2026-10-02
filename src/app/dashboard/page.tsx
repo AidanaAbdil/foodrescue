@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { deleteSchedule, markCollected, toggleBagActive, toggleSchedule } from "@/app/actions/dashboard";
+import { cantHandOver, deleteSchedule, markCollected, noShow, toggleBagActive, toggleSchedule } from "@/app/actions/dashboard";
 import { NewOrderAlert } from "@/components/dashboard/NewOrderAlert";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreForm } from "@/components/dashboard/StoreForm";
@@ -14,6 +14,7 @@ import { nextWindow, parseWeekdays } from "@/lib/schedules";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
+import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.dashboard };
@@ -182,15 +183,36 @@ export default async function DashboardPage() {
                     {order.bag.pickupEnd < now && <span className="font-medium text-brand-dark"> · {t.runningLate}</span>}
                   </p>
                 </div>
-                <form action={markCollected}>
-                  <input type="hidden" name="orderId" value={order.id} />
-                  <button
-                    type="submit"
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                <div className="flex flex-wrap gap-2">
+                  <form action={markCollected}>
+                    <input type="hidden" name="orderId" value={order.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      {t.markCollected}
+                    </button>
+                  </form>
+                  {/* Only once pickup has started can a customer be a no-show. */}
+                  {order.bag.pickupStart <= now && (
+                    <ConfirmSubmit
+                      action={noShow}
+                      message={fill(t.noShowConfirm, { code: order.pickupCode })}
+                      hidden={{ orderId: order.id }}
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"
+                    >
+                      {t.noShow}
+                    </ConfirmSubmit>
+                  )}
+                  <ConfirmSubmit
+                    action={cantHandOver}
+                    message={fill(t.cantHandOverConfirm, { code: order.pickupCode })}
+                    hidden={{ orderId: order.id }}
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200 hover:bg-red-50"
                   >
-                    {t.markCollected}
-                  </button>
-                </form>
+                    {t.cantHandOver}
+                  </ConfirmSubmit>
+                </div>
               </li>
             ))}
           </ul>

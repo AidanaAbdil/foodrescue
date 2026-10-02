@@ -139,6 +139,7 @@ export const en: Dictionary = {
     tooLate: "Orders can only be cancelled before pickup starts.",
     refunded: "Refunded.",
     refundPending: "Refund in progress.",
+    cancelledByStore: "The store couldn't hand over this order.",
     declined: "Payment didn't go through. The bag is back on sale.",
     status: {
       PENDING_PAYMENT: "Awaiting payment",
@@ -147,6 +148,7 @@ export const en: Dictionary = {
       CANCELLED: "Cancelled",
       MISSED: "Pickup missed",
       EXPIRED: "Not paid",
+      NO_SHOW: "Not collected",
     },
   },
   auth: {
@@ -218,6 +220,10 @@ export const en: Dictionary = {
     noPickups: "No reservations waiting right now.",
     runningLate: "running late",
     markCollected: "✓ Mark collected",
+    cantHandOver: "Can't hand over",
+    cantHandOverConfirm: "Cancel order {code}? The customer gets a full refund.",
+    noShow: "Didn't show up",
+    noShowConfirm: "Mark that the customer didn't collect order {code}? It isn't refunded.",
     newOrder: "New order: {code} · {bag} × {n}",
     soundOn: "🔔 Sound on",
     soundOff: "🔕 Turn on sound",
@@ -388,6 +394,7 @@ export const en: Dictionary = {
     cancelRefund: "Cancel and refund",
     noOrders: "No paid orders waiting for pickup.",
     customer: "Customer",
+    noShows: "no-shows: {n}",
   },
   store: {
     availableNow: "Available now",

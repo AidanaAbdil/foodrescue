@@ -22,7 +22,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   await requireAdmin();
   await runHousekeeping();
   const { error } = await searchParams;
-  const { dict, f } = await getI18n();
+  const { dict, f, fill } = await getI18n();
   const t = dict.admin;
 
   const [stores, orders] = await Promise.all([
@@ -33,7 +33,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     // Paid orders not yet collected: the ones a store might be unable to hand over.
     prisma.order.findMany({
       where: { status: "RESERVED" },
-      include: { user: { select: { name: true, email: true } }, bag: { include: { store: { select: { name: true } } } } },
+      include: {
+        user: { select: { name: true, email: true, _count: { select: { orders: { where: { status: "NO_SHOW" } } } } } },
+        bag: { include: { store: { select: { name: true } } } },
+      },
       orderBy: { createdAt: "desc" },
       take: 50,
     }),
@@ -128,6 +131,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   <p className="text-stone-500">
                     {order.bag.store.name} · {f.pickupWindow(order.bag.pickupStart, order.bag.pickupEnd)} · {t.customer}:{" "}
                     {order.user.name} ({order.user.email})
+                    {order.user._count.orders > 0 && (
+                      <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                        {fill(t.noShows, { n: order.user._count.orders })}
+                      </span>
+                    )}
                   </p>
                 </div>
                 <form action={cancelAndRefund}>

@@ -104,6 +104,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
 const STATUS_STYLES = {
   PENDING_PAYMENT: "bg-amber-100 text-amber-900",
+  NO_SHOW: "bg-stone-200 text-stone-600",
   EXPIRED: "bg-stone-200 text-stone-600",
   RESERVED: "bg-brand-light text-brand-dark",
   COLLECTED: "bg-accent text-white",
@@ -160,6 +161,7 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         {isPending && order.expiresAt && (
           <p className="mt-1 text-sm font-medium text-amber-800">{fill(t.payBy, { time: f.time(order.expiresAt) })}</p>
         )}
+        {order.cancelledBy === "store" && <p className="mt-1 text-sm text-stone-600">{t.cancelledByStore}</p>}
         {payment?.status === "REFUNDED" && <p className="mt-1 text-sm text-stone-600">{t.refunded}</p>}
         {payment?.status === "PAID" && (order.status === "CANCELLED" || order.status === "EXPIRED") && (
           <p className="mt-1 text-sm text-stone-600">{t.refundPending}</p>

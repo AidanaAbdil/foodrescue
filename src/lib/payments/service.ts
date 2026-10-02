@@ -111,7 +111,7 @@ export async function cancelPaidOrder(orderId: string, userId: string): Promise<
 
     const { count } = await tx.order.updateMany({
       where: { id: orderId, status: "RESERVED" },
-      data: { status: "CANCELLED" },
+      data: { status: "CANCELLED", cancelledBy: "customer" },
     });
     if (count === 0) return "NOT_FOUND" as const;
     await tx.surpriseBag.update({
@@ -128,17 +128,28 @@ export async function cancelPaidOrder(orderId: string, userId: string): Promise<
   return result;
 }
 
-// Admin: the store couldn't hand over a paid order → cancel it and refund in
-// full, at any time. Stock isn't put back (the store had nothing to give).
-export async function adminCancelOrder(orderId: string) {
+// The store couldn't hand over a paid order → cancel it and refund in full,
+// at any time. Stock isn't put back (the store had nothing to give).
+// Admins can do this for any store (ownerId omitted); owners only for theirs.
+export async function storeCancelOrder(orderId: string, by: "store" | "admin", ownerId?: string) {
   const { count } = await prisma.order.updateMany({
-    where: { id: orderId, status: "RESERVED" },
-    data: { status: "CANCELLED" },
+    where: { id: orderId, status: "RESERVED", ...(ownerId && { bag: { store: { ownerId } } }) },
+    data: { status: "CANCELLED", cancelledBy: by },
   });
   if (count === 0) return false;
   const payment = await prisma.payment.findUnique({ where: { orderId } });
   if (payment) await refundPayment(payment.id);
   return true;
+}
+
+// The customer didn't come: mark it (no refund, per the terms). Only once
+// the pickup window has started, and only for the store's own orders.
+export async function markNoShow(orderId: string, ownerId: string) {
+  const { count } = await prisma.order.updateMany({
+    where: { id: orderId, status: "RESERVED", bag: { pickupStart: { lte: new Date() }, store: { ownerId } } },
+    data: { status: "NO_SHOW" },
+  });
+  return count === 1;
 }
 
 // Ask the provider for the money back, then record it. PAID → REFUNDED once.

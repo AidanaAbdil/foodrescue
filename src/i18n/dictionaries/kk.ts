@@ -141,6 +141,7 @@ export const kk: Dictionary = {
     tooLate: "Тапсырыстан тек алып кету басталғанға дейін бас тартуға болады.",
     refunded: "Ақша қайтарылды.",
     refundPending: "Ақшаны қайтару рәсімделуде.",
+    cancelledByStore: "Дүкен тапсырысты бере алмады.",
     declined: "Төлем өтпеді. Пакет қайта сатылымға шықты.",
     status: {
       PENDING_PAYMENT: "Төлемді күтуде",
@@ -149,6 +150,7 @@ export const kk: Dictionary = {
       CANCELLED: "Бас тартылды",
       MISSED: "Алынбады",
       EXPIRED: "Төленбеді",
+      NO_SHOW: "Алынбады",
     },
   },
   auth: {
@@ -220,6 +222,10 @@ export const kk: Dictionary = {
     noPickups: "Қазір алып кетуді күтетін тапсырыс жоқ.",
     runningLate: "кешігіп жатыр",
     markCollected: "✓ Берілді",
+    cantHandOver: "Бере алмаймын",
+    cantHandOverConfirm: "{code} тапсырысын болдырмау керек пе? Сатып алушыға ақша толық қайтарылады.",
+    noShow: "Келмеді",
+    noShowConfirm: "{code} тапсырысы бойынша сатып алушы келмеді деп белгілеу керек пе? Ақша қайтарылмайды.",
     newOrder: "Жаңа тапсырыс: {code} · {bag} × {n}",
     soundOn: "🔔 Дыбыс қосулы",
     soundOff: "🔕 Дыбысты қосу",
@@ -390,6 +396,7 @@ export const kk: Dictionary = {
     cancelRefund: "Болдырмау және ақшаны қайтару",
     noOrders: "Алып кетуді күтетін төленген тапсырыстар жоқ.",
     customer: "Сатып алушы",
+    noShows: "келмеген: {n}",
   },
   store: {
     availableNow: "Қазір сатылымда",

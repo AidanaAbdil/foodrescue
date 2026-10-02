@@ -13,6 +13,7 @@ import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
+import { markNoShow, storeCancelOrder } from "@/lib/payments/service";
 import { publishScheduledBags, parseWeekdays, untouchedUpcoming } from "@/lib/schedules";
 import { deleteUploadIfUnused, uploadExists } from "@/lib/uploads";
 
@@ -241,6 +242,20 @@ export async function toggleBagActive(formData: FormData) {
   const bagId = text(formData, "bagId");
   const bag = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id } } });
   if (bag) await prisma.surpriseBag.update({ where: { id: bag.id }, data: { isActive: !bag.isActive } });
+  redirect("/dashboard");
+}
+
+// The store can't hand over a paid order: cancel it, the customer is refunded.
+export async function cantHandOver(formData: FormData) {
+  const user = await requireOwner();
+  await storeCancelOrder(text(formData, "orderId"), "store", user.id);
+  redirect("/dashboard");
+}
+
+// The customer didn't come to collect a paid order.
+export async function noShow(formData: FormData) {
+  const user = await requireOwner();
+  await markNoShow(text(formData, "orderId"), user.id);
   redirect("/dashboard");
 }
 

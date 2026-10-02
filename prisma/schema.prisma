@@ -37,6 +37,7 @@ enum OrderStatus {
   COLLECTED // customer picked it up
   CANCELLED // cancelled by the customer (paid orders are refunded)
   EXPIRED // not paid in time, or payment failed; the bag went back on sale
+  NO_SHOW // paid, but the customer didn't collect it (store marked it); not refunded
 }
 
 enum StoreStatus {
@@ -232,14 +233,15 @@ model BagSchedule {
 }
 
 model Order {
-  id         String      @id @default(cuid())
-  quantity   Int         @default(1)
-  totalPrice Int // tiyn; copied at purchase time so later price edits don't change history
-  status     OrderStatus @default(PENDING_PAYMENT)
-  pickupCode String      @unique // short code the customer shows at the store
-  expiresAt  DateTime? // payment deadline while PENDING_PAYMENT
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id          String      @id @default(cuid())
+  quantity    Int         @default(1)
+  totalPrice  Int // tiyn; copied at purchase time so later price edits don't change history
+  status      OrderStatus @default(PENDING_PAYMENT)
+  pickupCode  String      @unique // short code the customer shows at the store
+  expiresAt   DateTime? // payment deadline while PENDING_PAYMENT
+  cancelledBy String? // CANCELLED orders: "customer", "store" or "admin"
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

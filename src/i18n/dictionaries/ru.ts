@@ -145,6 +145,7 @@ export const ru = {
     tooLate: "Отменить заказ можно только до начала выдачи.",
     refunded: "Деньги возвращены.",
     refundPending: "Возврат оформляется.",
+    cancelledByStore: "Заведение не смогло выдать заказ.",
     declined: "Оплата не прошла. Пакет вернулся в продажу.",
     status: {
       PENDING_PAYMENT: "Ожидает оплаты",
@@ -153,6 +154,7 @@ export const ru = {
       CANCELLED: "Отменён",
       MISSED: "Не забран",
       EXPIRED: "Не оплачен",
+      NO_SHOW: "Не забран",
     },
   },
   auth: {
@@ -229,6 +231,10 @@ export const ru = {
     noPickups: "Сейчас никто не ждёт выдачи.",
     runningLate: "опаздывает",
     markCollected: "✓ Выдано",
+    cantHandOver: "Не могу выдать",
+    cantHandOverConfirm: "Отменить заказ {code}? Покупатель получит деньги обратно полностью.",
+    noShow: "Не пришёл",
+    noShowConfirm: "Отметить, что покупатель не пришёл за заказом {code}? Деньги не возвращаются.",
     newOrder: "Новый заказ: {code} · {bag} × {n}",
     soundOn: "🔔 Звук включён",
     soundOff: "🔕 Включить звук",
@@ -399,6 +405,7 @@ export const ru = {
     cancelRefund: "Отменить и вернуть деньги",
     noOrders: "Нет оплаченных заказов, ожидающих выдачи.",
     customer: "Покупатель",
+    noShows: "неявок: {n}",
   },
   store: {
     availableNow: "Сейчас в продаже",
