@@ -1,6 +1,6 @@
 // Kazakh. Must have the same keys as ru.ts (TypeScript checks this).
 // Reviewed by a native speaker (store, pickup, order, surprise-bag and
-// dashboard wording). Tagline still being checked.
+// dashboard wording, tagline).
 import type { Dictionary } from "./ru";
 
 export const kk: Dictionary = {
@@ -42,7 +42,7 @@ export const kk: Dictionary = {
     language: "Тіл",
   },
   footer: {
-    tagline: "Жақсы тағам — қоқысқа емес, дастарқанға.",
+    tagline: "Тағам қоқысқа емес, дастарқанға лайық.",
   },
   home: {
     eyebrow: "Тағамды құтқарыңыз · Ақша үнемдеңіз",
@@ -176,7 +176,7 @@ export const kk: Dictionary = {
     addBag: "+ Пакет қосу",
     statLive: "Сатылымда {n} пакет",
     statWaiting: "{n} тапсырыс алып кетуді күтуде",
-    statCollected: "Бүгін {n} берілді",
+    statCollected: "Бүгін {n} тапсырыс берілді",
     pickupsTitle: "Алып кетуді күтетін тапсырыстар",
     pickupsHint: "Сатып алушының кодын тексеріп, пакетті беріңіз де, берілді деп белгілеңіз.",
     noPickups: "Қазір алып кетуді күтетін тапсырыс жоқ.",
