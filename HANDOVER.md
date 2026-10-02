@@ -260,16 +260,42 @@ Still open:
 - Kazakh strings for **payments**, **photos**, **password reset**, **store editing** and
   **rate limiting** were written by Claude and sent to her for review — check for corrections.
 
-## 9. Suggested next step: deployment
+## 9. Next step: deployment (researched, paused on 2026-10-02)
 
-Things to decide/do with her (explain each in plain language):
-1. **Hosting** for a Next.js 16 app with Server Actions (e.g. Vercel, or a VPS in Kazakhstan —
-   Kaspi's VPN requirement may favour a VPS with a fixed IP).
-2. **Database**: move from SQLite to Postgres (change Prisma provider/adapter, new migrations,
-   `DATABASE_URL`).
-3. **Photo storage**: replace disk in `src/lib/uploads.ts` with S3-compatible storage (e.g.
-   Cloudflare R2); add its host to `images.remotePatterns`.
-4. **HTTPS + domain**; session cookie becomes `secure` automatically in production.
-5. **Env vars**: `DATABASE_URL`, `PAYMENT_PROVIDER` (test provider is blocked in production unless
-   `ALLOW_TEST_PAYMENTS=true` — only for a private staging site).
-6. Email provider + `APP_URL`, so password-reset emails really go out.
+She paused deployment to **choose a new brand name** first ("FoodRescue" doesn't work well in
+Kazakh/Russian). Don't deploy until she decides; then rename everywhere (logo, metadata, all three
+dictionaries, emails, README) and put the name in one constant.
+
+**Name candidates** (.kz free per `whois -h whois.nic.kz` on 2026-10-02; re-check before buying):
+Jarty (жарты, "half"), Qalmasyn (қалмасын, "let nothing be left"), Keshki (кешкі, "evening"),
+Tamaq Saqta, Obal Bolmasyn, Artyq As. Taken: obal, saqta, saqtau, artyq, dastarqan, kesh, obalemes.
+Claude suggested Jarty or Qalmasyn and a trademark check at Kazpatent.
+
+**Decisions already made:**
+- First goal is a **demo site** (test payments, clearly marked), not a public launch: she has no ИП yet.
+  For the demo set `ALLOW_TEST_PAYMENTS=true` and hide it from search engines (noindex).
+- **Host on a VPS in Kazakhstan.** Kazakhstan's personal-data law (Law No. 94-V, Art. 12(2)) requires
+  databases with personal data to be stored in Kazakhstan; .kz domains must also point to servers in
+  Kazakhstan and use HTTPS; Kaspi's API needs a fixed IP for its VPN. So no Vercel/EU hosting.
+  (Advise her to confirm the legal details with a lawyer/accountant when registering the ИП; the law
+  was amended in Nov 2025.)
+- VPS to rent (she buys it): PS.kz or Hoster.kz (Almaty/Astana), **Ubuntu 24.04 LTS, ≥2 GB RAM**,
+  1–2 vCPU, 25 GB+ SSD, **public IPv4** (not IPv6-only), ~3 000 ₸/month. Domain from a Kazakh registrar.
+- An SSH key was created on her Mac for this: `~/.ssh/foodrescue_ed25519` (public half
+  `foodrescue_ed25519.pub`, to paste into the provider's order form). Never ask for passwords in chat;
+  if needed she runs `ssh-copy-id -i ~/.ssh/foodrescue_ed25519.pub root@IP` herself.
+
+**Planned setup on the VPS** (Claude does it over SSH, explaining each step):
+1. Run `npm run build` locally first (it passes as of 2026-10-02).
+2. Keep SQLite + the uploads folder on the VPS disk at first (persistent, simplest), but outside the
+   app folder (e.g. `/srv/<app>/data`): make the upload folder configurable (currently
+   `process.cwd()/uploads` in `src/lib/uploads.ts`) and point `DATABASE_URL` there.
+3. Deploy by `rsync` from her Mac (no GitHub credentials on the server), then on the server:
+   `npm ci`, `npx prisma migrate deploy`, `npm run build`, restart.
+4. Run the app with systemd (auto-restart on crash/reboot), Caddy in front for automatic HTTPS
+   (Let's Encrypt), a firewall allowing only SSH/80/443.
+5. Daily backups of the database (`sqlite3 .backup`) and uploads, keeping ~2 weeks.
+6. Production env: `NODE_ENV=production`, `DATABASE_URL`, `APP_URL`, `PAYMENT_PROVIDER=test` +
+   `ALLOW_TEST_PAYMENTS=true` (demo only), later `EMAIL_PROVIDER`.
+7. Later, at scale or for the real launch: Postgres, object storage for photos (a Kazakh provider,
+   to respect data localization), real email, Kaspi/Halyk.
