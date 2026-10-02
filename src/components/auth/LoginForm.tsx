@@ -2,12 +2,14 @@
 
 import { useActionState } from "react";
 import { login } from "@/app/actions/auth";
+import { useI18n } from "@/i18n/client";
 import { FormField, submitButtonClass } from "./FormField";
 
 // `next` = where to go after success (e.g. back to the bag being reserved).
 export function LoginForm({ next }: { next: string }) {
   // state = whatever the login action last returned (errors), pending = submitting.
   const [state, action, pending] = useActionState(login, undefined);
+  const t = useI18n().dict.auth;
 
   return (
     <form action={action} className="space-y-4">
@@ -19,15 +21,15 @@ export function LoginForm({ next }: { next: string }) {
       )}
       <FormField
         name="email"
-        label="Email"
+        label={t.email}
         type="email"
         autoComplete="email"
         required
         defaultValue={state?.values?.email}
       />
-      <FormField name="password" label="Password" type="password" autoComplete="current-password" required />
+      <FormField name="password" label={t.password} type="password" autoComplete="current-password" required />
       <button type="submit" disabled={pending} className={submitButtonClass}>
-        {pending ? "Logging in…" : "Log in"}
+        {pending ? t.loggingIn : t.login}
       </button>
     </form>
   );

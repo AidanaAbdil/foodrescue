@@ -3,7 +3,10 @@
 // the logged-in owner, because a form can be submitted with any IDs.
 
 import { redirect } from "next/navigation";
+import { getI18n } from "@/i18n/server";
+import { parseLocalDateTime } from "@/i18n/shared";
 import { isCategory } from "@/lib/categories";
+import { parsePrice } from "@/lib/format";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
@@ -17,12 +20,6 @@ export type FormState =
 
 const text = (formData: FormData, key: string) => String(formData.get(key) ?? "").trim();
 
-// "4.99" → 499 cents, or null if it isn't a valid amount.
-function parsePrice(value: string) {
-  if (!/^\d{1,5}(\.\d{1,2})?$/.test(value)) return null;
-  return Math.round(Number(value) * 100);
-}
-
 export async function createStore(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireOwner();
   const values = {
@@ -31,11 +28,12 @@ export async function createStore(_prev: FormState, formData: FormData): Promise
     city: text(formData, "city"),
     description: text(formData, "description"),
   };
+  const t = (await getI18n()).dict.errors;
 
   const errors: Record<string, string> = {};
-  if (values.name.length < 2) errors.name = "Please enter your store's name.";
-  if (values.address.length < 3) errors.address = "Please enter the street address.";
-  if (values.city.length < 2) errors.city = "Please enter the city.";
+  if (values.name.length < 2) errors.name = t.storeName;
+  if (values.address.length < 3) errors.address = t.storeAddress;
+  if (values.city.length < 2) errors.city = t.storeCity;
   if (Object.keys(errors).length > 0) return { errors, values };
 
   // Optional map location from the "Use my current location" button.
@@ -65,40 +63,41 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     ),
   );
 
+  const t = (await getI18n()).dict.errors;
   const errors: Record<string, string> = {};
 
   const store = await prisma.store.findFirst({ where: { id: values.storeId, ownerId: user.id } });
-  if (!store) errors.storeId = "Please choose one of your stores.";
+  if (!store) errors.storeId = t.chooseStore;
 
-  if (values.title.length < 3) errors.title = "Give the bag a short name.";
+  if (values.title.length < 3) errors.title = t.bagTitle;
   const category = isCategory(values.category) ? values.category : null;
-  if (!category) errors.category = "Please choose a category.";
+  if (!category) errors.category = t.category;
 
+  // Prices are typed in tenge and stored in tiyn (see parsePrice).
   const originalPrice = parsePrice(values.originalPrice);
   const price = parsePrice(values.price);
-  if (originalPrice === null || originalPrice <= 0) errors.originalPrice = "Enter the normal value, e.g. 15.00";
-  if (price === null || price <= 0) errors.price = "Enter the price customers pay, e.g. 4.99";
-  else if (originalPrice && price >= originalPrice) errors.price = "Should be lower than the normal value.";
+  if (originalPrice === null || originalPrice <= 0) errors.originalPrice = t.originalPrice;
+  if (price === null || price <= 0) errors.price = t.price;
+  else if (originalPrice && price >= originalPrice) errors.price = t.priceTooHigh;
 
   const quantity = Number(values.quantity);
-  if (!Number.isInteger(quantity) || quantity < 0 || quantity > 100) errors.quantity = "Enter a number from 0 to 100.";
+  if (!Number.isInteger(quantity) || quantity < 0 || quantity > 100) errors.quantity = t.quantity;
 
-  // Dates are read in the server's time zone. That's fine locally; once the
-  // site is deployed we'll want to store each store's time zone.
-  const pickupStart = new Date(`${values.date}T${values.start}`);
-  const pickupEnd = new Date(`${values.date}T${values.end}`);
-  if (Number.isNaN(pickupStart.getTime()) || Number.isNaN(pickupEnd.getTime())) {
-    errors.end = "Choose a pickup date and times.";
+  // The times are Kazakhstan time (UTC+5), whatever the server's clock says.
+  const pickupStart = parseLocalDateTime(values.date, values.start);
+  const pickupEnd = parseLocalDateTime(values.date, values.end);
+  if (!pickupStart || !pickupEnd) {
+    errors.end = t.pickupMissing;
   } else if (pickupEnd <= pickupStart) {
-    errors.end = "The end time must be after the start time.";
+    errors.end = t.pickupOrder;
   } else if (pickupEnd <= new Date()) {
-    errors.end = "The pickup window has already ended. Pick a later time.";
+    errors.end = t.pickupPast;
   }
 
   let existing = null;
   if (bagId) {
     existing = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id } } });
-    if (!existing) errors.form = "This bag doesn't exist or isn't yours.";
+    if (!existing) errors.form = t.notYourBag;
   }
 
   if (Object.keys(errors).length > 0) return { errors, values };
@@ -111,8 +110,8 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     originalPrice: originalPrice!,
     price: price!,
     quantityAvailable: quantity,
-    pickupStart,
-    pickupEnd,
+    pickupStart: pickupStart!,
+    pickupEnd: pickupEnd!,
   };
 
   if (existing) {

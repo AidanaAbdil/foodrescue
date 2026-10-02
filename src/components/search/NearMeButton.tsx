@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useI18n } from "@/i18n/client";
 
 type Props = {
   active: boolean; // already sorting by distance?
@@ -13,13 +14,14 @@ type Props = {
 // ?near=lat,lng so the server can sort bags by distance.
 export function NearMeButton({ active, hrefWithout }: Props) {
   const router = useRouter();
+  const t = useI18n().dict.nearMe;
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
   const [message, setMessage] = useState("");
 
   function locate() {
     if (!("geolocation" in navigator)) {
       setStatus("error");
-      setMessage("Your browser can't share its location.");
+      setMessage(t.unsupported);
       return;
     }
     setStatus("locating");
@@ -34,9 +36,7 @@ export function NearMeButton({ active, hrefWithout }: Props) {
       (error) => {
         setStatus("error");
         setMessage(
-          error.code === error.PERMISSION_DENIED
-            ? "Location is blocked. Allow it in your browser's site settings to sort by distance."
-            : "Couldn't get your location. Please try again.",
+          error.code === error.PERMISSION_DENIED ? t.denied : t.failed,
         );
       },
       { timeout: 10_000, maximumAge: 5 * 60_000 },
@@ -47,9 +47,9 @@ export function NearMeButton({ active, hrefWithout }: Props) {
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {active ? (
         <span className="flex items-center gap-2 rounded-lg bg-brand-light px-3 py-2.5 text-sm font-medium text-brand-dark">
-          📍 Sorted by distance
+          📍 {t.sorted}
           <Link href={hrefWithout} scroll={false} className="underline underline-offset-2 hover:no-underline">
-            Clear
+            {t.clear}
           </Link>
         </span>
       ) : (
@@ -59,7 +59,7 @@ export function NearMeButton({ active, hrefWithout }: Props) {
           disabled={status === "locating"}
           className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
         >
-          {status === "locating" ? "Finding you…" : "📍 Near me"}
+          {status === "locating" ? t.locating : `📍 ${t.button}`}
         </button>
       )}
       {status === "error" && (

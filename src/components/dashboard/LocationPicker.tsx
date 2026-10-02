@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/i18n/client";
 import type { Coords } from "@/lib/geo";
 
 // Gets the browser's location. Owners use this while standing in their store.
 export function useCurrentLocation() {
+  const t = useI18n().dict.location;
   const [status, setStatus] = useState<"idle" | "locating" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -12,7 +14,7 @@ export function useCurrentLocation() {
     new Promise<Coords | null>((resolve) => {
       if (!("geolocation" in navigator)) {
         setStatus("error");
-        setError("Your browser can't share its location.");
+        setError(t.unsupported);
         return resolve(null);
       }
       setStatus("locating");
@@ -24,9 +26,7 @@ export function useCurrentLocation() {
         (err) => {
           setStatus("error");
           setError(
-            err.code === err.PERMISSION_DENIED
-              ? "Location is blocked. Allow it in your browser's site settings."
-              : "Couldn't get your location. Please try again.",
+            err.code === err.PERMISSION_DENIED ? t.denied : t.failed,
           );
           resolve(null);
         },
@@ -39,13 +39,14 @@ export function useCurrentLocation() {
 
 // Form field: a button that fills hidden latitude/longitude inputs.
 export function LocationPicker() {
+  const t = useI18n().dict.location;
   const { locate, locating, error } = useCurrentLocation();
   const [coords, setCoords] = useState<Coords | null>(null);
 
   return (
     <div>
-      <p className="text-sm font-medium text-stone-700">Location on the map (optional)</p>
-      <p className="text-sm text-stone-500">Lets nearby customers find you. Best done while you&apos;re at the store.</p>
+      <p className="text-sm font-medium text-stone-700">{t.label}</p>
+      <p className="text-sm text-stone-500">{t.hint}</p>
       {coords && (
         <>
           <input type="hidden" name="latitude" value={coords.lat} />
@@ -59,11 +60,11 @@ export function LocationPicker() {
           onClick={async () => setCoords((await locate()) ?? coords)}
           className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
         >
-          {locating ? "Finding location…" : coords ? "Update location" : "📍 Use my current location"}
+          {locating ? t.finding : coords ? t.update : t.use}
         </button>
         {coords && (
           <span className="text-sm text-accent">
-            ✓ Location set ({coords.lat.toFixed(3)}, {coords.lng.toFixed(3)})
+            {t.set} ({coords.lat.toFixed(3)}, {coords.lng.toFixed(3)})
           </span>
         )}
       </div>

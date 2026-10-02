@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { saveBag } from "@/app/actions/dashboard";
 import { FormField, inputClass, submitButtonClass } from "@/components/auth/FormField";
-import { CATEGORIES } from "@/lib/categories";
+import { useI18n } from "@/i18n/client";
+import { CATEGORY_EMOJI, CATEGORY_LIST } from "@/lib/categories";
 
 type Props = {
   stores: { id: string; name: string }[];
@@ -14,6 +15,8 @@ type Props = {
 
 export function BagForm({ stores, bagId, defaults }: Props) {
   const [state, action, pending] = useActionState(saveBag, undefined);
+  const { dict } = useI18n();
+  const t = dict.dashboard;
   const values = state?.values ?? defaults;
   const errors = state?.errors ?? {};
   // With one store there's no store picker to show its error next to.
@@ -31,7 +34,7 @@ export function BagForm({ stores, bagId, defaults }: Props) {
       )}
 
       {stores.length > 1 ? (
-        <Field label="Store" name="storeId" error={errors.storeId}>
+        <Field label={t.formStore} name="storeId" error={errors.storeId}>
           <select id="storeId" name="storeId" defaultValue={values.storeId} className={inputClass(errors.storeId)}>
             {stores.map((store) => (
               <option key={store.id} value={store.id}>
@@ -44,41 +47,41 @@ export function BagForm({ stores, bagId, defaults }: Props) {
         <input type="hidden" name="storeId" value={stores[0]?.id} />
       )}
 
-      <FormField name="title" label="Bag name" required defaultValue={values.title} error={errors.title}
-        placeholder="e.g. Bakery Surprise Bag" />
+      <FormField name="title" label={t.formTitle} required defaultValue={values.title} error={errors.title}
+        placeholder={t.formTitlePlaceholder} />
 
-      <Field label="What might be inside? (optional)" name="description">
+      <Field label={t.formDescription} name="description">
         <textarea id="description" name="description" rows={3} defaultValue={values.description}
-          placeholder="e.g. A mix of today's breads and pastries." className={inputClass()} />
+          placeholder={t.formDescriptionPlaceholder} className={inputClass()} />
       </Field>
 
-      <Field label="Category" name="category" error={errors.category}>
+      <Field label={t.formCategory} name="category" error={errors.category}>
         <select id="category" name="category" defaultValue={values.category} className={inputClass(errors.category)}>
-          {Object.entries(CATEGORIES).map(([value, { label, emoji }]) => (
+          {CATEGORY_LIST.map((value) => (
             <option key={value} value={value}>
-              {emoji} {label}
+              {CATEGORY_EMOJI[value]} {dict.categories[value]}
             </option>
           ))}
         </select>
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <FormField name="originalPrice" label="Normal value ($)" inputMode="decimal" required
-          defaultValue={values.originalPrice} error={errors.originalPrice} placeholder="15.00" />
-        <FormField name="price" label="Your price ($)" inputMode="decimal" required
-          defaultValue={values.price} error={errors.price} placeholder="4.99" />
-        <FormField name="quantity" label="Bags available" type="number" min={0} max={100} required
+        <FormField name="originalPrice" label={t.formOriginalPrice} inputMode="decimal" required
+          defaultValue={values.originalPrice} error={errors.originalPrice} placeholder="4500" />
+        <FormField name="price" label={t.formPrice} inputMode="decimal" required
+          defaultValue={values.price} error={errors.price} placeholder="1490" />
+        <FormField name="quantity" label={t.formQuantity} type="number" min={0} max={100} required
           defaultValue={values.quantity} error={errors.quantity} />
       </div>
 
       <fieldset>
-        <legend className="text-sm font-medium text-stone-700">Pickup window</legend>
+        <legend className="text-sm font-medium text-stone-700">{t.formPickup}</legend>
         <div className="mt-1 grid gap-4 sm:grid-cols-3">
-          <input aria-label="Pickup date" type="date" name="date" required defaultValue={values.date}
+          <input aria-label={t.formDate} type="date" name="date" required defaultValue={values.date}
             className={inputClass(errors.end)} />
-          <input aria-label="From" type="time" name="start" required defaultValue={values.start}
+          <input aria-label={t.formFrom} type="time" name="start" required defaultValue={values.start}
             className={inputClass(errors.end)} />
-          <input aria-label="Until" type="time" name="end" required defaultValue={values.end}
+          <input aria-label={t.formUntil} type="time" name="end" required defaultValue={values.end}
             className={inputClass(errors.end)} />
         </div>
         {errors.end && <p className="mt-1 text-sm text-red-600">{errors.end}</p>}
@@ -86,10 +89,10 @@ export function BagForm({ stores, bagId, defaults }: Props) {
 
       <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
         <Link href="/dashboard" className="rounded-lg px-4 py-2.5 text-center font-medium text-stone-600 hover:bg-stone-100">
-          Cancel
+          {dict.common.cancel}
         </Link>
         <button type="submit" disabled={pending} className={`${submitButtonClass} sm:w-auto sm:px-8`}>
-          {pending ? "Saving…" : bagId ? "Save changes" : "Publish bag"}
+          {pending ? t.saving : bagId ? t.saveChanges : t.publish}
         </button>
       </div>
     </form>

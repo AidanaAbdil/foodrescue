@@ -4,15 +4,20 @@ import { markCollected, toggleBagActive } from "@/app/actions/dashboard";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreSetupForm } from "@/components/dashboard/StoreSetupForm";
 import type { SurpriseBag } from "@/generated/prisma/client";
-import { CATEGORIES } from "@/lib/categories";
-import { formatDay, formatPrice, formatTime } from "@/lib/format";
+import { getI18n } from "@/i18n/server";
+import { startOfToday } from "@/i18n/shared";
+import { CATEGORY_EMOJI } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 
-export const metadata: Metadata = { title: "Dashboard · FoodRescue" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).dict.meta.dashboard };
+}
 
 export default async function DashboardPage() {
   const user = await requireOwner();
+  const { dict, f, fill } = await getI18n();
+  const t = dict.dashboard;
 
   const stores = await prisma.store.findMany({
     where: { ownerId: user.id },
@@ -32,8 +37,8 @@ export default async function DashboardPage() {
           <p className="text-3xl" aria-hidden>
             🏪
           </p>
-          <h1 className="mt-2 text-2xl font-bold">Set up your store</h1>
-          <p className="mt-1 text-stone-600">Tell customers where to pick up their bags.</p>
+          <h1 className="mt-2 text-2xl font-bold">{t.setupTitle}</h1>
+          <p className="mt-1 text-stone-600">{t.setupSubtitle}</p>
           <div className="mt-6">
             <StoreSetupForm />
           </div>
@@ -43,18 +48,18 @@ export default async function DashboardPage() {
   }
 
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayStart = startOfToday(); // midnight, Kazakhstan time
 
   const [pickups, collectedToday] = await Promise.all([
     // Reservations still to be picked up (including ones from earlier today,
     // in case the customer is running late).
     prisma.order.findMany({
-      where: { status: "RESERVED", bag: { store: { ownerId: user.id }, pickupEnd: { gte: startOfToday } } },
+      where: { status: "RESERVED", bag: { store: { ownerId: user.id }, pickupEnd: { gte: todayStart } } },
       include: { user: { select: { name: true } }, bag: { include: { store: { select: { name: true } } } } },
       orderBy: { bag: { pickupStart: "asc" } },
     }),
     prisma.order.count({
-      where: { status: "COLLECTED", updatedAt: { gte: startOfToday }, bag: { store: { ownerId: user.id } } },
+      where: { status: "COLLECTED", updatedAt: { gte: todayStart }, bag: { store: { ownerId: user.id } } },
     }),
   ]);
 
@@ -67,13 +72,13 @@ export default async function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-stone-500">{stores.map((s) => s.name).join(" · ")}</p>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">{t.title}</h1>
         </div>
         <Link
           href="/dashboard/bags/new"
           className="rounded-xl bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
         >
-          + Add a bag
+          {t.addBag}
         </Link>
       </div>
 
@@ -84,26 +89,23 @@ export default async function DashboardPage() {
             key={store.id}
             className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-light/60 p-4 ring-1 ring-accent/30"
           >
-            <p className="text-sm text-stone-700">
-              <strong>{store.name}</strong> has no map location yet, so it won&apos;t appear in &ldquo;Near me&rdquo;
-              results. Set it while you&apos;re at the store.
-            </p>
+            <p className="text-sm text-stone-700">{fill(t.noLocation, { store: store.name })}</p>
             <SetLocationButton storeId={store.id} />
           </div>
         ))}
 
       <dl className="mt-6 grid grid-cols-3 gap-3 sm:gap-4">
-        <Stat label="Bags live" value={liveBags} />
-        <Stat label="Waiting for pickup" value={pickups.length} />
-        <Stat label="Collected today" value={collectedToday} />
+        <Stat label={t.statLive} value={liveBags} />
+        <Stat label={t.statWaiting} value={pickups.length} />
+        <Stat label={t.statCollected} value={collectedToday} />
       </dl>
 
       <section className="mt-10">
-        <h2 className="text-xl font-bold">Upcoming pickups</h2>
-        <p className="text-sm text-stone-500">Check the customer&apos;s code, hand over the bag, then mark it collected.</p>
+        <h2 className="text-xl font-bold">{t.pickupsTitle}</h2>
+        <p className="text-sm text-stone-500">{t.pickupsHint}</p>
         {pickups.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white py-8 text-center text-stone-500">
-            No reservations waiting right now.
+            {t.noPickups}
           </p>
         ) : (
           <ul className="mt-4 divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white ring-1 ring-stone-200">
@@ -121,10 +123,9 @@ export default async function DashboardPage() {
                     </span>
                   </p>
                   <p className="text-sm text-stone-500">
-                    {formatDay(order.bag.pickupStart)}, {formatTime(order.bag.pickupStart)}–
-                    {formatTime(order.bag.pickupEnd)}
+                    {f.pickupWindow(order.bag.pickupStart, order.bag.pickupEnd)}
                     {showStoreName && ` · ${order.bag.store.name}`}
-                    {order.bag.pickupEnd < now && <span className="font-medium text-brand-dark"> · running late</span>}
+                    {order.bag.pickupEnd < now && <span className="font-medium text-brand-dark"> · {t.runningLate}</span>}
                   </p>
                 </div>
                 <form action={markCollected}>
@@ -133,7 +134,7 @@ export default async function DashboardPage() {
                     type="submit"
                     className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
                   >
-                    ✓ Mark collected
+                    {t.markCollected}
                   </button>
                 </form>
               </li>
@@ -143,52 +144,53 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-xl font-bold">Your bags</h2>
+        <h2 className="text-xl font-bold">{t.bagsTitle}</h2>
         {allBags.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white py-10 text-center">
-            <p className="text-stone-600">You haven&apos;t listed any bags yet.</p>
+            <p className="text-stone-600">{t.noBags}</p>
             <Link href="/dashboard/bags/new" className="mt-2 inline-block font-semibold text-brand-dark hover:underline">
-              Add your first bag →
+              {t.addFirst}
             </Link>
           </div>
         ) : (
           // A list that lays out as columns on wider screens and stacks on phones.
           <div className="mt-4 overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-stone-200">
             <div className={`${BAG_GRID} hidden gap-x-4 border-b border-stone-200 px-4 py-3 text-xs font-medium uppercase tracking-wide text-stone-500 md:grid`}>
-              <span>Bag</span>
-              <span>Pickup</span>
-              <span>Price</span>
-              <span>Left / reserved</span>
-              <span>Status</span>
-              <span className="sr-only">Actions</span>
+              <span>{t.colBag}</span>
+              <span>{t.colPickup}</span>
+              <span>{t.colPrice}</span>
+              <span>{t.colStock}</span>
+              <span>{t.colStatus}</span>
+              <span className="sr-only">{t.colActions}</span>
             </div>
             <ul className="divide-y divide-stone-100">
               {stores.flatMap((store) =>
                 store.bags.map((bag) => {
-                  const status = STATUS[bagStatus(bag, now)];
+                  const key = bagStatus(bag, now);
+                  const status = { label: t.status[key], className: STATUS_STYLES[key] };
                   return (
                     <li key={bag.id} className={`${BAG_GRID} grid gap-x-4 gap-y-1 px-4 py-3 md:items-center`}>
                       <div className="flex items-start justify-between gap-3 md:block">
                         <div>
                           <p className="font-semibold">
-                            {CATEGORIES[bag.category].emoji} {bag.title}
+                            {CATEGORY_EMOJI[bag.category]} {bag.title}
                           </p>
                           {showStoreName && <p className="text-stone-500">{store.name}</p>}
                         </div>
                         <StatusBadge status={status} className="shrink-0 md:hidden" />
                       </div>
                       <p className="text-stone-600">
-                        {formatDay(bag.pickupStart)}
+                        {f.day(bag.pickupStart)}
                         <span className="md:hidden">, </span>
                         <br className="hidden md:block" />
-                        {formatTime(bag.pickupStart)}–{formatTime(bag.pickupEnd)}
+                        {f.time(bag.pickupStart)}–{f.time(bag.pickupEnd)}
                       </p>
                       <p>
-                        <span className="font-semibold">{formatPrice(bag.price)}</span>{" "}
-                        <span className="text-stone-400 line-through">{formatPrice(bag.originalPrice)}</span>
+                        <span className="font-semibold">{f.price(bag.price)}</span>{" "}
+                        <span className="text-stone-400 line-through">{f.price(bag.originalPrice)}</span>
                         <span className="text-stone-600 md:hidden">
                           {" "}
-                          · {bag.quantityAvailable} left, {bag._count.orders} reserved
+                          · {fill(t.stockMobile, { left: bag.quantityAvailable, reserved: bag._count.orders })}
                         </span>
                       </p>
                       <p className="hidden text-stone-600 md:block">
@@ -200,7 +202,7 @@ export default async function DashboardPage() {
                           href={`/dashboard/bags/${bag.id}/edit`}
                           className="rounded-lg px-3 py-1.5 font-medium text-stone-700 hover:bg-stone-100"
                         >
-                          Edit
+                          {t.edit}
                         </Link>
                         <form action={toggleBagActive}>
                           <input type="hidden" name="bagId" value={bag.id} />
@@ -208,7 +210,7 @@ export default async function DashboardPage() {
                             type="submit"
                             className="rounded-lg px-3 py-1.5 font-medium text-stone-700 hover:bg-stone-100"
                           >
-                            {bag.isActive ? "Hide" : "Show"}
+                            {bag.isActive ? t.hide : t.show}
                           </button>
                         </form>
                       </div>
@@ -234,7 +236,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 // Column widths for the bag list header and rows (wide screens only).
-const BAG_GRID = "md:grid-cols-[2fr_1.4fr_1.2fr_1fr_0.8fr_7.5rem]";
+const BAG_GRID = "md:grid-cols-[2fr_1.3fr_1.3fr_1fr_1fr_11rem]";
 
 function StatusBadge({ status, className = "" }: { status: { label: string; className: string }; className?: string }) {
   return (
@@ -251,9 +253,9 @@ function bagStatus(bag: SurpriseBag, now: Date): BagStatus {
   return "LIVE";
 }
 
-const STATUS: Record<BagStatus, { label: string; className: string }> = {
-  LIVE: { label: "Live", className: "bg-accent text-white" },
-  HIDDEN: { label: "Hidden", className: "bg-stone-200 text-stone-700" },
-  SOLD_OUT: { label: "Sold out", className: "bg-stone-800 text-white" },
-  ENDED: { label: "Ended", className: "bg-stone-100 text-stone-500" },
+const STATUS_STYLES: Record<BagStatus, string> = {
+  LIVE: "bg-accent text-white",
+  HIDDEN: "bg-stone-200 text-stone-700",
+  SOLD_OUT: "bg-stone-800 text-white",
+  ENDED: "bg-stone-100 text-stone-500",
 };

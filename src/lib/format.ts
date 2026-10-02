@@ -1,30 +1,18 @@
-// Small display helpers shared across pages.
+// Number helpers that don't depend on the language. Text, dates and prices
+// are formatted by `f` from src/i18n (getI18n() on the server, useI18n() in
+// client components).
 
-// Turn cents (499) into a display string ($4.99).
-export const formatPrice = (cents: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+// Prices are stored in tiyn (1/100 tenge) as whole numbers, which avoids
+// rounding errors. Tiyn → "1490" (or "1490.50") for a price input.
+export const toPriceInput = (tiyn: number) => (tiyn % 100 === 0 ? String(tiyn / 100) : (tiyn / 100).toFixed(2));
 
-export const formatTime = (date: Date) =>
-  date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-
-// "Today", "Tomorrow", or a short date like "Mon, Oct 5".
-export function formatDay(date: Date) {
-  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const days = Math.round((startOfDay(date) - startOfDay(new Date())) / 86_400_000);
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+// "1490", "1 490" or "1490.50" tenge → tiyn, or null if it isn't a valid amount.
+export function parsePrice(value: string) {
+  const normalized = value.replace(/\s/g, "").replace(",", ".");
+  if (!/^\d{1,7}(\.\d{1,2})?$/.test(normalized)) return null;
+  return Math.round(Number(normalized) * 100);
 }
 
-// Values for <input type="date"> ("2026-10-02") and <input type="time"> ("14:30"),
-// in the server's local time zone.
-const pad = (n: number) => String(n).padStart(2, "0");
-export const toDateInput = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-export const toTimeInput = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-
-// Cents → "4.99" for a price input.
-export const toPriceInput = (cents: number) => (cents / 100).toFixed(2);
-
-// Percentage saved, e.g. 1500 → 499 gives 67.
+// Percentage saved, e.g. 4500 → 1490 gives 67.
 export const discountPercent = (originalPrice: number, price: number) =>
   Math.round((1 - price / originalPrice) * 100);

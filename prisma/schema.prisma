@@ -75,7 +75,7 @@ model Store {
   description String?
   address     String
   city        String
-  latitude    Float? // optional, for "near me" search later
+  latitude    Float? // optional, for "near me" sorting
   longitude   Float?
   imageUrl    String?
   createdAt   DateTime @default(now())
@@ -98,10 +98,10 @@ model SurpriseBag {
   category    BagCategory @default(MIXED)
   imageUrl    String?
 
-  // Money is stored as whole cents (Int), never Float, to avoid
-  // rounding errors like 0.1 + 0.2 = 0.30000000000000004.
-  originalPrice Int // e.g. 1500 = $15.00 worth of food
-  price         Int // e.g.  499 = $4.99 the customer pays
+  // Money is stored in tiyn (1/100 tenge) as whole numbers (Int), never
+  // Float, to avoid rounding errors like 0.1 + 0.2 = 0.30000000000000004.
+  originalPrice Int // e.g. 450000 = 4 500 ₸ worth of food
+  price         Int // e.g. 149000 = 1 490 ₸ the customer pays
 
   quantityAvailable Int      @default(1) // goes down as orders come in
   pickupStart       DateTime
@@ -122,7 +122,7 @@ model SurpriseBag {
 model Order {
   id         String      @id @default(cuid())
   quantity   Int         @default(1)
-  totalPrice Int // cents; copied at purchase time so later price edits don't change history
+  totalPrice Int // tiyn; copied at purchase time so later price edits don't change history
   status     OrderStatus @default(RESERVED)
   pickupCode String      @unique // short code the customer shows at the store
   createdAt  DateTime    @default(now())

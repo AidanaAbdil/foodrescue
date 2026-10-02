@@ -1,18 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Store, SurpriseBag } from "@/generated/prisma/client";
-import { CATEGORIES } from "@/lib/categories";
-import { discountPercent, formatDay, formatPrice, formatTime } from "@/lib/format";
-import { formatDistance } from "@/lib/geo";
+import { getI18n } from "@/i18n/server";
+import { CATEGORY_EMOJI } from "@/lib/categories";
+import { discountPercent } from "@/lib/format";
 
 type Props = {
   bag: SurpriseBag & { store: Store };
-  distance?: number; // miles from the customer, when "near me" is on
+  distance?: number; // km from the customer, when "near me" is on
 };
 
 // One surprise bag in the listing grid; the whole card links to its page.
-export function BagCard({ bag, distance }: Props) {
-  const category = CATEGORIES[bag.category];
+export async function BagCard({ bag, distance }: Props) {
+  const { dict, f, plural } = await getI18n();
+  const emoji = CATEGORY_EMOJI[bag.category];
   const fewLeft = bag.quantityAvailable <= 2;
 
   return (
@@ -32,7 +33,7 @@ export function BagCard({ bag, distance }: Props) {
         ) : (
           // No photo yet: show the category emoji instead.
           <div className="grid h-full place-items-center text-6xl" aria-hidden>
-            {category.emoji}
+            {emoji}
           </div>
         )}
 
@@ -44,7 +45,7 @@ export function BagCard({ bag, distance }: Props) {
             fewLeft ? "bg-stone-800 text-white" : "bg-white/95 text-stone-700"
           }`}
         >
-          {fewLeft ? `Only ${bag.quantityAvailable} left` : `${bag.quantityAvailable} left`}
+          {plural(bag.quantityAvailable, fewLeft ? dict.bag.onlyLeft : dict.bag.left)}
         </span>
       </div>
 
@@ -55,7 +56,7 @@ export function BagCard({ bag, distance }: Props) {
           </span>
           <p className="truncate text-sm font-medium text-stone-600">{bag.store.name}</p>
           {distance !== undefined && (
-            <span className="ml-auto shrink-0 text-sm font-medium text-brand-dark">{formatDistance(distance)}</span>
+            <span className="ml-auto shrink-0 text-sm font-medium text-brand-dark">{f.distance(distance)}</span>
           )}
         </div>
 
@@ -66,16 +67,16 @@ export function BagCard({ bag, distance }: Props) {
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v6l4 2" />
           </svg>
-          {formatDay(bag.pickupStart)} {formatTime(bag.pickupStart)}–{formatTime(bag.pickupEnd)}
+          {f.pickupWindow(bag.pickupStart, bag.pickupEnd)}
         </p>
 
         <div className="mt-4 flex items-end justify-between border-t border-stone-100 pt-3">
           <span className="text-xs font-medium text-stone-500">
-            {category.emoji} {category.label}
+            {emoji} {dict.categories[bag.category]}
           </span>
           <span className="text-right">
-            <span className="block text-xs text-stone-400 line-through">{formatPrice(bag.originalPrice)}</span>
-            <span className="text-xl font-bold text-brand">{formatPrice(bag.price)}</span>
+            <span className="block text-xs text-stone-400 line-through">{f.price(bag.originalPrice)}</span>
+            <span className="text-xl font-bold text-brand">{f.price(bag.price)}</span>
           </span>
         </div>
       </div>

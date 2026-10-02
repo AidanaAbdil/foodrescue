@@ -15,6 +15,9 @@ const inHours = (hours: number) => new Date(Date.now() + hours * 60 * 60 * 1000)
 // Helper: an Unsplash photo URL from its id (host is allowed in next.config.ts).
 const photo = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&q=70&auto=format&fit=crop`;
 
+// Helper: tenge → tiyn, the unit prices are stored in (1 ₸ = 100 tiyn).
+const tenge = (amount: number) => amount * 100;
+
 const DEMO_EMAILS = ["owner@example.com", "customer@example.com"];
 
 async function main() {
@@ -31,41 +34,42 @@ async function main() {
   const passwordHash = await hashPassword("password123");
 
   const owner = await prisma.user.create({
-    data: { email: "owner@example.com", name: "Sam Baker", passwordHash, role: "STORE_OWNER" },
+    data: { email: "owner@example.com", name: "Ерлан Сейтжанов", passwordHash, role: "STORE_OWNER" },
   });
   const customer = await prisma.user.create({
-    data: { email: "customer@example.com", name: "Alex Rivera", passwordHash },
+    data: { email: "customer@example.com", name: "Алия Нурланова", passwordHash },
   });
 
+  // ── Almaty ────────────────────────────────────────────────────────────────
   // Nested create: makes the store AND its bags in one call.
   const bakery = await prisma.store.create({
     data: {
-      name: "Golden Crust Bakery",
-      description: "Sourdough, pastries and cakes baked fresh every morning.",
-      address: "12 Main St",
-      city: "Springfield",
-      latitude: 39.8003,
-      longitude: -89.6496,
+      name: "Пекарня «Тёплый хлеб»",
+      description: "Хлеб на закваске, круассаны и торты — каждое утро свежие.",
+      address: "пр. Абая, 52",
+      city: "Алматы",
+      latitude: 43.2405,
+      longitude: 76.9286,
       ownerId: owner.id,
       bags: {
         create: [
           {
-            title: "Bakery Surprise Bag",
-            description: "A mix of today's breads and pastries.",
+            title: "Хлебный сюрприз",
+            description: "Хлеб и выпечка, оставшиеся за сегодня.",
             category: "BAKERY",
             imageUrl: photo("1509440159596-0249088772ff"),
-            originalPrice: 1500,
-            price: 499,
+            originalPrice: tenge(4500),
+            price: tenge(1490),
             quantityAvailable: 5,
             pickupStart: inHours(2),
             pickupEnd: inHours(4),
           },
           {
-            title: "Cake Slice Box",
+            title: "Сладкая коробка",
             category: "BAKERY",
             imageUrl: photo("1578985545062-69928b1d9587"),
-            originalPrice: 1200,
-            price: 399,
+            originalPrice: tenge(3900),
+            price: tenge(1290),
             quantityAvailable: 2,
             pickupStart: inHours(3),
             pickupEnd: inHours(5),
@@ -78,31 +82,32 @@ async function main() {
 
   await prisma.store.create({
     data: {
-      name: "Green Leaf Grocery",
-      address: "88 Oak Ave",
-      city: "Springfield",
-      latitude: 39.7880,
-      longitude: -89.6610,
+      name: "Зелёный базар",
+      description: "Фрукты, овощи и продукты от местных фермеров.",
+      address: "ул. Жибек Жолы, 30",
+      city: "Алматы",
+      latitude: 43.2615,
+      longitude: 76.945,
       ownerId: owner.id,
       bags: {
         create: [
           {
-            title: "Fruit & Veg Rescue Box",
+            title: "Фрукты и овощи",
             category: "PRODUCE",
             imageUrl: photo("1610832958506-aa56368176cf"),
-            originalPrice: 2000,
-            price: 699,
+            originalPrice: tenge(6000),
+            price: tenge(1990),
             quantityAvailable: 3,
             pickupStart: inHours(1),
             pickupEnd: inHours(3),
           },
           {
-            title: "Grocery Surprise Bag",
-            description: "Pantry staples, dairy and fresh items close to their date.",
+            title: "Продуктовый пакет",
+            description: "Крупы, молочные продукты и свежие товары с подходящим сроком.",
             category: "GROCERIES",
             imageUrl: photo("1542838132-92c53300491e"),
-            originalPrice: 2500,
-            price: 799,
+            originalPrice: tenge(8000),
+            price: tenge(2490),
             quantityAvailable: 4,
             pickupStart: inHours(5),
             pickupEnd: inHours(7),
@@ -112,22 +117,23 @@ async function main() {
     },
   });
 
+  // ── Astana ────────────────────────────────────────────────────────────────
   await prisma.store.create({
     data: {
-      name: "Bowl & Basil",
-      description: "Fresh salads and warm grain bowls.",
-      address: "5 Elm St",
-      city: "Springfield",
-      latitude: 39.8120,
-      longitude: -89.6380,
+      name: "Bowl Bar",
+      description: "Свежие салаты и тёплые боулы.",
+      address: "пр. Мангилик Ел, 20",
+      city: "Астана",
+      latitude: 51.0905,
+      longitude: 71.4185,
       ownerId: owner.id,
       bags: {
         create: {
-          title: "Lunch Bowl Surprise",
+          title: "Обед-сюрприз",
           category: "MEALS",
           imageUrl: photo("1546069901-ba9599a7e63c"),
-          originalPrice: 1400,
-          price: 450,
+          originalPrice: tenge(5000),
+          price: tenge(1690),
           quantityAvailable: 6,
           pickupStart: inHours(2),
           pickupEnd: inHours(6),
@@ -138,20 +144,20 @@ async function main() {
 
   await prisma.store.create({
     data: {
-      name: "Slice Pizzeria",
-      address: "301 N Main St",
-      city: "Chatham",
-      latitude: 39.6761,
-      longitude: -89.7043,
+      name: "Пиццерия «Слайс»",
+      address: "ул. Кенесары, 40",
+      city: "Астана",
+      latitude: 51.1694,
+      longitude: 71.43,
       ownerId: owner.id,
       bags: {
         create: {
-          title: "End-of-Day Pizza Box",
-          description: "Whatever pizzas are left at closing time.",
+          title: "Пицца в конце дня",
+          description: "Пиццы, оставшиеся к закрытию.",
           category: "MIXED",
           imageUrl: photo("1565299624946-b28f40a0ae38"),
-          originalPrice: 1800,
-          price: 599,
+          originalPrice: tenge(6000),
+          price: tenge(1990),
           quantityAvailable: 1,
           pickupStart: inHours(6),
           pickupEnd: inHours(8),
@@ -165,7 +171,7 @@ async function main() {
   const bag = bakery.bags[0];
   await prisma.$transaction([
     prisma.order.create({
-      data: { userId: customer.id, bagId: bag.id, quantity: 1, totalPrice: bag.price, pickupCode: "GC-4821" },
+      data: { userId: customer.id, bagId: bag.id, quantity: 1, totalPrice: bag.price, pickupCode: "TX-4821" },
     }),
     prisma.surpriseBag.update({
       where: { id: bag.id },

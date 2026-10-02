@@ -3,18 +3,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { cancelOrder } from "@/app/actions/orders";
 import type { Order, Store, SurpriseBag } from "@/generated/prisma/client";
-import { CATEGORIES } from "@/lib/categories";
-import { formatDay, formatPrice, formatTime } from "@/lib/format";
+import { getI18n } from "@/i18n/server";
+import { CATEGORY_EMOJI } from "@/lib/categories";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
-export const metadata: Metadata = { title: "My orders · FoodRescue" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getI18n()).dict.meta.orders };
+}
 
 type OrderWithBag = Order & { bag: SurpriseBag & { store: Store } };
 
 export default async function OrdersPage({ searchParams }: PageProps<"/orders">) {
   const user = await requireUser("/orders");
   const { new: newOrderId } = await searchParams;
+  const { dict, f, fill } = await getI18n();
+  const t = dict.orders;
 
   const orders = await prisma.order.findMany({
     where: { userId: user.id },
@@ -29,26 +33,35 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8">
-      <h1 className="text-3xl font-bold">My orders</h1>
+      <h1 className="text-3xl font-bold">{t.title}</h1>
 
       {justReserved && (
         <div role="status" className="mt-6 rounded-2xl bg-accent p-5 text-white">
-          <p className="text-lg font-semibold">🎉 Reserved! Thanks for rescuing food.</p>
+          <p className="text-lg font-semibold">{t.reservedTitle}</p>
           <p className="mt-1">
-            Show code <strong className="font-mono">{justReserved.pickupCode}</strong> at {justReserved.bag.store.name}{" "}
-            {formatDay(justReserved.bag.pickupStart).toLowerCase()} between {formatTime(justReserved.bag.pickupStart)}{" "}
-            and {formatTime(justReserved.bag.pickupEnd)}.
+            {/* Split around {code} so the code itself can be shown in bold. */}
+            {fill(t.reservedText, {
+              store: justReserved.bag.store.name,
+              window: f.pickupWindow(justReserved.bag.pickupStart, justReserved.bag.pickupEnd),
+            })
+              .split("{code}")
+              .map((part, i) => (
+                <span key={i}>
+                  {i > 0 && <strong className="font-mono">{justReserved.pickupCode}</strong>}
+                  {part}
+                </span>
+              ))}
           </p>
         </div>
       )}
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold">Upcoming pickups</h2>
+        <h2 className="text-lg font-semibold">{t.upcoming}</h2>
         {upcoming.length === 0 ? (
           <div className="mt-3 rounded-2xl border border-dashed border-stone-300 bg-white py-10 text-center">
-            <p className="text-stone-600">No upcoming pickups.</p>
+            <p className="text-stone-600">{t.none}</p>
             <Link href="/" className="mt-2 inline-block font-semibold text-brand-dark hover:underline">
-              Find a bag to rescue →
+              {t.findBag}
             </Link>
           </div>
         ) : (
@@ -62,7 +75,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
       {past.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold">Past orders</h2>
+          <h2 className="text-lg font-semibold">{t.past}</h2>
           <ul className="mt-3 space-y-4">
             {past.map((order) => (
               <OrderCard key={order.id} order={order} />
@@ -74,14 +87,15 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
   );
 }
 
-const STATUS_LABELS = {
-  RESERVED: { label: "Reserved", className: "bg-brand-light text-brand-dark" },
-  COLLECTED: { label: "Collected", className: "bg-accent text-white" },
-  CANCELLED: { label: "Cancelled", className: "bg-stone-200 text-stone-600" },
-  MISSED: { label: "Pickup missed", className: "bg-stone-200 text-stone-600" },
+const STATUS_STYLES = {
+  RESERVED: "bg-brand-light text-brand-dark",
+  COLLECTED: "bg-accent text-white",
+  CANCELLED: "bg-stone-200 text-stone-600",
+  MISSED: "bg-stone-200 text-stone-600",
 };
 
-function OrderCard({ order, highlight = false }: { order: OrderWithBag; highlight?: boolean }) {
+async function OrderCard({ order, highlight = false }: { order: OrderWithBag; highlight?: boolean }) {
+  const { dict, f } = await getI18n();
   const { bag } = order;
   const isUpcoming = order.status === "RESERVED" && bag.pickupEnd > new Date();
   const status = order.status === "RESERVED" && !isUpcoming ? "MISSED" : order.status;
@@ -96,7 +110,7 @@ function OrderCard({ order, highlight = false }: { order: OrderWithBag; highligh
         {bag.imageUrl ? (
           <Image src={bag.imageUrl} alt="" fill sizes="96px" className="object-cover" />
         ) : (
-          <span className="grid h-full place-items-center text-3xl">{CATEGORIES[bag.category].emoji}</span>
+          <span className="grid h-full place-items-center text-3xl">{CATEGORY_EMOJI[bag.category]}</span>
         )}
       </Link>
 
@@ -109,14 +123,13 @@ function OrderCard({ order, highlight = false }: { order: OrderWithBag; highligh
               {order.quantity > 1 && <span className="text-stone-500"> × {order.quantity}</span>}
             </h3>
           </div>
-          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_LABELS[status].className}`}>
-            {STATUS_LABELS[status].label}
+          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[status]}`}>
+            {dict.orders.status[status]}
           </span>
         </div>
 
         <p className="mt-1 text-sm text-stone-600">
-          {formatDay(bag.pickupStart)}, {formatTime(bag.pickupStart)}–{formatTime(bag.pickupEnd)} ·{" "}
-          {bag.store.address}
+          {f.pickupWindow(bag.pickupStart, bag.pickupEnd)} · {bag.store.address}, {bag.store.city}
         </p>
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -126,13 +139,13 @@ function OrderCard({ order, highlight = false }: { order: OrderWithBag; highligh
                 {order.pickupCode}
               </span>
             )}
-            <span className="font-semibold">{formatPrice(order.totalPrice)}</span>
+            <span className="font-semibold">{f.price(order.totalPrice)}</span>
           </div>
           {isUpcoming && (
             <form action={cancelOrder}>
               <input type="hidden" name="orderId" value={order.id} />
               <button type="submit" className="text-sm font-medium text-stone-500 underline-offset-2 hover:text-red-700 hover:underline">
-                Cancel reservation
+                {dict.orders.cancel}
               </button>
             </form>
           )}
