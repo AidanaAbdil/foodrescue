@@ -73,6 +73,20 @@ model User {
   orders         Order[] // bags this user has reserved
   sessions       Session[] // one per device the user is logged in on
   passwordResets PasswordResetToken[]
+  favorites      Favorite[]
+}
+
+// A customer's favourite store (♡).
+model Favorite {
+  createdAt DateTime @default(now())
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, storeId]) // a store can be favourited once per user
+  @@index([storeId])
 }
 
 // "Forgot password?" links. Like sessions, only a hash of the token is stored.
@@ -137,6 +151,7 @@ model Store {
 
   bags      SurpriseBag[]
   schedules BagSchedule[]
+  favorites Favorite[]
 
   @@index([ownerId])
   @@index([city])

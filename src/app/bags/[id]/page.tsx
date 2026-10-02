@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReserveForm } from "@/components/ReserveForm";
 import { getI18n } from "@/i18n/server";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { FoodLabels } from "@/components/FoodLabels";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { parseAllergens } from "@/lib/labels";
@@ -72,12 +73,15 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
         </div>
 
         <div>
-          <p className="flex items-center gap-2 font-medium text-stone-600">
-            <span className="grid size-8 place-items-center rounded-full bg-brand-light text-sm font-bold text-brand-dark">
-              {bag.store.name.charAt(0)}
-            </span>
-            {bag.store.name}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link href={`/stores/${bag.store.id}`} className="group flex items-center gap-2 font-medium text-stone-600">
+              <span className="grid size-8 place-items-center rounded-full bg-brand-light text-sm font-bold text-brand-dark">
+                {bag.store.name.charAt(0)}
+              </span>
+              <span className="group-hover:text-brand-dark group-hover:underline">{bag.store.name}</span>
+            </Link>
+            {approved && <FavoriteButton storeId={bag.store.id} back={`/bags/${bag.id}`} />}
+          </div>
           <h1 className="mt-3 text-3xl font-bold leading-tight">{bag.title}</h1>
           <p className="mt-2 text-sm font-medium text-stone-500">
             {emoji} {dict.categories[bag.category]}
@@ -156,6 +160,9 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
         <section className="rounded-2xl bg-white p-6 ring-1 ring-stone-200">
           <h2 className="font-semibold">{fill(t.about, { store: bag.store.name })}</h2>
           <p className="mt-2 text-sm text-stone-600">{bag.store.description ?? t.defaultStoreDescription}</p>
+          <Link href={`/stores/${bag.store.id}`} className="mt-3 inline-block text-sm font-semibold text-brand-dark hover:underline">
+            {t.storeLink}
+          </Link>
         </section>
       </div>
     </main>

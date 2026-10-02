@@ -10,7 +10,7 @@ import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { latestPaidOrder } from "@/lib/new-orders";
-import { parseWeekdays } from "@/lib/schedules";
+import { nextWindow, parseWeekdays } from "@/lib/schedules";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
@@ -205,6 +205,11 @@ export default async function DashboardPage() {
                         {f.price(schedule.price)}
                         {showStoreName && ` · ${store.name}`}
                       </p>
+                      {schedule.isActive && nextWindow(schedule) && (
+                        <p className="text-brand-dark">
+                          {fill(t.nextBag, { when: f.pickupWindow(nextWindow(schedule)!.start, nextWindow(schedule)!.end) })}
+                        </p>
+                      )}
                     </div>
                     <span
                       className={`rounded-full px-2.5 py-1 text-xs font-semibold ${

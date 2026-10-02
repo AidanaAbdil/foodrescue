@@ -80,6 +80,20 @@ export async function publishScheduledBags(scheduleIds?: string[]) {
   }
 }
 
+// The next pickup window of a schedule that hasn't ended yet (within a week),
+// e.g. for "Next bag: Mon 08:00–10:00". Null if the schedule has no days.
+export function nextWindow(schedule: Pick<BagSchedule, "weekdays" | "startTime" | "endTime">) {
+  const weekdays = parseWeekdays(schedule.weekdays);
+  const now = new Date();
+  for (let i = 0; i < 8; i++) {
+    const date = dayKey(new Date(now.getTime() + i * 24 * 60 * 60 * 1000));
+    if (!weekdays.includes(isoWeekday(date) as (typeof WEEKDAYS)[number])) continue;
+    const window = windowFor(schedule, date);
+    if (window && window.end > now) return window;
+  }
+  return null;
+}
+
 // Upcoming bags from a schedule that nobody has ordered yet: safe to change or remove.
 export const untouchedUpcoming = (scheduleId: string) => ({
   scheduleId,

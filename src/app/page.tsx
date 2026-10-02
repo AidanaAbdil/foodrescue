@@ -48,6 +48,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   });
   const cities = [...new Set(bags.map((bag) => bag.store.city))].sort((a, b) => a.localeCompare(b));
 
+
   // Filtering in JavaScript is fine at this size (a few hundred bags). With
   // thousands we'd move these conditions into the database query instead.
   const words = normalize(q).split(/\s+/).filter(Boolean);
@@ -68,6 +69,27 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     }));
   // Nearest first; stores without a location go last.
   if (near) shown.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+
+  // Today's bags that already sold out stay visible (greyed), so customers
+  // still find the store and can add it to their favourites.
+  const soldOut = await prisma.surpriseBag.findMany({
+    where: {
+      isActive: true,
+      quantityAvailable: 0,
+      pickupEnd: { gt: new Date() },
+      store: { status: "APPROVED" },
+      ...(selected && { category: selected }),
+      ...(halal && { isHalal: true }),
+      ...(veg && { isVegetarian: true }),
+      ...(vegan && { isVegan: true }),
+      ...(city && { store: { status: "APPROVED", city } }),
+    },
+    include: { store: true },
+    orderBy: { pickupStart: "asc" },
+  });
+  const soldOutShown = soldOut.filter((bag) =>
+    words.every((word) => normalize(`${bag.title} ${bag.description ?? ""} ${bag.store.name}`).includes(word)),
+  );
 
   // Build a link to this page with some filters changed (undefined = remove).
   const current = {
@@ -190,7 +212,19 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           ))}
         </div>
 
-        {shown.length === 0 && (
+        {soldOutShown.length > 0 && (
+          <div className="mt-10">
+            <h3 className="text-lg font-semibold">{t.soldOutTitle}</h3>
+            <p className="text-sm text-stone-500">{t.soldOutHint}</p>
+            <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {soldOutShown.map((bag) => (
+                <BagCard key={bag.id} bag={bag} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {shown.length === 0 && soldOutShown.length === 0 && (
           <div className="mt-6 rounded-2xl border border-dashed border-stone-300 bg-white py-16 text-center">
             <p className="text-4xl" aria-hidden>
               🥡

@@ -207,6 +207,15 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Store pages, sold out & favourites
+- `/stores/[id]`: store info, map link, regular bags with "Next bag" (`nextWindow` in
+  src/lib/schedules.ts), available bags, and today's sold-out bags. Reachable even when everything
+  is sold out; non-approved stores only for owner/admin.
+- Homepage keeps today's sold-out bags in a greyed "Already sold out" section (same filters).
+- `Favorite` (userId+storeId). `FavoriteButton` (customers only; logged out → login link) on store
+  and bag pages; `/favorites` lists favourite stores with current bags or the next bag time.
+  Header shows "Favourites" for customers. Notifying favourites about new bags = later (push).
+
 ### New-order alerts & regular bags
 - Dashboard `NewOrderAlert` polls `/dashboard/updates` (owner-only JSON: newest paid order) every
   10 s → pop-up, `router.refresh()`, 🔔 in the tab title, optional Web-Audio chime (button; choice in

@@ -15,12 +15,15 @@ type Props = {
 export async function BagCard({ bag, distance }: Props) {
   const { dict, f, plural } = await getI18n();
   const emoji = CATEGORY_EMOJI[bag.category];
+  const soldOut = bag.quantityAvailable === 0;
   const fewLeft = bag.quantityAvailable <= 2;
 
   return (
     <Link
       href={`/bags/${bag.id}`}
-      className="group block overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+      className={`group block overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+        soldOut ? "opacity-60 grayscale-[60%]" : ""
+      }`}
     >
       <div className="relative aspect-[16/10] bg-brand-light">
         {bag.imageUrl ? (
@@ -46,7 +49,7 @@ export async function BagCard({ bag, distance }: Props) {
             fewLeft ? "bg-stone-800 text-white" : "bg-white/95 text-stone-700"
           }`}
         >
-          {plural(bag.quantityAvailable, fewLeft ? dict.bag.onlyLeft : dict.bag.left)}
+          {soldOut ? dict.bag.soldOut : plural(bag.quantityAvailable, fewLeft ? dict.bag.onlyLeft : dict.bag.left)}
         </span>
       </div>
 

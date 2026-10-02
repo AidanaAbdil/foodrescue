@@ -23,7 +23,12 @@ export async function Header() {
       ? [{ href: "/admin", label: pendingStores > 0 ? `${t.admin} (${pendingStores})` : t.admin }]
       : []),
     // "My orders" is for customers; store accounts don't order.
-    ...(user?.role === "CUSTOMER" ? [{ href: "/orders", label: t.myOrders }] : []),
+    ...(user?.role === "CUSTOMER"
+      ? [
+          { href: "/orders", label: t.myOrders },
+          { href: "/favorites", label: t.favorites },
+        ]
+      : []),
     ...(user
       ? []
       : [
