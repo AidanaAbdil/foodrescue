@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf6f1; /* warm off-white page */
+  --foreground: #1c1917;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Brand colors (Terracotta & Sage). Use them like any Tailwind color: bg-brand, text-brand-dark…
+     Each pairs with white text at a readable contrast (WCAG AA). */
+  --color-brand: #c2553a; /* terracotta */
+  --color-brand-dark: #8f3b26;
+  --color-brand-light: #e3ebdd; /* soft sage */
+  --color-accent: #5e7d5a; /* sage green */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}

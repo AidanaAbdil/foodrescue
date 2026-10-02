@@ -1,0 +1,140 @@
+// Prisma schema: the single source of truth for the database.
+// Each `model` becomes a table. After changing this file, run:
+//   npm run db:migrate
+// which creates a migration (SQL file) and regenerates the typed client.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// The connection URL lives in prisma.config.ts (read from .env).
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+// A fixed list of allowed values. Prisma rejects anything else.
+
+enum Role {
+  CUSTOMER    // browses and reserves bags
+  STORE_OWNER // lists surplus food for their stores
+  ADMIN
+}
+
+enum BagCategory {
+  MEALS
+  BAKERY
+  GROCERIES
+  PRODUCE
+  MIXED
+}
+
+enum OrderStatus {
+  RESERVED  // paid/reserved, waiting for pickup
+  COLLECTED // customer picked it up
+  CANCELLED // cancelled by customer or store
+}
+
+// ─── Models ─────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String // never store plain-text passwords
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relation fields: not real columns, they let you write
+  // `prisma.user.findUnique({ include: { orders: true } })`.
+  stores   Store[] // stores this user owns (if STORE_OWNER)
+  orders   Order[] // bags this user has reserved
+  sessions Session[] // one per device the user is logged in on
+}
+
+// A logged-in browser. The browser keeps a random token in a cookie; we store
+// only a SHA-256 hash of it, so a leaked database can't be used to log in.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Store {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  city        String
+  latitude    Float? // optional, for "near me" search later
+  longitude   Float?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key: each store belongs to one user (its owner).
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  bags SurpriseBag[]
+
+  @@index([ownerId])
+  @@index([city])
+}
+
+model SurpriseBag {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  category    BagCategory @default(MIXED)
+  imageUrl    String?
+
+  // Money is stored as whole cents (Int), never Float, to avoid
+  // rounding errors like 0.1 + 0.2 = 0.30000000000000004.
+  originalPrice Int // e.g. 1500 = $15.00 worth of food
+  price         Int // e.g.  499 = $4.99 the customer pays
+
+  quantityAvailable Int      @default(1) // goes down as orders come in
+  pickupStart       DateTime
+  pickupEnd         DateTime
+  isActive          Boolean  @default(true) // store can hide a listing
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  orders Order[]
+
+  @@index([storeId])
+  @@index([isActive, pickupEnd]) // speeds up "available right now" queries
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  quantity   Int         @default(1)
+  totalPrice Int // cents; copied at purchase time so later price edits don't change history
+  status     OrderStatus @default(RESERVED)
+  pickupCode String      @unique // short code the customer shows at the store
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Restrict: a bag that has orders can't be deleted (keeps order history intact).
+  bagId String
+  bag   SurpriseBag @relation(fields: [bagId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+  @@index([bagId])
+}
