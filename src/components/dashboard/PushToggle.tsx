@@ -15,8 +15,10 @@ function keyBytes(base64url: string) {
 // "🔔 Notifications on this device": turns push notifications for new
 // orders on or off for the phone/computer it's tapped on.
 export function PushToggle({ publicKey }: { publicKey: string | null }) {
-  const t = useI18n().dict.push;
+  const { dict, fill } = useI18n();
+  const t = dict.push;
   const [status, setStatus] = useState<Status>("checking");
+  const [problem, setProblem] = useState(""); // why turning on failed, shown to the user
 
   useEffect(() => {
     (async () => {
@@ -32,14 +34,18 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
 
   async function turnOn() {
     setStatus("working");
+    setProblem("");
     try {
-      if ((await Notification.requestPermission()) !== "granted") return setStatus("blocked");
+      const permission = await Notification.requestPermission();
+      if (permission === "denied") return setStatus("blocked");
+      if (permission !== "granted") throw new Error("permission not given");
       const registration = await navigator.serviceWorker.ready;
       const sub = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey!) });
-      await savePushSubscription(JSON.parse(JSON.stringify(sub)));
+      if (!(await savePushSubscription(JSON.parse(JSON.stringify(sub))))) throw new Error("not saved");
       setStatus("on");
     } catch (error) {
       console.error(error);
+      setProblem(error instanceof Error ? error.message : String(error));
       setStatus("off");
     }
   }
@@ -83,6 +89,7 @@ export function PushToggle({ publicKey }: { publicKey: string | null }) {
           {t.enable}
         </button>
       )}
+      {problem && <p className="w-full text-sm text-red-700">{fill(t.failed, { reason: problem })}</p>}
     </div>
   );
 }

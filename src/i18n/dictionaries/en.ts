@@ -445,6 +445,7 @@ export const en: Dictionary = {
     hint: "New orders arrive as a notification, even when the site is closed.",
     blocked: "Notifications are blocked for this site in your browser settings.",
     unsupported: "This browser doesn't support notifications.",
+    failed: "Couldn't turn on notifications: {reason}",
     iosInstall: "On iPhone, first add the site to your Home Screen (Share → Add to Home Screen) and open it from there.",
   },
   location: {
