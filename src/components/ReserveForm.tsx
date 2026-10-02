@@ -61,7 +61,7 @@ export function ReserveForm({ bagId, price, maxQuantity }: Props) {
         <span>{pending ? t.reserving : t.reserve}</span>
         <span>{f.price(price * quantity)}</span>
       </button>
-      <p className="text-center text-xs text-stone-500">{t.payAtStore}</p>
+      <p className="text-center text-xs text-stone-500">{t.payNote}</p>
     </form>
   );
 }

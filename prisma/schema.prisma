@@ -32,9 +32,18 @@ enum BagCategory {
 }
 
 enum OrderStatus {
-  RESERVED  // paid/reserved, waiting for pickup
+  PENDING_PAYMENT // bag is held while the customer pays (see Order.expiresAt)
+  RESERVED // paid, waiting for pickup
   COLLECTED // customer picked it up
-  CANCELLED // cancelled by customer or store
+  CANCELLED // cancelled by the customer (paid orders are refunded)
+  EXPIRED // not paid in time, or payment failed; the bag went back on sale
+}
+
+enum PaymentStatus {
+  PENDING // customer is on the payment page
+  PAID
+  FAILED // declined or abandoned
+  REFUNDED
 }
 
 // ─── Models ─────────────────────────────────────────────────────────────────
@@ -123,8 +132,9 @@ model Order {
   id         String      @id @default(cuid())
   quantity   Int         @default(1)
   totalPrice Int // tiyn; copied at purchase time so later price edits don't change history
-  status     OrderStatus @default(RESERVED)
+  status     OrderStatus @default(PENDING_PAYMENT)
   pickupCode String      @unique // short code the customer shows at the store
+  expiresAt  DateTime? // payment deadline while PENDING_PAYMENT
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
@@ -135,6 +145,28 @@ model Order {
   bagId String
   bag   SurpriseBag @relation(fields: [bagId], references: [id], onDelete: Restrict)
 
+  payment Payment?
+
   @@index([userId])
   @@index([bagId])
+  @@index([status, expiresAt]) // finding unpaid orders past their deadline
+}
+
+// The money side of an order. Amounts are in tiyn, like prices.
+model Payment {
+  id                String        @id @default(cuid())
+  provider          String // "test" for now; later "kaspi" or "halyk"
+  providerPaymentId String? // the provider's own ID, for refunds and support
+  amount            Int
+  currency          String        @default("KZT")
+  status            PaymentStatus @default(PENDING)
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerPaymentId])
 }

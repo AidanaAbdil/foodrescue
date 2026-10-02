@@ -166,12 +166,20 @@ async function main() {
     },
   });
 
-  // Customer reserves one bakery bag; decrement stock in the same transaction
-  // so the two writes succeed or fail together.
+  // Customer has paid for one bakery bag (test payment); decrement stock in
+  // the same transaction so the two writes succeed or fail together.
   const bag = bakery.bags[0];
   await prisma.$transaction([
     prisma.order.create({
-      data: { userId: customer.id, bagId: bag.id, quantity: 1, totalPrice: bag.price, pickupCode: "TX-4821" },
+      data: {
+        userId: customer.id,
+        bagId: bag.id,
+        quantity: 1,
+        totalPrice: bag.price,
+        pickupCode: "TX-4821",
+        status: "RESERVED",
+        payment: { create: { provider: "test", amount: bag.price, status: "PAID", paidAt: new Date() } },
+      },
     }),
     prisma.surpriseBag.update({
       where: { id: bag.id },

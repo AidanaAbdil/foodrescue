@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { cancelOrder } from "@/app/actions/orders";
-import type { Order, Store, SurpriseBag } from "@/generated/prisma/client";
+import type { Order, Payment, Store, SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI } from "@/lib/categories";
+import { getPaymentProvider } from "@/lib/payments/provider";
+import { releaseExpiredHolds } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
@@ -12,28 +14,37 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.orders };
 }
 
-type OrderWithBag = Order & { bag: SurpriseBag & { store: Store } };
+type OrderWithBag = Order & { bag: SurpriseBag & { store: Store }; payment: Payment | null };
 
 export default async function OrdersPage({ searchParams }: PageProps<"/orders">) {
   const user = await requireUser("/orders");
-  const { new: newOrderId } = await searchParams;
+  const { new: newOrderId, declined, error } = await searchParams;
+  await releaseExpiredHolds(); // unpaid orders past their deadline become EXPIRED
   const { dict, f, fill } = await getI18n();
   const t = dict.orders;
 
   const orders = await prisma.order.findMany({
     where: { userId: user.id },
-    include: { bag: { include: { store: true } } },
+    include: { bag: { include: { store: true } }, payment: true },
     orderBy: { createdAt: "desc" },
   });
 
   const now = new Date();
-  const upcoming = orders.filter((o) => o.status === "RESERVED" && o.bag.pickupEnd > now);
+  const upcoming = orders.filter(
+    (o) => o.status === "PENDING_PAYMENT" || (o.status === "RESERVED" && o.bag.pickupEnd > now),
+  );
   const past = orders.filter((o) => !upcoming.includes(o));
   const justReserved = upcoming.find((o) => o.id === newOrderId);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8">
       <h1 className="text-3xl font-bold">{t.title}</h1>
+
+      {(declined || error === "too-late") && (
+        <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-red-700">
+          {declined ? t.declined : t.tooLate}
+        </p>
+      )}
 
       {justReserved && (
         <div role="status" className="mt-6 rounded-2xl bg-accent p-5 text-white">
@@ -88,6 +99,8 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 }
 
 const STATUS_STYLES = {
+  PENDING_PAYMENT: "bg-amber-100 text-amber-900",
+  EXPIRED: "bg-stone-200 text-stone-600",
   RESERVED: "bg-brand-light text-brand-dark",
   COLLECTED: "bg-accent text-white",
   CANCELLED: "bg-stone-200 text-stone-600",
@@ -95,16 +108,20 @@ const STATUS_STYLES = {
 };
 
 async function OrderCard({ order, highlight = false }: { order: OrderWithBag; highlight?: boolean }) {
-  const { dict, f } = await getI18n();
-  const { bag } = order;
-  const isUpcoming = order.status === "RESERVED" && bag.pickupEnd > new Date();
+  const { dict, f, fill } = await getI18n();
+  const t = dict.orders;
+  const { bag, payment } = order;
+  const now = new Date();
+  const isPending = order.status === "PENDING_PAYMENT";
+  const isUpcoming = order.status === "RESERVED" && bag.pickupEnd > now;
   const status = order.status === "RESERVED" && !isUpcoming ? "MISSED" : order.status;
+  const canCancel = isPending || (isUpcoming && bag.pickupStart > now); // refunds only before pickup starts
 
   return (
     <li
       className={`flex gap-4 rounded-2xl bg-white p-4 ring-1 ${
         highlight ? "ring-2 ring-accent" : "ring-stone-200"
-      } ${isUpcoming ? "" : "opacity-75"}`}
+      } ${isUpcoming || isPending ? "" : "opacity-75"}`}
     >
       <Link href={`/bags/${bag.id}`} className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-brand-light sm:size-24">
         {bag.imageUrl ? (
@@ -131,6 +148,10 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         <p className="mt-1 text-sm text-stone-600">
           {f.pickupWindow(bag.pickupStart, bag.pickupEnd)} · {bag.store.address}, {bag.store.city}
         </p>
+        {isPending && order.expiresAt && (
+          <p className="mt-1 text-sm font-medium text-amber-800">{fill(t.payBy, { time: f.time(order.expiresAt) })}</p>
+        )}
+        {payment?.status === "REFUNDED" && <p className="mt-1 text-sm text-stone-600">{t.refunded}</p>}
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">
@@ -140,12 +161,20 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
               </span>
             )}
             <span className="font-semibold">{f.price(order.totalPrice)}</span>
+            {isPending && payment && (
+              <Link
+                href={getPaymentProvider().resumeUrl(payment)}
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+              >
+                {t.payNow}
+              </Link>
+            )}
           </div>
-          {isUpcoming && (
+          {canCancel && (
             <form action={cancelOrder}>
               <input type="hidden" name="orderId" value={order.id} />
               <button type="submit" className="text-sm font-medium text-stone-500 underline-offset-2 hover:text-red-700 hover:underline">
-                {dict.orders.cancel}
+                {isPending ? dict.common.cancel : t.cancel}
               </button>
             </form>
           )}

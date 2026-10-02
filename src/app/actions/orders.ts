@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { MAX_PER_ORDER } from "@/lib/orders";
+import { getPaymentProvider } from "@/lib/payments/provider";
+import { cancelPaidOrder, expireOrder, HOLD_MINUTES, releaseExpiredHolds } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
@@ -35,19 +37,22 @@ export async function reserveBag(_prev: ReserveState, formData: FormData): Promi
     return { error: fill(t.quantityRange, { n: MAX_PER_ORDER }) };
   }
 
-  let orderId: string | undefined;
+  // Bags held by unpaid orders that timed out go back on sale first.
+  await releaseExpiredHolds();
+
+  let created: { orderId: string; paymentId: string; amount: number; description: string } | undefined;
   // A pickup code could (rarely) collide with an existing one; just try again.
-  for (let attempt = 0; attempt < 5 && !orderId; attempt++) {
+  for (let attempt = 0; attempt < 5 && !created; attempt++) {
     try {
-      orderId = await prisma.$transaction(async (tx) => {
+      created = await prisma.$transaction(async (tx) => {
         const bag = await tx.surpriseBag.findUnique({ where: { id: bagId }, include: { store: true } });
         if (!bag) throw new ReserveError(t.bagGone);
         if (bag.store.ownerId === user.id) throw new ReserveError(t.ownStore);
 
-        // Take the bags only if enough are still available, all in ONE update.
-        // If two people click "Reserve" on the last bag at the same moment,
-        // only one update can match; the other gets count 0. Reading the
-        // quantity first and writing it later would sell the bag twice.
+        // Hold the bags only if enough are still available, all in ONE update.
+        // If two people click "Pay" on the last bag at the same moment, only
+        // one update can match; the other gets count 0. Reading the quantity
+        // first and writing it later would sell the bag twice.
         const { count } = await tx.surpriseBag.updateMany({
           where: {
             id: bagId,
@@ -65,16 +70,26 @@ export async function reserveBag(_prev: ReserveState, formData: FormData): Promi
           );
         }
 
+        const amount = bag.price * quantity; // locked in now, even if the price changes later
         const order = await tx.order.create({
           data: {
             userId: user.id,
             bagId,
             quantity,
-            totalPrice: bag.price * quantity, // locked in now, even if the price changes later
+            totalPrice: amount,
             pickupCode: makePickupCode(),
+            status: "PENDING_PAYMENT",
+            expiresAt: new Date(Date.now() + HOLD_MINUTES * 60_000),
+            payment: { create: { provider: getPaymentProvider().name, amount } },
           },
+          include: { payment: true },
         });
-        return order.id;
+        return {
+          orderId: order.id,
+          paymentId: order.payment!.id,
+          amount,
+          description: `FoodRescue: ${bag.title} × ${quantity}`,
+        };
       });
     } catch (error) {
       if (error instanceof ReserveError) return { error: error.message };
@@ -82,33 +97,38 @@ export async function reserveBag(_prev: ReserveState, formData: FormData): Promi
       if (!codeTaken) throw error;
     }
   }
+  if (!created) return { error: t.generic };
 
-  if (!orderId) return { error: t.generic };
-  redirect(`/orders?new=${orderId}`);
+  // Start the payment with the provider (outside the transaction: it's a
+  // network call). If that fails, release the hold straight away.
+  let redirectUrl: string;
+  try {
+    const started = await getPaymentProvider().createPayment(created);
+    await prisma.payment.update({
+      where: { id: created.paymentId },
+      data: { providerPaymentId: started.providerPaymentId },
+    });
+    redirectUrl = started.redirectUrl;
+  } catch (error) {
+    console.error("Could not start payment", error);
+    await expireOrder(created.orderId);
+    return { error: t.generic };
+  }
+  redirect(redirectUrl);
 }
 
+// Cancel your own order. Unpaid: the hold is simply released. Paid: refunded,
+// but only before the pickup window starts.
 export async function cancelOrder(formData: FormData) {
   const user = await requireUser("/orders");
   const orderId = String(formData.get("orderId") ?? "");
 
-  await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUnique({ where: { id: orderId }, include: { bag: true } });
-    // Only your own, still-reserved orders, and only before pickup ends.
-    if (!order || order.userId !== user.id || order.bag.pickupEnd <= new Date()) return;
-
-    // Status check inside the update, so double-clicking "Cancel" can't put
-    // the bags back twice.
-    const { count } = await tx.order.updateMany({
-      where: { id: orderId, status: "RESERVED" },
-      data: { status: "CANCELLED" },
-    });
-    if (count === 1) {
-      await tx.surpriseBag.update({
-        where: { id: order.bagId },
-        data: { quantityAvailable: { increment: order.quantity } },
-      });
-    }
-  });
-
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (order?.userId === user.id && order.status === "PENDING_PAYMENT") {
+    await expireOrder(orderId);
+  } else if (order?.userId === user.id && order.status === "RESERVED") {
+    const result = await cancelPaidOrder(orderId, user.id);
+    if (result === "TOO_LATE") redirect("/orders?error=too-late");
+  }
   redirect("/orders");
 }

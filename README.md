@@ -59,3 +59,16 @@ and `en.ts` must contain the same keys, and `npx tsc` reports anything missing.
 The language comes from the switcher in the header (saved in a cookie), else
 the browser's language, else Russian. The Kazakh text should be reviewed by a
 native speaker.
+
+## Payments
+
+Customers pay online when ordering. The bag is held for 15 minutes while they
+pay; unpaid orders expire and the bag goes back on sale. Paid orders can be
+cancelled with a full refund until the pickup window starts.
+
+The flow lives in `src/lib/payments/service.ts`; providers plug in through
+`src/lib/payments/provider.ts`. Until a real provider (Kaspi Pay or Halyk ePay)
+is connected, the **test provider** shows a clearly marked test payment page
+and moves no money. It refuses to run in production. Choose the provider with
+`PAYMENT_PROVIDER` in `.env` (default: `test`).
+

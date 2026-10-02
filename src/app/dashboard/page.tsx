@@ -8,6 +8,7 @@ import type { SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
 import { CATEGORY_EMOJI } from "@/lib/categories";
+import { releaseExpiredHolds } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DashboardPage() {
   const user = await requireOwner();
+  await releaseExpiredHolds();
   const { dict, f, fill } = await getI18n();
   const t = dict.dashboard;
 
@@ -26,7 +28,8 @@ export default async function DashboardPage() {
     include: {
       bags: {
         orderBy: { pickupStart: "desc" },
-        include: { _count: { select: { orders: { where: { status: { not: "CANCELLED" } } } } } },
+        // "Reserved" = paid orders only (not unpaid holds, cancelled or expired).
+        include: { _count: { select: { orders: { where: { status: { in: ["RESERVED", "COLLECTED"] } } } } } },
       },
     },
   });
