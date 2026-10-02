@@ -238,6 +238,8 @@ export const ru = {
     cantHandOverConfirm: "Отменить заказ {code}? Покупатель получит деньги обратно полностью.",
     noShow: "Не пришёл",
     noShowConfirm: "Отметить, что покупатель не пришёл за заказом {code}? Деньги не возвращаются.",
+    confirmYes: "Да",
+    confirmNo: "Нет",
     newOrder: "Новый заказ: {code} · {bag} × {n}",
     soundOn: "🔔 Звук включён",
     soundOff: "🔕 Включить звук",

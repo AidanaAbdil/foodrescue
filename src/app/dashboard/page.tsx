@@ -202,6 +202,8 @@ export default async function DashboardPage() {
                       action={noShow}
                       message={fill(t.noShowConfirm, { code: order.pickupCode })}
                       hidden={{ orderId: order.id }}
+                      yes={t.confirmYes}
+                      no={t.confirmNo}
                       className="rounded-lg px-3 py-2 text-sm font-medium text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"
                     >
                       {t.noShow}
@@ -211,6 +213,8 @@ export default async function DashboardPage() {
                     action={cantHandOver}
                     message={fill(t.cantHandOverConfirm, { code: order.pickupCode })}
                     hidden={{ orderId: order.id }}
+                    yes={t.confirmYes}
+                    no={t.confirmNo}
                     className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200 hover:bg-red-50"
                   >
                     {t.cantHandOver}

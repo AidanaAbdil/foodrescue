@@ -229,6 +229,8 @@ export const kk: Dictionary = {
     cantHandOverConfirm: "{code} тапсырысын болдырмау керек пе? Сатып алушыға ақша толық қайтарылады.",
     noShow: "Келмеді",
     noShowConfirm: "{code} тапсырысы бойынша сатып алушы келмеді деп белгілеу керек пе? Ақша қайтарылмайды.",
+    confirmYes: "Иә",
+    confirmNo: "Жоқ",
     newOrder: "Жаңа тапсырыс: {code} · {bag} × {n}",
     soundOn: "🔔 Дыбыс қосулы",
     soundOff: "🔕 Дыбысты қосу",

@@ -227,6 +227,8 @@ export const en: Dictionary = {
     cantHandOverConfirm: "Cancel order {code}? The customer gets a full refund.",
     noShow: "Didn't show up",
     noShowConfirm: "Mark that the customer didn't collect order {code}? It isn't refunded.",
+    confirmYes: "Yes",
+    confirmNo: "No",
     newOrder: "New order: {code} · {bag} × {n}",
     soundOn: "🔔 Sound on",
     soundOff: "🔕 Turn on sound",
