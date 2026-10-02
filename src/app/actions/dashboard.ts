@@ -8,6 +8,7 @@ import { parseLocalDateTime, toDateInput } from "@/i18n/shared";
 import { isCategory } from "@/lib/categories";
 import { isCity } from "@/lib/cities";
 import { parsePrice } from "@/lib/format";
+import { normalizePhone } from "@/lib/phone";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
@@ -33,20 +34,30 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
     address: text(formData, "address"),
     city: text(formData, "city"),
     description: text(formData, "description"),
+    phone: text(formData, "phone"),
+    openingHours: text(formData, "openingHours").slice(0, 200),
   };
   const t = (await getI18n()).dict.errors;
+  const phone = normalizePhone(values.phone);
 
   const errors: Record<string, string> = {};
   if (values.name.length < 2) errors.name = t.storeName;
   if (values.address.length < 3) errors.address = t.storeAddress;
   if (!isCity(values.city)) errors.city = t.storeCity; // must be one of CITY_LIST
+  if (!phone) errors.phone = t.phone;
   if (Object.keys(errors).length > 0) return { errors, values };
 
   // Optional map location from the "Use my current location" button.
   const latitude = Number(formData.get("latitude"));
   const longitude = Number(formData.get("longitude"));
   const location = formData.has("latitude") && isValidCoords(latitude, longitude) ? { latitude, longitude } : {};
-  const data = { ...values, description: values.description || null, ...location };
+  const data = {
+    ...values,
+    description: values.description || null,
+    phone,
+    openingHours: values.openingHours || null,
+    ...location,
+  };
 
   if (storeId) {
     // updateMany with ownerId: only changes the store if it's this owner's.

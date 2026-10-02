@@ -7,6 +7,7 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { FoodLabels } from "@/components/FoodLabels";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { parseAllergens } from "@/lib/labels";
+import { formatPhone } from "@/lib/phone";
 import { discountPercent } from "@/lib/format";
 import { MAX_PER_ORDER } from "@/lib/orders";
 import { runHousekeeping } from "@/lib/housekeeping";
@@ -104,6 +105,16 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
                 {bag.store.address}, {cityName(dict.cities, bag.store.city)}
               </dd>
             </div>
+            {bag.store.phone && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-stone-500">{t.phone}</dt>
+                <dd className="text-right font-medium">
+                  <a href={`tel:${bag.store.phone}`} className="text-brand-dark underline underline-offset-2">
+                    {formatPhone(bag.store.phone)}
+                  </a>
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between gap-4">
               <dt className="text-stone-500">{t.available}</dt>
               <dd className="text-right font-medium">

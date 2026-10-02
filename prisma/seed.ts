@@ -58,6 +58,8 @@ async function main() {
       longitude: 76.9286,
       ownerId: owner.id,
       status: "APPROVED",
+      phone: "+77272000001", // demo number
+      openingHours: "Пн–Вс 09:00–22:00",
       bags: {
         create: [
           {
@@ -103,6 +105,8 @@ async function main() {
       longitude: 76.945,
       ownerId: owner.id,
       status: "APPROVED",
+      phone: "+77272000002", // demo number
+      openingHours: "Пн–Вс 09:00–22:00",
       bags: {
         create: [
           {
@@ -145,6 +149,8 @@ async function main() {
       longitude: 71.4185,
       ownerId: owner.id,
       status: "APPROVED",
+      phone: "+77172000003", // demo number
+      openingHours: "Пн–Вс 09:00–22:00",
       bags: {
         create: {
           title: "Обед-сюрприз",
@@ -172,6 +178,8 @@ async function main() {
       longitude: 71.43,
       ownerId: owner.id,
       status: "APPROVED",
+      phone: "+77172000004", // demo number
+      openingHours: "Пн–Вс 09:00–22:00",
       bags: {
         create: {
           title: "Пицца в конце дня",

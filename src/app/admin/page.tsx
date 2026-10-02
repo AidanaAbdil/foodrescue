@@ -6,6 +6,7 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { type City, cityName } from "@/lib/cities";
+import { formatPhone } from "@/lib/phone";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.admin };
@@ -171,6 +172,7 @@ function StoreDetails({ store, t, created, cities }: {
           t.noLocation
         )}
       </p>
+      {store.phone && <p className="text-stone-600">📞 {formatPhone(store.phone)}</p>}
       {store.description && <p className="mt-1 text-stone-600">{store.description}</p>}
       <p className="mt-1 text-stone-500">
         {t.owner}: {store.owner.name} ({store.owner.email}) · {t.created}: {created}

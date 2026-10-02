@@ -129,16 +129,18 @@ model Session {
 }
 
 model Store {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  address     String
-  city        String
-  latitude    Float? // optional, for "near me" sorting
-  longitude   Float?
-  imageUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  address      String
+  city         String
+  latitude     Float? // optional, for "near me" sorting
+  longitude    Float?
+  imageUrl     String?
+  phone        String? // "+77011234567" (see src/lib/phone.ts); required in the form
+  openingHours String? // free text, e.g. "Пн–Пт 08:00–20:00"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Admin review: only APPROVED stores' bags are shown to customers.
   status          StoreStatus @default(PENDING)

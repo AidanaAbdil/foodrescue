@@ -126,6 +126,17 @@ export default async function DashboardPage() {
         ))}
 
       {stores
+        .filter((store) => !store.phone)
+        .map((store) => (
+          <div key={store.id} className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+            <p className="text-sm text-amber-900">{fill(t.phoneMissing, { store: store.name })}</p>
+            <Link href={`/dashboard/stores/${store.id}/edit`} className="rounded-lg bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-dark">
+              {t.addPhone}
+            </Link>
+          </div>
+        ))}
+
+      {stores
         .filter((store) => store.latitude == null || store.longitude == null)
         .map((store) => (
           <div

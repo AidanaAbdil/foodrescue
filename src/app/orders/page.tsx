@@ -11,6 +11,7 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { cityName } from "@/lib/cities";
+import { formatPhone } from "@/lib/phone";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.orders };
@@ -151,6 +152,11 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         <p className="mt-1 text-sm text-stone-600">
           {f.pickupWindow(bag.pickupStart, bag.pickupEnd)} · {bag.store.address}, {cityName(dict.cities, bag.store.city)}
         </p>
+        {(isUpcoming || isPending) && bag.store.phone && (
+          <a href={`tel:${bag.store.phone}`} className="mt-1 inline-block text-sm font-medium text-brand-dark underline underline-offset-2">
+            {dict.store.call} · {formatPhone(bag.store.phone)}
+          </a>
+        )}
         {isPending && order.expiresAt && (
           <p className="mt-1 text-sm font-medium text-amber-800">{fill(t.payBy, { time: f.time(order.expiresAt) })}</p>
         )}

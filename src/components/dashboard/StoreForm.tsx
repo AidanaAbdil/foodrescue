@@ -7,10 +7,13 @@ import { FormField, inputClass, submitButtonClass } from "@/components/auth/Form
 import { useI18n } from "@/i18n/client";
 import { CITY_LIST, cityAt, isCity, type City } from "@/lib/cities";
 import type { Coords } from "@/lib/geo";
+import { formatPhone } from "@/lib/phone";
 import { MapPicker } from "./MapPicker";
 
 type StoreDefaults = {
   id: string;
+  phone: string | null;
+  openingHours: string | null;
   name: string;
   address: string;
   city: string;
@@ -28,6 +31,8 @@ export function StoreForm({ store }: { store?: StoreDefaults }) {
     address: store?.address ?? "",
     city: store?.city ?? "",
     description: store?.description ?? "",
+    phone: store?.phone ? formatPhone(store.phone) : "",
+    openingHours: store?.openingHours ?? "",
   };
   const { dict, fill } = useI18n();
   const [city, setCity] = useState<City>(isCity(values.city) ? values.city : "ALMATY");
@@ -133,6 +138,12 @@ export function StoreForm({ store }: { store?: StoreDefaults }) {
             </p>
           )}
         </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+        <FormField name="phone" label={t.phone} type="tel" required autoComplete="tel" inputMode="tel"
+          placeholder="+7 701 123 45 67" defaultValue={values.phone} error={errors.phone} />
+        <FormField name="openingHours" label={t.hours} maxLength={200}
+          placeholder={t.hoursPlaceholder} defaultValue={values.openingHours} />
       </div>
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-stone-700">

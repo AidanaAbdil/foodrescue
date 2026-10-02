@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { nextWindow, parseWeekdays } from "@/lib/schedules";
 import { getCurrentUser } from "@/lib/session";
 import { cityName } from "@/lib/cities";
+import { formatPhone } from "@/lib/phone";
 
 export async function generateMetadata({ params }: PageProps<"/stores/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -75,6 +76,12 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
                 </>
               )}
             </p>
+            {store.openingHours && <p className="mt-1 text-sm text-stone-600">{fill(t.hours, { hours: store.openingHours })}</p>}
+            {store.phone && (
+              <a href={`tel:${store.phone}`} className="mt-2 inline-block rounded-full bg-brand-light px-3 py-1 text-sm font-semibold text-brand-dark hover:bg-brand-light/70">
+                {t.call} · {formatPhone(store.phone)}
+              </a>
+            )}
             {store.description && <p className="mt-2 max-w-2xl text-stone-700">{store.description}</p>}
           </div>
         </div>
