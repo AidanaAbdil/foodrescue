@@ -148,6 +148,12 @@ export const ru = {
     refunded: "Деньги возвращены.",
     refundPending: "Возврат оформляется.",
     cancelledByStore: "Заведение не смогло выдать заказ.",
+    sorryTitle: "😔 Простите, заказ {code} отменён",
+    sorryText: "{store} не сможет выдать ваш заказ.",
+    reasonLine: "Причина: {reason}.",
+    refundDone: "Деньги возвращены полностью: {amount}.",
+    refundGoing: "Возвращаем деньги полностью: {amount}.",
+    alternatives: "Ещё можно спасти что-то другое — вот пакеты, которые есть сейчас:",
     declined: "Оплата не прошла. Пакет вернулся в продажу.",
     status: {
       PENDING_PAYMENT: "Ожидает оплаты",
@@ -158,6 +164,11 @@ export const ru = {
       EXPIRED: "Не оплачен",
       NO_SHOW: "Не забран",
     },
+  },
+  cancelReasons: {
+    SOLD_OUT: "Еда закончилась",
+    CLOSING: "Заведению пришлось закрыться раньше",
+    OTHER: "Другая причина",
   },
   auth: {
     loginTitle: "С возвращением",
@@ -236,6 +247,7 @@ export const ru = {
     markCollected: "✓ Выдано",
     cantHandOver: "Не могу выдать",
     cantHandOverConfirm: "Отменить заказ {code}? Покупатель получит деньги обратно полностью.",
+    cancelReasonLabel: "Причина (покупатель её увидит):",
     noShow: "Не пришёл",
     noShowConfirm: "Отметить, что покупатель не пришёл за заказом {code}? Деньги не возвращаются.",
     confirmYes: "Да",
@@ -469,7 +481,7 @@ export const ru = {
     testTitle: "🔔 Проверка уведомлений",
     testBody: "Всё работает! Так будут приходить уведомления.",
     cancelledTitle: "Заказ {code} отменён",
-    cancelledBody: "{store} не сможет выдать заказ. Деньги вернутся полностью.",
+    cancelledBody: "Простите, {store} не сможет выдать заказ. Деньги вернутся полностью.",
   },
   location: {
     label: "Точка на карте (необязательно)",

@@ -5,13 +5,14 @@ import { useFormStatus } from "react-dom";
 
 // A button that asks "are you sure?" right on the page before submitting
 // (for costly mistakes like refunding an order). Works with Server Actions.
-export function ConfirmSubmit({ action, message, hidden, className, yes, no, children }: {
+export function ConfirmSubmit({ action, message, hidden, className, yes, no, fields, children }: {
   action: (formData: FormData) => void | Promise<void>;
   message: string;
   hidden: Record<string, string>;
   className: string;
   yes: string;
   no: string;
+  fields?: ReactNode; // extra inputs shown with the question (e.g. a reason)
   children: ReactNode;
 }) {
   const [asking, setAsking] = useState(false);
@@ -34,6 +35,7 @@ export function ConfirmSubmit({ action, message, hidden, className, yes, no, chi
         <input key={name} type="hidden" name={name} value={value} />
       ))}
       <p className="text-stone-800">{message}</p>
+      {fields}
       <div className="mt-2 flex gap-2">
         <YesButton label={yes} />
         <button

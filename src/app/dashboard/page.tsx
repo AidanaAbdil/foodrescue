@@ -17,6 +17,7 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
+import { CANCEL_REASONS } from "@/lib/orders";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.dashboard };
@@ -215,6 +216,17 @@ export default async function DashboardPage() {
                     hidden={{ orderId: order.id }}
                     yes={t.confirmYes}
                     no={t.confirmNo}
+                    fields={
+                      <fieldset className="mt-2 space-y-1">
+                        <legend className="font-medium text-stone-700">{t.cancelReasonLabel}</legend>
+                        {CANCEL_REASONS.map((reason, i) => (
+                          <label key={reason} className="flex items-center gap-2">
+                            <input type="radio" name="reason" value={reason} defaultChecked={i === 0} className="accent-brand" />
+                            {dict.cancelReasons[reason]}
+                          </label>
+                        ))}
+                      </fieldset>
+                    }
                     className="rounded-lg px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-red-200 hover:bg-red-50"
                   >
                     {t.cantHandOver}

@@ -219,6 +219,11 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   notification to that device only (`sendTestPush`).
 - Customers: `storeCancelOrder` (store "Can't hand over" or admin) → `notifyStoreCancelled` →
   "Order CODE cancelled · {store} can't hand over… full refund", opens /orders.
+- "Can't hand over" asks on the page (`ConfirmSubmit`, no browser popup) with a reason:
+  `Order.cancelReason` = SOLD_OUT / CLOSING / OTHER (`CANCEL_REASONS` in src/lib/orders.ts). For two
+  days, My orders shows an apology box per store-cancelled order (reason unless OTHER, refund amount
+  and state) plus up to 3 bags from other stores in the same city. Idea for later: a goodwill
+  voucher, which needs a credits/promo system first.
 - `confirmPayment` → `notifyNewOrder` (src/lib/push.ts) → "🔔 New order CODE · bag × n · pickup …"
   to all the owner's devices; tapping opens /dashboard (`public/sw.js`, cache `offline-v3`).
   Expired subscriptions (404/410) are deleted. Sending never breaks a payment.

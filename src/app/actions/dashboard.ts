@@ -10,6 +10,7 @@ import { isCategory } from "@/lib/categories";
 import { isCity } from "@/lib/cities";
 import { parsePrice } from "@/lib/format";
 import { normalizePhone } from "@/lib/phone";
+import { isCancelReason } from "@/lib/orders";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
@@ -249,7 +250,8 @@ export async function toggleBagActive(formData: FormData) {
 // The store can't hand over a paid order: cancel it, the customer is refunded.
 export async function cantHandOver(formData: FormData) {
   const user = await requireOwner();
-  await storeCancelOrder(text(formData, "orderId"), "store", user.id);
+  const reason = text(formData, "reason");
+  await storeCancelOrder(text(formData, "orderId"), "store", user.id, isCancelReason(reason) ? reason : "OTHER");
   refresh(); // also redraws the header count
   redirect("/dashboard");
 }

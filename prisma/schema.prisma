@@ -259,6 +259,7 @@ model Order {
   pickupCode  String      @unique // short code the customer shows at the store
   expiresAt   DateTime? // payment deadline while PENDING_PAYMENT
   cancelledBy String? // CANCELLED orders: "customer", "store" or "admin"
+  cancelReason String? // store cancellations: "SOLD_OUT", "CLOSING" or "OTHER" (shown to the customer)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

@@ -144,6 +144,12 @@ export const kk: Dictionary = {
     refunded: "Ақша қайтарылды.",
     refundPending: "Ақшаны қайтару рәсімделуде.",
     cancelledByStore: "Дүкен тапсырысты бере алмады.",
+    sorryTitle: "😔 Кешіріңіз, тапсырыс болдырылмады: {code}",
+    sorryText: "Дүкен ({store}) тапсырысыңызды бере алмайды.",
+    reasonLine: "Себебі: {reason}.",
+    refundDone: "Ақша толық қайтарылды: {amount}.",
+    refundGoing: "Ақша толық қайтарылуда: {amount}.",
+    alternatives: "Басқа тағамды құтқаруға әлі болады — міне, қазір бар пакеттер:",
     declined: "Төлем өтпеді. Пакет қайта сатылымға шықты.",
     status: {
       PENDING_PAYMENT: "Төлемді күтуде",
@@ -154,6 +160,11 @@ export const kk: Dictionary = {
       EXPIRED: "Төленбеді",
       NO_SHOW: "Алынбады",
     },
+  },
+  cancelReasons: {
+    SOLD_OUT: "Тағам таусылып қалды",
+    CLOSING: "Дүкен ертерек жабылуға мәжбүр болды",
+    OTHER: "Басқа себеп",
   },
   auth: {
     loginTitle: "Қайта қош келдіңіз",
@@ -227,6 +238,7 @@ export const kk: Dictionary = {
     markCollected: "✓ Берілді",
     cantHandOver: "Бере алмаймын",
     cantHandOverConfirm: "{code} тапсырысын болдырмау керек пе? Сатып алушыға ақша толық қайтарылады.",
+    cancelReasonLabel: "Себебі (сатып алушы көреді):",
     noShow: "Келмеді",
     noShowConfirm: "{code} тапсырысы бойынша сатып алушы келмеді деп белгілеу керек пе? Ақша қайтарылмайды.",
     confirmYes: "Иә",
@@ -460,7 +472,7 @@ export const kk: Dictionary = {
     testTitle: "🔔 Хабарландыруларды тексеру",
     testBody: "Бәрі жұмыс істейді! Хабарландырулар осылай келеді.",
     cancelledTitle: "Тапсырыс болдырылмады: {code}",
-    cancelledBody: "Дүкен ({store}) тапсырысты бере алмайды. Ақша толық қайтарылады.",
+    cancelledBody: "Кешіріңіз, дүкен ({store}) тапсырысты бере алмайды. Ақша толық қайтарылады.",
   },
   location: {
     label: "Картадағы нүкте (міндетті емес)",

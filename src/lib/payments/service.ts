@@ -12,6 +12,7 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import { notifyNewOrder, notifyStoreCancelled } from "@/lib/push";
+import type { CancelReason } from "@/lib/orders";
 import { getPaymentProvider } from "./provider";
 
 export const HOLD_MINUTES = 15;
@@ -137,10 +138,10 @@ export async function cancelPaidOrder(orderId: string, userId: string): Promise<
 // The store couldn't hand over a paid order → cancel it and refund in full,
 // at any time. Stock isn't put back (the store had nothing to give).
 // Admins can do this for any store (ownerId omitted); owners only for theirs.
-export async function storeCancelOrder(orderId: string, by: "store" | "admin", ownerId?: string) {
+export async function storeCancelOrder(orderId: string, by: "store" | "admin", ownerId?: string, reason?: CancelReason) {
   const { count } = await prisma.order.updateMany({
     where: { id: orderId, status: "RESERVED", ...(ownerId && { bag: { store: { ownerId } } }) },
-    data: { status: "CANCELLED", cancelledBy: by },
+    data: { status: "CANCELLED", cancelledBy: by, cancelReason: reason ?? null },
   });
   if (count === 0) return false;
   const payment = await prisma.payment.findUnique({ where: { orderId } });

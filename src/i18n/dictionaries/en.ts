@@ -142,6 +142,12 @@ export const en: Dictionary = {
     refunded: "Refunded.",
     refundPending: "Refund in progress.",
     cancelledByStore: "The store couldn't hand over this order.",
+    sorryTitle: "😔 Sorry, order {code} was cancelled",
+    sorryText: "{store} can't hand over your order.",
+    reasonLine: "Reason: {reason}.",
+    refundDone: "Fully refunded: {amount}.",
+    refundGoing: "Refund in progress: {amount}.",
+    alternatives: "You can still rescue something else. Bags available now:",
     declined: "Payment didn't go through. The bag is back on sale.",
     status: {
       PENDING_PAYMENT: "Awaiting payment",
@@ -152,6 +158,11 @@ export const en: Dictionary = {
       EXPIRED: "Not paid",
       NO_SHOW: "Not collected",
     },
+  },
+  cancelReasons: {
+    SOLD_OUT: "The food ran out",
+    CLOSING: "The store had to close early",
+    OTHER: "Another reason",
   },
   auth: {
     loginTitle: "Welcome back",
@@ -225,6 +236,7 @@ export const en: Dictionary = {
     markCollected: "✓ Mark collected",
     cantHandOver: "Can't hand over",
     cantHandOverConfirm: "Cancel order {code}? The customer gets a full refund.",
+    cancelReasonLabel: "Reason (the customer will see it):",
     noShow: "Didn't show up",
     noShowConfirm: "Mark that the customer didn't collect order {code}? It isn't refunded.",
     confirmYes: "Yes",
@@ -458,7 +470,7 @@ export const en: Dictionary = {
     testTitle: "🔔 Notification test",
     testBody: "It works! This is how notifications will arrive.",
     cancelledTitle: "Order {code} cancelled",
-    cancelledBody: "{store} can't hand over your order. You'll get a full refund.",
+    cancelledBody: "Sorry, {store} can't hand over your order. You'll get a full refund.",
   },
   location: {
     label: "Location on the map (optional)",

@@ -12,7 +12,9 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { cityName } from "@/lib/cities";
 import { formatPhone } from "@/lib/phone";
+import { BagCard } from "@/components/BagCard";
 import { PushToggle } from "@/components/PushToggle";
+import { isCancelReason } from "@/lib/orders";
 import { pushPublicKey } from "@/lib/push";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,6 +44,30 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
   const past = orders.filter((o) => !upcoming.includes(o));
   const justReserved = upcoming.find((o) => o.id === newOrderId);
 
+  // Orders the store couldn't hand over in the last two days: apologise at
+  // the top and suggest other stores' bags from the same city.
+  const recentlyCancelled = orders.filter(
+    (o) =>
+      o.status === "CANCELLED" &&
+      (o.cancelledBy === "store" || o.cancelledBy === "admin") &&
+      now.getTime() - o.updatedAt.getTime() < 2 * 24 * 60 * 60 * 1000,
+  );
+  const alternatives = recentlyCancelled.length
+    ? await prisma.surpriseBag.findMany({
+        where: {
+          isActive: true,
+          quantityAvailable: { gt: 0 },
+          pickupEnd: { gt: now },
+          // Not from the store that just cancelled.
+          storeId: { notIn: recentlyCancelled.map((o) => o.bag.storeId) },
+          store: { status: "APPROVED", city: recentlyCancelled[0].bag.store.city },
+        },
+        include: { store: true },
+        orderBy: { pickupStart: "asc" },
+        take: 3,
+      })
+    : [];
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -53,6 +79,33 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
         <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-red-700">
           {declined ? t.declined : t.tooLate}
         </p>
+      )}
+
+      {recentlyCancelled.map((order) => (
+        <div key={order.id} role="status" className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-stone-200">
+          <p className="text-lg font-semibold">{fill(t.sorryTitle, { code: order.pickupCode })}</p>
+          <p className="mt-1 text-stone-700">
+            {fill(t.sorryText, { store: order.bag.store.name })}{" "}
+            {order.cancelReason && order.cancelReason !== "OTHER" && isCancelReason(order.cancelReason) &&
+              fill(t.reasonLine, { reason: dict.cancelReasons[order.cancelReason] })}
+          </p>
+          <p className="mt-1 font-medium text-brand-dark">
+            {fill(order.payment?.status === "REFUNDED" ? t.refundDone : t.refundGoing, { amount: f.price(order.totalPrice) })}
+          </p>
+        </div>
+      ))}
+      {alternatives.length > 0 && (
+        <section className="mt-4">
+          <p className="text-stone-700">{t.alternatives}</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {alternatives.map((bag) => (
+              <BagCard key={bag.id} bag={bag} />
+            ))}
+          </div>
+          <Link href="/" className="mt-3 inline-block font-semibold text-brand-dark hover:underline">
+            {t.findBag}
+          </Link>
+        </section>
       )}
 
       {justReserved && (
@@ -166,7 +219,13 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         {isPending && order.expiresAt && (
           <p className="mt-1 text-sm font-medium text-amber-800">{fill(t.payBy, { time: f.time(order.expiresAt) })}</p>
         )}
-        {order.cancelledBy === "store" && <p className="mt-1 text-sm text-stone-600">{t.cancelledByStore}</p>}
+        {(order.cancelledBy === "store" || order.cancelledBy === "admin") && (
+          <p className="mt-1 text-sm text-stone-600">
+            {t.cancelledByStore}{" "}
+            {order.cancelReason && order.cancelReason !== "OTHER" && isCancelReason(order.cancelReason) &&
+              fill(t.reasonLine, { reason: dict.cancelReasons[order.cancelReason] })}
+          </p>
+        )}
         {payment?.status === "REFUNDED" && <p className="mt-1 text-sm text-stone-600">{t.refunded}</p>}
         {payment?.status === "PAID" && (order.status === "CANCELLED" || order.status === "EXPIRED") && (
           <p className="mt-1 text-sm text-stone-600">{t.refundPending}</p>
