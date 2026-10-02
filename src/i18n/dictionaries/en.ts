@@ -287,6 +287,11 @@ export const en: Dictionary = {
     emailBody:
       "Hi {name},\n\nTo choose a new password, open this link:\n{link}\n\nThe link works for 1 hour. If you didn't ask to reset your password, you can ignore this email.",
   },
+  install: {
+    title: "Install FoodRescue on your phone",
+    ios: "Tap Share at the bottom of the screen, then “Add to Home Screen”.",
+    close: "Close",
+  },
   location: {
     label: "Location on the map (optional)",
     hint: "Lets nearby customers find you. Best done while you're at the store.",

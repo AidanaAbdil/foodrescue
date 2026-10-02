@@ -27,7 +27,8 @@ export async function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 backdrop-blur">
+    // pt-[safe-area]: room for the iPhone notch/status bar when installed as an app.
+    <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4">
         <Logo />
 

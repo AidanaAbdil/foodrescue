@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Header } from "@/components/Header";
 import { Logo } from "@/components/Logo";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { I18nProvider } from "@/i18n/client";
 import { getI18n } from "@/i18n/server";
 import "./globals.css";
@@ -23,8 +24,15 @@ export async function generateMetadata(): Promise<Metadata> {
     // Pages set their own title; "%s · FoodRescue" adds the brand after it.
     title: { default: dict.meta.title, template: "%s · FoodRescue" },
     description: dict.meta.description,
+    // Installed on an iPhone home screen: open full screen, with this name.
+    appleWebApp: { capable: true, title: "FoodRescue", statusBarStyle: "default" },
   };
 }
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff", // browser/status bar colour, matching the white header
+  viewportFit: "cover", // use the whole screen on phones with a notch (see safe-area padding)
+};
 
 // The layout wraps every page: the header and footer here appear site-wide.
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -44,7 +52,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
           <div className="flex-1">{children}</div>
 
-          <footer className="mt-16 border-t border-stone-200 bg-white">
+          <ServiceWorkerRegistration />
+
+          {/* Bottom padding: room for the iPhone home bar when installed as an app */}
+          <footer className="mt-16 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)]">
             <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-stone-500 sm:flex-row">
               <Logo />
               <p>{dict.footer.tagline}</p>

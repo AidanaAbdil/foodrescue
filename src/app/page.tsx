@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { BagCard } from "@/components/BagCard";
+import { InstallHint } from "@/components/InstallHint";
 import { NearMeButton } from "@/components/search/NearMeButton";
 import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
@@ -182,6 +183,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           ))}
         </ol>
       </section>
+
+      <InstallHint />
     </main>
   );
 }
