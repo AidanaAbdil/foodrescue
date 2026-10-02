@@ -14,7 +14,8 @@ the bag up during a time window by showing a short pickup code.
 
 Two kinds of users:
 - **Customers** browse, search, order and pay, see "My orders", cancel (refund before pickup starts).
-- **Store owners** set up a store, add/edit/hide bags (with photos), see who's coming, mark orders collected.
+- **Store owners** set up a store, add/edit/hide bags (with photos), see who's coming, mark orders
+  collected. They **cannot order** (separate customer account needed).
 
 **Next planned step: putting the site online** (see §9). After that: real Kaspi Pay / Halyk ePay.
 
@@ -173,6 +174,8 @@ form `action`s (work without JS too); client components only where interaction n
 - Login uses one generic error message and a dummy hash for unknown emails (no account enumeration).
 - `?next=` return paths pass through `safeReturnPath` (blocks `//evil.com`).
 - Roles: CUSTOMER, STORE_OWNER (ADMIN exists in schema, unused). Sign-up can't create ADMIN.
+- **Only customers can order** (her decision): store accounts see a notice instead of the order
+  form, have no "My orders" (`/orders` redirects to `/dashboard`), and `reserveBag` refuses them.
 
 ### Orders & payments (`src/lib/payments/service.ts`)
 ```

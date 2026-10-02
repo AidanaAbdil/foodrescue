@@ -16,8 +16,10 @@ export async function Header() {
   const links = [
     { href: "/#how-it-works", label: t.howItWorks },
     ...(user?.role === "STORE_OWNER" ? [{ href: "/dashboard", label: t.dashboard }] : []),
+    // "My orders" is for customers; store accounts don't order.
+    ...(user?.role === "CUSTOMER" ? [{ href: "/orders", label: t.myOrders }] : []),
     ...(user
-      ? [{ href: "/orders", label: t.myOrders }]
+      ? []
       : [
           { href: "/login", label: t.login },
           { href: "/signup", label: t.signup },

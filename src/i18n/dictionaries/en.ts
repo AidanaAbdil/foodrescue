@@ -162,6 +162,7 @@ export const en: Dictionary = {
     quantityRange: "You can reserve between 1 and {n} bags.",
     bagGone: "This bag no longer exists.",
     ownStore: "You can't reserve bags from your own store.",
+    ownersCannotOrder: "Store accounts can't place orders. To order, log in with a customer account.",
     onlyLeft: { one: "Only {n} left. Try a smaller amount.", other: "Only {n} left. Try a smaller amount." },
     soldOut: "Sorry, this bag is no longer available.",
     generic: "Something went wrong. Please try again.",

@@ -33,6 +33,9 @@ export async function reserveBag(_prev: ReserveState, formData: FormData): Promi
   const { dict, fill, plural } = await getI18n();
   const t = dict.errors;
 
+  // Only customer accounts order; store accounts just sell.
+  if (user.role !== "CUSTOMER") return { error: t.ownersCannotOrder };
+
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_PER_ORDER) {
     return { error: fill(t.quantityRange, { n: MAX_PER_ORDER }) };
   }

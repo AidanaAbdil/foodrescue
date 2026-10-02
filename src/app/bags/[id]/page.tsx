@@ -109,9 +109,10 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
               >
                 {t.loginToReserve}
               </Link>
-            ) : isOwnStore ? (
+            ) : user.role !== "CUSTOMER" ? (
+              // Store accounts can't order (their own bags or anyone else's).
               <p className="rounded-xl bg-stone-100 px-4 py-3 text-center font-medium text-stone-600">
-                {t.ownStore}
+                {isOwnStore ? t.ownStore : dict.errors.ownersCannotOrder}
               </p>
             ) : (
               <ReserveForm

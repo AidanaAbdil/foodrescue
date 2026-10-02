@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { cancelOrder } from "@/app/actions/orders";
 import type { Order, Payment, Store, SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
@@ -18,6 +19,7 @@ type OrderWithBag = Order & { bag: SurpriseBag & { store: Store }; payment: Paym
 
 export default async function OrdersPage({ searchParams }: PageProps<"/orders">) {
   const user = await requireUser("/orders");
+  if (user.role !== "CUSTOMER") redirect("/dashboard"); // store accounts don't order
   const { new: newOrderId, declined, error } = await searchParams;
   await paymentHousekeeping(); // unpaid orders past their deadline become EXPIRED
   const { dict, f, fill } = await getI18n();
