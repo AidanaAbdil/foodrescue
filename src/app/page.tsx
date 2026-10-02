@@ -1,7 +1,9 @@
+import Form from "next/form";
 import Link from "next/link";
 import { connection } from "next/server";
 import { BagCard } from "@/components/BagCard";
 import { InstallHint } from "@/components/InstallHint";
+import { AutoSubmitSelect } from "@/components/search/AutoSubmitSelect";
 import { NearMeButton } from "@/components/search/NearMeButton";
 import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
@@ -172,8 +174,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <section id="browse" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pt-10">
         <h2 className="text-2xl font-bold">{near ? t.closest : t.availableNow}</h2>
 
-        {/* A plain GET form: submitting it just updates the URL's ?q= and ?city=. */}
-        <form action="/#browse" className="mt-4 flex flex-col gap-3 sm:flex-row">
+        {/* A GET form: it updates the URL (?q=…&city=…) without reloading the page. */}
+        <Form action="/" scroll={false} className="mt-4 flex flex-col gap-3 sm:flex-row">
           {selected && <input type="hidden" name="category" value={selected} />}
           {halal && <input type="hidden" name="halal" value="1" />}
           {veg && <input type="hidden" name="veg" value="1" />}
@@ -191,7 +193,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </label>
           <label className="sm:w-48">
             <span className="sr-only">{t.cityLabel}</span>
-            <select name="city" defaultValue={city}
+            <AutoSubmitSelect name="city" defaultValue={city}
               className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand-light">
               <option value="">{t.allCities}</option>
               {CITY_LIST.map((code) => (
@@ -199,12 +201,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                   {dict.cities[code]}
                 </option>
               ))}
-            </select>
+            </AutoSubmitSelect>
           </label>
           <button type="submit" className="rounded-lg bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark">
             {t.search}
           </button>
-        </form>
+        </Form>
 
         <div className="mt-3">
           <NearMeButton active={Boolean(near)} hrefWithout={hrefWith({ near: undefined })} />
