@@ -227,6 +227,18 @@ export const en: Dictionary = {
     saveChanges: "Save changes",
     saving: "Saving…",
   },
+  photo: {
+    label: "Photo (optional)",
+    hint: "Bags with a photo get more orders. JPG, PNG or WebP.",
+    choose: "📷 Add a photo",
+    change: "Change",
+    remove: "Remove",
+    uploading: "Uploading…",
+    tooBig: "That file is too big (4 MB max).",
+    wrongType: "Please choose a JPG, PNG or WebP photo.",
+    failed: "Couldn't upload the photo. Please try again.",
+    missing: "That photo couldn't be found. Please upload it again.",
+  },
   location: {
     label: "Location on the map (optional)",
     hint: "Lets nearby customers find you. Best done while you're at the store.",

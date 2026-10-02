@@ -10,6 +10,7 @@ import { parsePrice } from "@/lib/format";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
+import { deleteUpload, uploadExists } from "@/lib/uploads";
 
 export type FormState =
   | {
@@ -58,7 +59,7 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
   const user = await requireOwner();
   const bagId = text(formData, "bagId");
   const values = Object.fromEntries(
-    ["storeId", "title", "description", "category", "originalPrice", "price", "quantity", "date", "start", "end"].map(
+    ["storeId", "title", "description", "category", "originalPrice", "price", "quantity", "date", "start", "end", "imageUrl"].map(
       (key) => [key, text(formData, key)],
     ),
   );
@@ -100,12 +101,21 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     if (!existing) errors.form = t.notYourBag;
   }
 
+  // The photo must be the bag's current one, or a file we stored via
+  // uploadBagPhoto. Any other URL (another site, someone's file) is refused.
+  const imageUrl = values.imageUrl || null;
+  if (imageUrl && imageUrl !== existing?.imageUrl && !(await uploadExists(imageUrl))) {
+    errors.form ??= (await getI18n()).dict.photo.missing;
+    values.imageUrl = existing?.imageUrl ?? ""; // don't echo an unknown URL back into the form
+  }
+
   if (Object.keys(errors).length > 0) return { errors, values };
 
   const data = {
     storeId: values.storeId,
     title: values.title,
     description: values.description || null,
+    imageUrl,
     category: category!,
     originalPrice: originalPrice!,
     price: price!,
@@ -117,6 +127,8 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
   if (existing) {
     // Existing orders keep the price they paid (Order.totalPrice).
     await prisma.surpriseBag.update({ where: { id: existing.id }, data });
+    // Replaced or removed the photo: delete the old file (if it was an upload).
+    if (existing.imageUrl !== imageUrl) await deleteUpload(existing.imageUrl);
   } else {
     await prisma.surpriseBag.create({ data });
   }

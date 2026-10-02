@@ -42,7 +42,15 @@ src/app/               pages (each folder is a URL) and server actions
 src/components/        reusable UI pieces
 src/lib/               helpers: database client, sessions, passwords, formatting
 src/i18n/              languages: dictionaries/ru.ts (main), kk.ts, en.ts
+uploads/               bag photos uploaded by stores (git-ignored, local only)
 ```
+
+## Photos
+
+Store owners upload bag photos from the bag form. The browser shrinks them
+(max 1600 px, JPEG) before upload; the server only accepts real JPEG, PNG or
+WebP files up to 4 MB and saves them in `uploads/`. That folder is local and
+git-ignored, so before deploying, switch `src/lib/uploads.ts` to cloud storage.
 
 ## Translations
 

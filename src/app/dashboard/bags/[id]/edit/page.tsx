@@ -35,6 +35,7 @@ export default async function EditBagPage({ params }: PageProps<"/dashboard/bags
             storeId: bag.storeId,
             title: bag.title,
             description: bag.description ?? "",
+            imageUrl: bag.imageUrl ?? "",
             category: bag.category,
             originalPrice: toPriceInput(bag.originalPrice),
             price: toPriceInput(bag.price),

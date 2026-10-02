@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { saveBag } from "@/app/actions/dashboard";
 import { FormField, inputClass, submitButtonClass } from "@/components/auth/FormField";
+import { PhotoField } from "@/components/dashboard/PhotoField";
 import { useI18n } from "@/i18n/client";
 import { CATEGORY_EMOJI, CATEGORY_LIST } from "@/lib/categories";
 
@@ -49,6 +50,8 @@ export function BagForm({ stores, bagId, defaults }: Props) {
 
       <FormField name="title" label={t.formTitle} required defaultValue={values.title} error={errors.title}
         placeholder={t.formTitlePlaceholder} />
+
+      <PhotoField defaultUrl={values.imageUrl} />
 
       <Field label={t.formDescription} name="description">
         <textarea id="description" name="description" rows={3} defaultValue={values.description}

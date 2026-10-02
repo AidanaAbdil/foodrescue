@@ -44,3 +44,6 @@ next-env.d.ts
 /src/generated/prisma
 *.db
 *.db-journal
+
+# uploaded photos (local storage for development)
+/uploads
