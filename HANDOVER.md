@@ -352,6 +352,11 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
+**Planned for the next session** (her "must-haves" not done yet): earnings reports for stores
+(sold per day/week/month, what they'll be paid), an automated test suite (Playwright: ordering,
+payments/refunds, admin, owner actions), and link previews (Open Graph images/titles for bag and
+store pages, so shared links show a card in WhatsApp/Telegram).
+
 Still open:
 - **Not deployed.** SQLite file + local `uploads/` folder only.
 - **Email**: no provider connected (reset links print to the terminal). Connect one (e.g. Resend)
