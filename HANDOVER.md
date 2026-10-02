@@ -391,6 +391,17 @@ smoke-tested).
 payments/refunds, admin, owner actions), and link previews (Open Graph images/titles for bag and
 store pages, so shared links show a card in WhatsApp/Telegram).
 
+**Open at the end of 2026-10-02:**
+- **Push on her own devices is not confirmed yet.** As of the end of the session, `PushSubscription` was
+  still empty: "🔔 Notifications on this device" never finished on her laptop (as danchik@mail.ru) or
+  phone. Ask which browser and the exact red message the toggle now shows (Brave/Arc block push
+  by default; iPhone needs the Home Screen app). Then test with "Проверить" (Test).
+- **Homepage redesign proposed, she hasn't answered:** "Пакеты | Заведения" tabs, search scoped
+  to the open tab, "Показать ещё" pagination, filtering in the database instead of in memory,
+  later a list/map toggle. Ask whether to do it.
+- Customer push so far only covers "store can't hand over"; "pickup starts soon" is the natural next one.
+- Possible goodwill voucher after a store cancels (she said "offer smth idk"); needs a voucher system.
+
 Still open:
 - **Not deployed.** SQLite file + local `uploads/` folder only.
 - **Email**: no provider connected (reset links print to the terminal). Connect one (e.g. Resend)
@@ -408,11 +419,12 @@ Still open:
   today" reminder before pickup, and confirm pickups there. Telegram bot was discussed as an
   alternative; cash-register (POS) integration only for big chains, much later. Needs the site
   deployed (push needs an always-on server with HTTPS).
-- Features not built yet: push/email/SMS notifications, admin tools, store time zones (all UTC+5),
-  favourites, public store pages, address geocoding, automated test suite (Playwright).
+- Features not built yet: email/SMS notifications, store time zones (all UTC+5), automated test
+  suite (Playwright), earnings reports, link previews.
 - Localized URLs for SEO (`/kk/…`) if search ranking matters.
-- Kazakh strings for **payments**, **photos**, **password reset**, **store editing** and
-  **rate limiting** were written by Claude and sent to her for review — check for corrections.
+- Kazakh strings for **payments**, **photos**, **password reset**, **store editing**, **rate
+  limiting**, **push/test notification**, **sound button**, **Иә/Жоқ confirmations** and **store
+  cancellation apology/reasons** were written by Claude and sent to her for review. Check for corrections.
 
 ## 9. Next step: deployment (researched, paused on 2026-10-02)
 
