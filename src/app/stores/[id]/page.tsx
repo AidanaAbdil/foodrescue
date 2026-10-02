@@ -10,11 +10,15 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { nextWindow, parseWeekdays } from "@/lib/schedules";
 import { getCurrentUser } from "@/lib/session";
+import { cityName } from "@/lib/cities";
 
 export async function generateMetadata({ params }: PageProps<"/stores/[id]">): Promise<Metadata> {
   const { id } = await params;
-  const store = await prisma.store.findUnique({ where: { id }, select: { name: true, city: true } });
-  return { title: store ? `${store.name} · ${store.city}` : (await getI18n()).dict.meta.notFound };
+  const [store, { dict }] = await Promise.all([
+    prisma.store.findUnique({ where: { id }, select: { name: true, city: true } }),
+    getI18n(),
+  ]);
+  return { title: store ? `${store.name} · ${cityName(dict.cities, store.city)}` : dict.meta.notFound };
 }
 
 // A store's own page: always reachable (even when sold out), so customers can
@@ -56,7 +60,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
           <div>
             <h1 className="text-3xl font-bold leading-tight">{store.name}</h1>
             <p className="mt-1 text-stone-600">
-              {store.address}, {store.city}
+              {store.address}, {cityName(dict.cities, store.city)}
               {hasLocation && (
                 <>
                   {" · "}

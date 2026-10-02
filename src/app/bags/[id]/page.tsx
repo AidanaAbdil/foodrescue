@@ -12,6 +12,7 @@ import { MAX_PER_ORDER } from "@/lib/orders";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, loginUrl } from "@/lib/session";
+import { cityName } from "@/lib/cities";
 
 export async function generateMetadata({ params }: PageProps<"/bags/[id]">) {
   const { id } = await params;
@@ -100,7 +101,7 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
             <div className="flex justify-between gap-4">
               <dt className="text-stone-500">{t.address}</dt>
               <dd className="text-right font-medium">
-                {bag.store.address}, {bag.store.city}
+                {bag.store.address}, {cityName(dict.cities, bag.store.city)}
               </dd>
             </div>
             <div className="flex justify-between gap-4">

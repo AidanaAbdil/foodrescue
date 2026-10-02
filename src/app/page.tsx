@@ -6,7 +6,9 @@ import { NearMeButton } from "@/components/search/NearMeButton";
 import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI, CATEGORY_LIST, isCategory } from "@/lib/categories";
+import { CITY_LIST, cityName, isCity } from "@/lib/cities";
 import { distanceKm, parseCoords } from "@/lib/geo";
+import { nextWindow } from "@/lib/schedules";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 
@@ -20,14 +22,14 @@ const normalize = (text: string) => text.toLowerCase().replaceAll("ё", "е");
 export default async function Home({ searchParams }: PageProps<"/">) {
   // Render on every request so the list is always fresh.
   await connection();
-  const { dict, f, plural } = await getI18n();
+  const { dict, f, fill, plural } = await getI18n();
   const t = dict.home;
 
   // All filters live in the URL, e.g. /?q=хлеб&city=Алматы&category=BAKERY&near=43.24,76.95
   // so they survive a refresh and can be shared as a link.
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
-  const city = typeof params.city === "string" ? params.city : "";
+  const city = isCity(params.city) ? params.city : "";
   const selected = isCategory(params.category) ? params.category : undefined;
   const near = parseCoords(params.near);
   // Food label filters: ?halal=1, ?veg=1 (vegetarian, incl. vegan), ?vegan=1
@@ -46,7 +48,6 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     include: { store: true },
     orderBy: { pickupStart: "asc" },
   });
-  const cities = [...new Set(bags.map((bag) => bag.store.city))].sort((a, b) => a.localeCompare(b));
 
 
   // Filtering in JavaScript is fine at this size (a few hundred bags). With
@@ -110,6 +111,44 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   };
   const isFiltered = Boolean(q || city || selected || halal || veg || vegan);
 
+  // Store list: all approved stores in the chosen city (matching the search),
+  // whether or not they have bags right now.
+  const allStores = await prisma.store.findMany({
+    where: { status: "APPROVED", ...(city && { city }) },
+    include: {
+      bags: {
+        where: { isActive: true, quantityAvailable: { gt: 0 }, pickupEnd: { gt: new Date() } },
+        select: { id: true },
+      },
+      schedules: { where: { isActive: true } },
+    },
+  });
+  const directory = allStores
+    .filter((store) => {
+      const text = normalize(`${store.name} ${store.description ?? ""} ${store.address}`);
+      return words.every((word) => text.includes(word));
+    })
+    .map((store) => ({
+      store,
+      onSale: store.bags.length,
+      next: store.schedules
+        .map((schedule) => nextWindow(schedule))
+        .filter((window) => window !== null)
+        .sort((a, b) => a.start.getTime() - b.start.getTime())[0],
+      distance:
+        near && store.latitude != null && store.longitude != null
+          ? distanceKm(near, { lat: store.latitude, lng: store.longitude })
+          : undefined,
+    }))
+    // Near me: closest first. Otherwise: stores with bags first, then the soonest next bag.
+    .sort((a, b) =>
+      near
+        ? (a.distance ?? Infinity) - (b.distance ?? Infinity)
+        : b.onSale - a.onSale ||
+          (a.next?.start.getTime() ?? Infinity) - (b.next?.start.getTime() ?? Infinity) ||
+          a.store.name.localeCompare(b.store.name),
+    );
+
   const totalSavings = bags.reduce(
     (sum, bag) => sum + (bag.originalPrice - bag.price) * bag.quantityAvailable,
     0,
@@ -155,9 +194,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             <select name="city" defaultValue={city}
               className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 outline-none focus:border-brand focus:ring-2 focus:ring-brand-light">
               <option value="">{t.allCities}</option>
-              {cities.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              {CITY_LIST.map((code) => (
+                <option key={code} value={code}>
+                  {dict.cities[code]}
                 </option>
               ))}
             </select>
@@ -234,6 +273,46 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </div>
         )}
       </section>
+
+      {/* Every live store, including those with nothing on sale right now. */}
+      {directory.length > 0 && (
+        <section id="stores" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pt-16">
+          <h2 className="text-2xl font-bold">{t.storesTitle}</h2>
+          <p className="mt-1 text-sm text-stone-500">{t.storesHint}</p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {directory.map(({ store, onSale, next, distance }) => (
+              <li key={store.id}>
+                <Link
+                  href={`/stores/${store.id}`}
+                  className="flex h-full items-start gap-3 rounded-2xl bg-white p-4 ring-1 ring-stone-200 transition hover:ring-brand"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-light font-bold text-brand-dark">
+                    {store.name.charAt(0)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-baseline justify-between gap-2">
+                      <span className="truncate font-semibold">{store.name}</span>
+                      {distance !== undefined && (
+                        <span className="shrink-0 text-sm text-brand-dark">{f.distance(distance)}</span>
+                      )}
+                    </span>
+                    <span className="block truncate text-sm text-stone-500">
+                      {store.address}, {cityName(dict.cities, store.city)}
+                    </span>
+                    <span className={`mt-1 block text-sm font-medium ${onSale > 0 ? "text-accent" : "text-stone-500"}`}>
+                      {onSale > 0
+                        ? plural(onSale, t.onSale)
+                        : next
+                          ? fill(dict.store.nextBag, { when: f.pickupWindow(next.start, next.end) })
+                          : t.noBagsNow}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section id="how-it-works" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pt-16">
         <h2 className="text-2xl font-bold">{t.howTitle}</h2>

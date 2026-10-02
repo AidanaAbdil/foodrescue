@@ -27,6 +27,7 @@ export const en: Dictionary = {
     cancel: "Cancel",
     optional: "optional",
   },
+  cities: { ALMATY: "Almaty", ASTANA: "Astana" },
   categories: {
     MEALS: "Meals",
     BAKERY: "Bakery",
@@ -76,6 +77,10 @@ export const en: Dictionary = {
     noMatchText: "Try another word, city or category.",
     soldOutTitle: "Already sold out",
     soldOutHint: "Check back tomorrow, or add the store to your favourites so you don't lose it.",
+    storesTitle: "All stores",
+    storesHint: "Even with no bags right now, a store's page shows when the next one comes.",
+    onSale: { one: "{n} bag on sale", other: "{n} bags on sale" },
+    noBagsNow: "No bags right now",
     howTitle: "How it works",
     steps: [
       { title: "Find a bag", text: "Browse surprise bags from bakeries, cafés and shops near you." },
@@ -184,7 +189,7 @@ export const en: Dictionary = {
     generic: "Something went wrong. Please try again.",
     storeName: "Please enter your store's name.",
     storeAddress: "Please enter the street address.",
-    storeCity: "Please enter the city.",
+    storeCity: "Please choose the city.",
     chooseStore: "Please choose one of your stores.",
     bagTitle: "Give the bag a short name.",
     category: "Please choose a category.",
@@ -396,6 +401,8 @@ export const en: Dictionary = {
   location: {
     label: "Location on the map (optional)",
     hint: "Lets nearby customers find you. Best done while you're at the store.",
+    mapHint: "Tap the map where your store is, or drag the pin.",
+    pinSet: "✓ Location set on the map",
     use: "📍 Use my current location",
     update: "Update location",
     finding: "Finding location…",

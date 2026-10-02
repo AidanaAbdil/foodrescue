@@ -207,6 +207,20 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Cities, map & store list
+- `Store.city` holds a code from `src/lib/cities.ts` (ALMATY, ASTANA; names in `dict.cities`,
+  shown via `cityName`). Store form uses a select; `saveStore` rejects anything else. Existing
+  free-text cities were converted by two migrations (SQLite `lower()` is ASCII-only, hence the
+  second, Cyrillic one). To add a city: `CITIES` + `cities` in each dictionary.
+- Store form map: `MapPicker` → `StoreMap` (Leaflet + react-leaflet, client-only via
+  `next/dynamic`, OpenStreetMap tiles, CSS divIcon pin, neutral credit). Tapping/dragging sets
+  lat/lng; a point picks its city (`cityAt`, 50 km); changing city clears an out-of-city pin.
+  At scale switch tiles to a provider (2GIS is the local favourite; needs an API key).
+- Homepage "All stores" lists every approved store in the city (search matches names), with
+  "N bags on sale" / "Next bag …" / "No bags right now"; sorted by bags, then next bag, or distance.
+- Her `~/.npm` cache has root-owned files (old `sudo`), so `npm install` fails with EACCES. She can
+  fix it with `sudo chown -R 501:20 ~/.npm`; until then install with `--cache <some temp dir>`.
+
 ### Store pages, sold out & favourites
 - `/stores/[id]`: store info, map link, regular bags with "Next bag" (`nextWindow` in
   src/lib/schedules.ts), available bags, and today's sold-out bags. Reachable even when everything

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { getI18n } from "@/i18n/server";
 import { parseLocalDateTime, toDateInput } from "@/i18n/shared";
 import { isCategory } from "@/lib/categories";
+import { isCity } from "@/lib/cities";
 import { parsePrice } from "@/lib/format";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
@@ -38,7 +39,7 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
   const errors: Record<string, string> = {};
   if (values.name.length < 2) errors.name = t.storeName;
   if (values.address.length < 3) errors.address = t.storeAddress;
-  if (values.city.length < 2) errors.city = t.storeCity;
+  if (!isCity(values.city)) errors.city = t.storeCity; // must be one of CITY_LIST
   if (Object.keys(errors).length > 0) return { errors, values };
 
   // Optional map location from the "Use my current location" button.

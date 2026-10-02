@@ -5,6 +5,7 @@ import { getI18n } from "@/i18n/server";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
+import { type City, cityName } from "@/lib/cities";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.admin };
@@ -60,7 +61,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           <ul className="mt-3 space-y-4">
             {pending.map((store) => (
               <li key={store.id} className="rounded-2xl bg-white p-5 ring-1 ring-stone-200">
-                <StoreDetails store={store} t={t} created={f.day(store.createdAt)} />
+                <StoreDetails store={store} t={t} created={f.day(store.createdAt)} cities={dict.cities} />
                 <div className="mt-4 flex flex-wrap items-end gap-3">
                   <form action={approveStore}>
                     <input type="hidden" name="storeId" value={store.id} />
@@ -84,7 +85,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             .map((store) => (
               <li key={store.id} className="p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <StoreDetails store={store} t={t} created={f.day(store.createdAt)} />
+                  <StoreDetails store={store} t={t} created={f.day(store.createdAt)} cities={dict.cities} />
                   <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_STYLES[store.status]}`}>
                     {t.status[store.status]}
                   </span>
@@ -145,17 +146,18 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
 type Labels = Awaited<ReturnType<typeof getI18n>>["dict"]["admin"];
 
-function StoreDetails({ store, t, created }: {
+function StoreDetails({ store, t, created, cities }: {
   store: Store & { owner: { name: string; email: string }; _count: { bags: number } };
   t: Labels;
   created: string;
+  cities: Record<City, string>;
 }) {
   const hasLocation = store.latitude != null && store.longitude != null;
   return (
     <div className="min-w-0 text-sm">
       <p className="text-base font-semibold">{store.name}</p>
       <p className="text-stone-600">
-        {store.address}, {store.city} ·{" "}
+        {store.address}, {cityName(cities, store.city)} ·{" "}
         {hasLocation ? (
           <a
             href={`https://www.openstreetmap.org/?mlat=${store.latitude}&mlon=${store.longitude}#map=17/${store.latitude}/${store.longitude}`}

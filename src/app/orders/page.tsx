@@ -10,6 +10,7 @@ import { getPaymentProvider } from "@/lib/payments/provider";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
+import { cityName } from "@/lib/cities";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.orders };
@@ -148,7 +149,7 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         </div>
 
         <p className="mt-1 text-sm text-stone-600">
-          {f.pickupWindow(bag.pickupStart, bag.pickupEnd)} · {bag.store.address}, {bag.store.city}
+          {f.pickupWindow(bag.pickupStart, bag.pickupEnd)} · {bag.store.address}, {cityName(dict.cities, bag.store.city)}
         </p>
         {isPending && order.expiresAt && (
           <p className="mt-1 text-sm font-medium text-amber-800">{fill(t.payBy, { time: f.time(order.expiresAt) })}</p>

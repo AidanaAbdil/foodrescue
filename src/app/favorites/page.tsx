@@ -7,6 +7,7 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { nextWindow } from "@/lib/schedules";
 import { requireUser } from "@/lib/session";
+import { cityName } from "@/lib/cities";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.favorites };
@@ -62,7 +63,7 @@ export default async function FavoritesPage() {
                   <span>
                     <span className="block text-lg font-semibold group-hover:underline">{store.name}</span>
                     <span className="block text-sm text-stone-500">
-                      {store.address}, {store.city}
+                      {store.address}, {cityName(dict.cities, store.city)}
                     </span>
                   </span>
                 </Link>
