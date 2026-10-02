@@ -3,6 +3,7 @@
 // directly. Anything here is reachable from the browser, so validate everything.
 
 import { randomBytes } from "node:crypto";
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { LEGAL_VERSION } from "@/content/legal";
@@ -177,6 +178,9 @@ export async function acceptTerms() {
     where: { id: user.id },
     data: { consentAt: new Date(), consentVersion: LEGAL_VERSION },
   });
+  // Redraw the page so the banner disappears straight away. (Nothing else
+  // changes in this action, so without this the browser keeps the old page.)
+  refresh();
 }
 
 export async function logout() {
