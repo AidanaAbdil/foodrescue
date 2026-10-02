@@ -1,7 +1,7 @@
 # FoodRescue — handover
 
 Read this before making any change. It is the state of the project as of **2026-10-02**
-(last commit `c6edddc`, pushed to `github.com/AidanaAbdil/foodrescue`, branch `main`).
+(see `git log` for the latest commit; pushed to `github.com/AidanaAbdil/foodrescue`, branch `main`).
 Also read `AGENTS.md` and `README.md`.
 
 ---
@@ -49,8 +49,13 @@ npx prisma migrate dev --name <change> && npx prisma generate   # after editing 
 npx tsc --noEmit && npx eslint src prisma                       # run before every commit
 ```
 
-- `.env` (git-ignored) contains only `DATABASE_URL="file:./dev.db"`. Optional: `PAYMENT_PROVIDER`
-  (default `test`). There is no `.env.example` yet (a permission check blocked copying `.env`;
+- `.env` (git-ignored) contains only `DATABASE_URL="file:./dev.db"`. Optional settings:
+  `PAYMENT_PROVIDER` (default `test`), `APP_URL` (site address for links in emails),
+  `EMAIL_PROVIDER` (none yet → emails are printed in the `npm run dev` terminal),
+  `TEST_REFUNDS_FAIL=true` (makes test refunds fail, to try the retry logic).
+- **After a migration, restart `npm run dev`.** The Prisma client is cached on `globalThis` across
+  hot reloads, so new tables are `undefined` until restart (`Cannot read properties of undefined
+  (reading 'findMany')`). There is no `.env.example` yet (a permission check blocked copying `.env`;
   writing one from scratch is fine if wanted).
 - **Demo accounts** (password `password123`): `customer@example.com` (Алия Нурланова),
   `owner@example.com` (Ерлан Сейтжанов, owns 4 sample stores: 2 Almaty, 2 Astana).
@@ -157,6 +162,12 @@ form `action`s (work without JS too); client components only where interaction n
 - Header: inline links on `lg+`, ☰ `MobileMenu` below. Check layouts at 375 px width.
 
 ### Auth & sessions
+- **Rate limiting** (`src/lib/rate-limit.ts`, `AuthAttempt` table): 5 wrong passwords per email /
+  15 min, 20 failed logins per IP / 15 min, 3 reset emails per address / hour. The IP comes from
+  `x-forwarded-for`, which is only trustworthy behind a hosting proxy that sets it.
+- **Password reset**: `/forgot-password` → one-time link (`PasswordResetToken`, hashed, 1 hour) →
+  `/reset-password?token=…`. Same reply whether or not the email exists. Resetting logs out all
+  devices. Email goes through `src/lib/mailer.ts` (printed to the terminal until a provider is added).
 - Random 32-byte token in an httpOnly cookie `session`; DB stores only its SHA-256 (`Session.tokenHash`),
   30-day expiry. `secure` only in production.
 - Login uses one generic error message and a dummy hash for unknown emails (no account enumeration).
@@ -181,6 +192,8 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
 - Provider interface: `createPayment`, `resumeUrl`, `refund`. Only `test` exists. It throws in
   production unless `ALLOW_TEST_PAYMENTS=true`.
 - Pickup codes: 2 Latin letters (no I/O) + 4 digits, unique, shown only after payment.
+- `paymentHousekeeping()` (called at the top of stock/order pages) releases expired holds and
+  **retries failed refunds**; meanwhile the customer sees "refund in progress".
 - Store dashboard shows only paid orders; "reserved" counts RESERVED+COLLECTED.
 
 ### Photos (`src/lib/uploads.ts`)
@@ -188,11 +201,13 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   via `uploadBagPhoto`; URL travels in hidden `imageUrl`. Server checks magic bytes (JPEG/PNG/WebP),
   ≤4 MB, random UUID names, saves to `./uploads` (git-ignored), served by `/uploads/[file]` with
   immutable caching + `nosniff`. `saveBag` only accepts the bag's current photo or an existing
-  upload; replaced/removed uploads are deleted. Sample data uses Unsplash (allowed in `next.config.ts`).
+  upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
+cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
 ### Location / search
 - Customers: "Near me" = browser geolocation → `?near=lat,lng` (3 decimals) → sorted by km.
-- Owners set store coordinates with "use my current location" (setup form or dashboard banner).
+- Owners set store coordinates with "use my current location" (setup form, dashboard banner, or the
+  store edit page `/dashboard/stores/[id]/edit`, linked from the store names on the dashboard).
   No address geocoding.
 - Filtering happens in JS after one query (fine at current scale; move to SQL when large).
 
@@ -221,22 +236,26 @@ of every field, prices/amounts computed on the server, no user-supplied URLs ren
 
 ## 8. Known gaps / TODO
 
+Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund retries,
+abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
+smoke-tested).
+
+Still open:
 - **Not deployed.** SQLite file + local `uploads/` folder only.
+- **Email**: no provider connected (reset links print to the terminal). Connect one (e.g. Resend)
+  in `src/lib/mailer.ts` before launch, and set `APP_URL`.
 - **Real payments**: needs her ИП, a live HTTPS site, a Kaspi Pay contract (Kaspi's API also requires
   an IPSec VPN tunnel from the server) and/or Halyk ePay (use its hosted payment page to avoid PCI DSS).
   Then add a provider in `src/lib/payments/` + a webhook route calling `confirmPayment`/`failPayment`
-  (verify signatures!).
-- If a provider **refund call fails**, the order is already CANCELLED but Payment stays PAID — needs
-  retry/alerting.
-- No background job for expiries; abandoned uploads aren't cleaned up.
-- Missing features: **password reset**, **editing store details** (name/address/location after setup),
-  email/SMS notifications, admin tools, login **rate limiting**, store time zones (all UTC+5 assumed),
-  favourites, store pages.
+  (verify signatures!). With `PAYMENT_PROVIDER=test` in production, ordering fails with a plain
+  500 error by design (no stock is held).
+- No background jobs: expiries, refund retries and upload clean-up run during page requests.
+  Fine at this size; use a scheduled job once deployed.
+- Features not built yet: email/SMS notifications, admin tools, store time zones (all UTC+5),
+  favourites, public store pages, address geocoding, automated test suite (Playwright).
 - Localized URLs for SEO (`/kk/…`) if search ranking matters.
-- New Kazakh strings for **payments** and **photos** were sent to her for review — check whether she
-  replied with corrections.
-
----
+- Kazakh strings for **payments**, **photos**, **password reset**, **store editing** and
+  **rate limiting** were written by Claude and sent to her for review — check for corrections.
 
 ## 9. Suggested next step: deployment
 
@@ -250,4 +269,4 @@ Things to decide/do with her (explain each in plain language):
 4. **HTTPS + domain**; session cookie becomes `secure` automatically in production.
 5. **Env vars**: `DATABASE_URL`, `PAYMENT_PROVIDER` (test provider is blocked in production unless
    `ALLOW_TEST_PAYMENTS=true` — only for a private staging site).
-6. Production build check: `npm run build` hasn't been run yet — do that first and fix anything it finds.
+6. Email provider + `APP_URL`, so password-reset emails really go out.

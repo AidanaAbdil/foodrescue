@@ -6,7 +6,7 @@ import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI, CATEGORY_LIST, isCategory } from "@/lib/categories";
 import { distanceKm, parseCoords } from "@/lib/geo";
-import { releaseExpiredHolds } from "@/lib/payments/service";
+import { paymentHousekeeping } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 
 const STEP_EMOJI = ["🔍", "📱", "🛍️"];
@@ -29,7 +29,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const city = typeof params.city === "string" ? params.city : "";
   const selected = isCategory(params.category) ? params.category : undefined;
   const near = parseCoords(params.near);
-  await releaseExpiredHolds(); // bags held by unpaid orders past their deadline go back on sale
+  await paymentHousekeeping(); // bags held by unpaid orders past their deadline go back on sale
 
   const bags = await prisma.surpriseBag.findMany({
     where: { isActive: true, quantityAvailable: { gt: 0 }, pickupEnd: { gt: new Date() } },

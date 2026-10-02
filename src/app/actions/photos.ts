@@ -2,7 +2,7 @@
 
 import { getI18n } from "@/i18n/server";
 import { requireOwner } from "@/lib/session";
-import { savePhoto } from "@/lib/uploads";
+import { cleanUpAbandonedUploads, savePhoto } from "@/lib/uploads";
 
 export type UploadResult = { url: string } | { error: string };
 
@@ -16,6 +16,8 @@ export async function uploadBagPhoto(formData: FormData): Promise<UploadResult> 
   if (!(file instanceof File)) return { error: t.failed };
 
   const result = await savePhoto(file);
+  // Good moment for housekeeping; never let it break the upload.
+  await cleanUpAbandonedUploads().catch((error) => console.error("Upload clean-up failed", error));
   if ("url" in result) return result;
   return { error: result.error === "size" ? t.tooBig : t.wrongType };
 }

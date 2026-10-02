@@ -13,6 +13,8 @@ export const testProvider: PaymentProvider = {
     return `/pay/test/${id}`;
   },
   async refund() {
-    // A real provider would call its refund API here and throw if it fails.
+    // A real provider calls its refund API here and throws if it fails.
+    // Set TEST_REFUNDS_FAIL=true to try out the retry behaviour.
+    if (process.env.TEST_REFUNDS_FAIL === "true") throw new Error("Test refund failure");
   },
 };

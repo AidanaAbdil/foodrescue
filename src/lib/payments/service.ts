@@ -15,14 +15,27 @@ import { getPaymentProvider } from "./provider";
 
 export const HOLD_MINUTES = 15;
 
-// Unpaid orders past their deadline: give the bags back. There's no
-// background job yet, so pages that show stock call this first.
-export async function releaseExpiredHolds() {
+// Run before showing stock or orders. There's no background job yet, so
+// pages do this housekeeping: release unpaid holds past their deadline, and
+// retry refunds that failed earlier.
+export async function paymentHousekeeping() {
   const expired = await prisma.order.findMany({
     where: { status: "PENDING_PAYMENT", expiresAt: { lt: new Date() } },
     select: { id: true },
   });
   for (const { id } of expired) await expireOrder(id);
+  await retryPendingRefunds();
+}
+
+// Paid payments whose order was cancelled or expired still owe the customer
+// their money (the refund call failed before). Try again, a few at a time.
+async function retryPendingRefunds() {
+  const owed = await prisma.payment.findMany({
+    where: { status: "PAID", order: { status: { in: ["CANCELLED", "EXPIRED"] } } },
+    select: { id: true },
+    take: 10,
+  });
+  for (const { id } of owed) await refundPayment(id);
 }
 
 // PENDING_PAYMENT → EXPIRED and put the bags back. Safe to call twice.
@@ -116,10 +129,17 @@ export async function cancelPaidOrder(orderId: string, userId: string): Promise<
 }
 
 // Ask the provider for the money back, then record it. PAID → REFUNDED once.
+// If the provider fails, the payment stays PAID and paymentHousekeeping()
+// retries later; the customer sees "refund in progress" meanwhile.
 async function refundPayment(paymentId: string) {
   const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
   if (!payment || payment.status !== "PAID") return;
-  await getPaymentProvider().refund(payment);
+  try {
+    await getPaymentProvider().refund(payment);
+  } catch (error) {
+    console.error(`Refund failed for payment ${paymentId}; will retry`, error);
+    return;
+  }
   await prisma.payment.updateMany({
     where: { id: paymentId, status: "PAID" },
     data: { status: "REFUNDED", refundedAt: new Date() },

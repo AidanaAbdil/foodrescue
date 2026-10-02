@@ -38,10 +38,10 @@ export function useCurrentLocation() {
 }
 
 // Form field: a button that fills hidden latitude/longitude inputs.
-export function LocationPicker() {
+export function LocationPicker({ defaultCoords = null }: { defaultCoords?: Coords | null }) {
   const t = useI18n().dict.location;
   const { locate, locating, error } = useCurrentLocation();
-  const [coords, setCoords] = useState<Coords | null>(null);
+  const [coords, setCoords] = useState<Coords | null>(defaultCoords);
 
   return (
     <div>

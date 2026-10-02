@@ -6,8 +6,9 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { access, mkdir, readFile, unlink, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { prisma } from "@/lib/prisma";
 
 export const UPLOAD_DIR = path.join(process.cwd(), "uploads");
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // 4 MB
@@ -64,6 +65,28 @@ export async function uploadExists(url: string) {
 export async function deleteUpload(url: string | null | undefined) {
   const name = url?.match(UPLOAD_URL)?.[1];
   if (name) await unlink(path.join(UPLOAD_DIR, name)).catch(() => {});
+}
+
+// Photos uploaded but never saved with a bag (the owner closed the form).
+// Deletes uploads older than a day that no bag uses.
+export async function cleanUpAbandonedUploads() {
+  let names: string[];
+  try {
+    names = (await readdir(UPLOAD_DIR)).filter((name) => FILE_NAME.test(name));
+  } catch {
+    return; // no uploads folder yet
+  }
+  const inUse = new Set(
+    (await prisma.surpriseBag.findMany({ where: { imageUrl: { startsWith: "/uploads/" } }, select: { imageUrl: true } }))
+      .map((bag) => bag.imageUrl),
+  );
+  const dayAgo = Date.now() - 86_400_000;
+  for (const name of names) {
+    if (inUse.has(`/uploads/${name}`)) continue;
+    const file = path.join(UPLOAD_DIR, name);
+    const { mtimeMs } = await stat(file);
+    if (mtimeMs < dayAgo) await unlink(file).catch(() => {});
+  }
 }
 
 // For the file-serving route.

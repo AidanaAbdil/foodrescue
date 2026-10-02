@@ -6,7 +6,7 @@ import type { Order, Payment, Store, SurpriseBag } from "@/generated/prisma/clie
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { getPaymentProvider } from "@/lib/payments/provider";
-import { releaseExpiredHolds } from "@/lib/payments/service";
+import { paymentHousekeeping } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
@@ -19,7 +19,7 @@ type OrderWithBag = Order & { bag: SurpriseBag & { store: Store }; payment: Paym
 export default async function OrdersPage({ searchParams }: PageProps<"/orders">) {
   const user = await requireUser("/orders");
   const { new: newOrderId, declined, error } = await searchParams;
-  await releaseExpiredHolds(); // unpaid orders past their deadline become EXPIRED
+  await paymentHousekeeping(); // unpaid orders past their deadline become EXPIRED
   const { dict, f, fill } = await getI18n();
   const t = dict.orders;
 
@@ -152,6 +152,9 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
           <p className="mt-1 text-sm font-medium text-amber-800">{fill(t.payBy, { time: f.time(order.expiresAt) })}</p>
         )}
         {payment?.status === "REFUNDED" && <p className="mt-1 text-sm text-stone-600">{t.refunded}</p>}
+        {payment?.status === "PAID" && (order.status === "CANCELLED" || order.status === "EXPIRED") && (
+          <p className="mt-1 text-sm text-stone-600">{t.refundPending}</p>
+        )}
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-4">

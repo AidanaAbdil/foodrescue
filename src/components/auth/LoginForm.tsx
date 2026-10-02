@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { login } from "@/app/actions/auth";
 import { useI18n } from "@/i18n/client";
@@ -27,7 +28,12 @@ export function LoginForm({ next }: { next: string }) {
         required
         defaultValue={state?.values?.email}
       />
-      <FormField name="password" label={t.password} type="password" autoComplete="current-password" required />
+      <div>
+        <FormField name="password" label={t.password} type="password" autoComplete="current-password" required />
+        <Link href="/forgot-password" className="mt-1 inline-block text-sm font-medium text-brand-dark hover:underline">
+          {t.forgot}
+        </Link>
+      </div>
       <button type="submit" disabled={pending} className={submitButtonClass}>
         {pending ? t.loggingIn : t.login}
       </button>

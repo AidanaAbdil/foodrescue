@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { markCollected, toggleBagActive } from "@/app/actions/dashboard";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
-import { StoreSetupForm } from "@/components/dashboard/StoreSetupForm";
+import { StoreForm } from "@/components/dashboard/StoreForm";
 import { StatCard } from "@/components/StatCard";
 import type { SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
 import { CATEGORY_EMOJI } from "@/lib/categories";
-import { releaseExpiredHolds } from "@/lib/payments/service";
+import { paymentHousekeeping } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DashboardPage() {
   const user = await requireOwner();
-  await releaseExpiredHolds();
+  await paymentHousekeeping();
   const { dict, f, fill } = await getI18n();
   const t = dict.dashboard;
 
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
           <h1 className="mt-2 text-2xl font-bold">{t.setupTitle}</h1>
           <p className="mt-1 text-stone-600">{t.setupSubtitle}</p>
           <div className="mt-6">
-            <StoreSetupForm />
+            <StoreForm />
           </div>
         </div>
       </main>
@@ -75,7 +75,21 @@ export default async function DashboardPage() {
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-stone-500">{stores.map((s) => s.name).join(" · ")}</p>
+          {/* Store names link to their settings. */}
+          <p className="text-sm font-medium text-stone-500">
+            {stores.map((store, i) => (
+              <span key={store.id}>
+                {i > 0 && " · "}
+                <Link
+                  href={`/dashboard/stores/${store.id}/edit`}
+                  title={t.editStore}
+                  className="underline decoration-stone-300 underline-offset-2 hover:text-brand-dark"
+                >
+                  {store.name} ✎
+                </Link>
+              </span>
+            ))}
+          </p>
           <h1 className="text-3xl font-bold">{t.title}</h1>
         </div>
         <Link

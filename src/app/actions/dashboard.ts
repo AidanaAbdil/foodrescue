@@ -21,8 +21,10 @@ export type FormState =
 
 const text = (formData: FormData, key: string) => String(formData.get(key) ?? "").trim();
 
-export async function createStore(_prev: FormState, formData: FormData): Promise<FormState> {
+// Create a store (no storeId) or update one of the owner's stores.
+export async function saveStore(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireOwner();
+  const storeId = text(formData, "storeId");
   const values = {
     name: text(formData, "name"),
     address: text(formData, "address"),
@@ -40,17 +42,15 @@ export async function createStore(_prev: FormState, formData: FormData): Promise
   // Optional map location from the "Use my current location" button.
   const latitude = Number(formData.get("latitude"));
   const longitude = Number(formData.get("longitude"));
-  const hasLocation = formData.has("latitude") && isValidCoords(latitude, longitude);
+  const location = formData.has("latitude") && isValidCoords(latitude, longitude) ? { latitude, longitude } : {};
+  const data = { ...values, description: values.description || null, ...location };
 
-  await prisma.store.create({
-    data: {
-      ...values,
-      description: values.description || null,
-      latitude: hasLocation ? latitude : null,
-      longitude: hasLocation ? longitude : null,
-      ownerId: user.id,
-    },
-  });
+  if (storeId) {
+    // updateMany with ownerId: only changes the store if it's this owner's.
+    await prisma.store.updateMany({ where: { id: storeId, ownerId: user.id }, data });
+  } else {
+    await prisma.store.create({ data: { ...data, ownerId: user.id } });
+  }
   redirect("/dashboard");
 }
 
