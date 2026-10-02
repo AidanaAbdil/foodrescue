@@ -216,6 +216,13 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   `next/dynamic`, OpenStreetMap tiles, CSS divIcon pin, neutral credit). Tapping/dragging sets
   lat/lng; a point picks its city (`cityAt`, 50 km); changing city clears an out-of-city pin.
   At scale switch tiles to a provider (2GIS is the local favourite; needs an API key).
+- Address ↔ map (`src/lib/geocode.ts`, actions in `src/app/actions/geocode.ts`, owners only):
+  OpenStreetMap Nominatim via our server (1 req/s, cached, identifying User-Agent — its policy
+  forbids search-as-you-type). "Find on map" expands abbreviations (пр./ул./мкр…), searches inside
+  the city's box and only accepts results whose city matches (same-named streets exist in Kaskelen
+  etc.); otherwise asks to place the pin manually. Tapping the map suggests the street address
+  (auto-fills an empty field). Live suggestions + better house data → 2GIS Suggest/Geocoder API
+  at launch (needs a key; paid after a demo month).
 - Homepage "All stores" lists every approved store in the city (search matches names), with
   "N bags on sale" / "Next bag …" / "No bags right now"; sorted by bags, then next bag, or distance.
 - Her `~/.npm` cache has root-owned files (old `sudo`), so `npm install` fails with EACCES. She can
