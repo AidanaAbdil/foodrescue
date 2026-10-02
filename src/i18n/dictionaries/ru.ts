@@ -5,6 +5,8 @@
 export type Plural = { one: string; few?: string; many?: string; other: string };
 const p = (forms: Plural) => forms;
 
+// Stat labels (statBags, statLive…) are sentence templates: {n} marks where
+// the number goes, since word order differs between languages.
 export const ru = {
   meta: {
     title: "FoodRescue — спасайте еду со скидкой",
@@ -51,8 +53,8 @@ export const ru = {
     title: "Спасайте вкусную еду, пока её не выбросили.",
     subtitle:
       "Кафе, пекарни и магазины продают нераспроданную за день еду в пакетах-сюрпризах со скидкой до 70%. Вы экономите, они сокращают отходы.",
-    statBags: "Пакетов доступно",
-    statSavings: "Можно сэкономить",
+    statBags: "Пакетов доступно {n}",
+    statSavings: "Можно сэкономить {n}",
     availableNow: "Доступно сейчас",
     closest: "Ближайшие к вам",
     searchLabel: "Поиск пакетов и заведений",
@@ -181,9 +183,9 @@ export const ru = {
   dashboard: {
     title: "Кабинет",
     addBag: "+ Добавить пакет",
-    statLive: "Пакетов в продаже",
-    statWaiting: "Ждут выдачи",
-    statCollected: "Выдано сегодня",
+    statLive: "Пакетов в продаже {n}",
+    statWaiting: "Ждут выдачи {n}",
+    statCollected: "Выдано сегодня {n}",
     pickupsTitle: "Предстоящие выдачи",
     pickupsHint: "Сверьте код покупателя, отдайте пакет и отметьте выдачу.",
     noPickups: "Сейчас никто не ждёт выдачи.",

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { BagCard } from "@/components/BagCard";
 import { NearMeButton } from "@/components/search/NearMeButton";
+import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI, CATEGORY_LIST, isCategory } from "@/lib/categories";
 import { distanceKm, parseCoords } from "@/lib/geo";
@@ -79,16 +80,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <p className="text-sm font-semibold uppercase tracking-widest text-white">{t.eyebrow}</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-bold leading-tight sm:text-5xl">{t.title}</h1>
           <p className="mt-4 max-w-xl text-lg text-white">{t.subtitle}</p>
-          <dl className="mt-8 flex flex-wrap gap-4">
-            <div className="rounded-xl bg-black/15 px-5 py-3">
-              <dt className="text-sm text-white">{t.statBags}</dt>
-              <dd className="text-2xl font-bold">{bags.length}</dd>
-            </div>
-            <div className="rounded-xl bg-black/15 px-5 py-3">
-              <dt className="text-sm text-white">{t.statSavings}</dt>
-              <dd className="text-2xl font-bold">{f.price(totalSavings)}</dd>
-            </div>
-          </dl>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <StatCard variant="onBrand" template={t.statBags} value={bags.length} />
+            <StatCard variant="onBrand" template={t.statSavings} value={f.price(totalSavings)} />
+          </div>
         </div>
       </section>
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { markCollected, toggleBagActive } from "@/app/actions/dashboard";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreSetupForm } from "@/components/dashboard/StoreSetupForm";
+import { StatCard } from "@/components/StatCard";
 import type { SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
@@ -94,11 +95,11 @@ export default async function DashboardPage() {
           </div>
         ))}
 
-      <dl className="mt-6 grid grid-cols-3 gap-3 sm:gap-4">
-        <Stat label={t.statLive} value={liveBags} />
-        <Stat label={t.statWaiting} value={pickups.length} />
-        <Stat label={t.statCollected} value={collectedToday} />
-      </dl>
+      <div className="mt-6 grid grid-cols-3 gap-3 sm:gap-4">
+        <StatCard template={t.statLive} value={liveBags} />
+        <StatCard template={t.statWaiting} value={pickups.length} />
+        <StatCard template={t.statCollected} value={collectedToday} />
+      </div>
 
       <section className="mt-10">
         <h2 className="text-xl font-bold">{t.pickupsTitle}</h2>
@@ -223,15 +224,6 @@ export default async function DashboardPage() {
         )}
       </section>
     </main>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 sm:p-5">
-      <dt className="text-xs font-medium text-stone-500 sm:text-sm">{label}</dt>
-      <dd className="mt-1 text-2xl font-bold sm:text-3xl">{value}</dd>
-    </div>
   );
 }
 

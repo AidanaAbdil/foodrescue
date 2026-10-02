@@ -47,8 +47,8 @@ export const en: Dictionary = {
     title: "Rescue delicious food before it goes to waste.",
     subtitle:
       "Cafés, bakeries and shops sell their unsold food in surprise bags at up to 70% off. You save money, they cut waste.",
-    statBags: "Bags available now",
-    statSavings: "Up for grabs in savings",
+    statBags: "Bags available now {n}",
+    statSavings: "Up for grabs in savings {n}",
     availableNow: "Available now",
     closest: "Closest to you",
     searchLabel: "Search bags and stores",
@@ -172,9 +172,9 @@ export const en: Dictionary = {
   dashboard: {
     title: "Dashboard",
     addBag: "+ Add a bag",
-    statLive: "Bags live",
-    statWaiting: "Waiting for pickup",
-    statCollected: "Collected today",
+    statLive: "Bags live {n}",
+    statWaiting: "Waiting for pickup {n}",
+    statCollected: "Collected today {n}",
     pickupsTitle: "Upcoming pickups",
     pickupsHint: "Check the customer's code, hand over the bag, then mark it collected.",
     noPickups: "No reservations waiting right now.",
