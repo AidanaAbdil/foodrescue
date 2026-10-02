@@ -55,12 +55,12 @@ export async function Header() {
               ))}
             {user && (
               <>
-                <span className="ml-2 flex items-center gap-2 text-stone-800">
+                <Link href="/account" title={t.account} className="ml-2 flex items-center gap-2 rounded-lg px-2 py-1 text-stone-800 hover:bg-stone-100">
                   <span className="grid size-8 place-items-center rounded-full bg-brand-light font-bold text-brand-dark">
                     {user.name.charAt(0).toUpperCase()}
                   </span>
                   {user.name.split(" ")[0]}
-                </span>
+                </Link>
                 {/* Logging out changes data, so it's a form POST, not a link. */}
                 <form action={logout}>
                   <button type="submit" className={linkClass}>
@@ -81,7 +81,7 @@ export async function Header() {
           {/* Phones: everything in a ☰ menu */}
           <MobileMenu
             label={t.menu}
-            links={links}
+            links={user ? [...links, { href: "/account", label: t.account }] : links}
             user={user ? { name: user.name } : null}
             logoutLabel={t.logout}
           />

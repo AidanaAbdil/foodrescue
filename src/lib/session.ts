@@ -36,6 +36,14 @@ export async function deleteSession() {
   cookieStore.delete(COOKIE_NAME);
 }
 
+// Log out everywhere except this browser (e.g. after a password change).
+export async function deleteOtherSessions(userId: string) {
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
+  await prisma.session.deleteMany({
+    where: { userId, ...(token && { tokenHash: { not: hashToken(token) } }) },
+  });
+}
+
 // The logged-in user, or null. `cache` makes repeat calls during one request
 // (header, page, …) share a single database lookup.
 export const getCurrentUser = cache(async () => {

@@ -207,6 +207,21 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Account, store contact, store-side cancel, error screens (2026-10-02)
+- `/account` (`AccountForms`, `src/app/actions/account.ts`): change name, email (password needed),
+  password (logs out other devices via `deleteOtherSessions`), and delete the account: refused while
+  paid orders are waiting (as customer or at own stores); otherwise wipes name/email/password/consent
+  (`deletedAt` set, email → `deleted-<id>@deleted.invalid`), deletes sessions/favourites/reset
+  tokens, hides the owner's stores/bags/schedules, keeps orders/payments anonymously.
+- Store `phone` (required in the form, normalised to +7…, `src/lib/phone.ts`) and `openingHours`;
+  call links on store/bag/order pages; dashboard reminder when missing.
+- Owner dashboard pickups: "Can't hand over" (`storeCancelOrder`, full refund, no restock,
+  `Order.cancelledBy`) and "Didn't show up" (`markNoShow`, status NO_SHOW, only after pickup start,
+  no refund); both confirm first (`ConfirmSubmit`). Admin shows per-customer no-show counts.
+- `src/app/error.tsx` (translated, `retry` prop in Next 16), `global-error.tsx`, `loading.tsx`.
+  Note: with `loading.tsx`, pages stream, so `redirect()` during rendering arrives as a 200 with a
+  `<meta http-equiv="refresh">` instead of a 307. Browsers follow it; tests must look for it.
+
 ### Cities, map & store list
 - `Store.city` holds a code from `src/lib/cities.ts` (ALMATY, ASTANA; names in `dict.cities`,
   shown via `cityName`). Store form uses a select; `saveStore` rejects anything else. Existing
