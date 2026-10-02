@@ -3,11 +3,15 @@ import Link from "next/link";
 import type { Store, SurpriseBag } from "@/generated/prisma/client";
 import { CATEGORIES } from "@/lib/categories";
 import { discountPercent, formatDay, formatPrice, formatTime } from "@/lib/format";
+import { formatDistance } from "@/lib/geo";
 
-type Props = { bag: SurpriseBag & { store: Store } };
+type Props = {
+  bag: SurpriseBag & { store: Store };
+  distance?: number; // miles from the customer, when "near me" is on
+};
 
 // One surprise bag in the listing grid; the whole card links to its page.
-export function BagCard({ bag }: Props) {
+export function BagCard({ bag, distance }: Props) {
   const category = CATEGORIES[bag.category];
   const fewLeft = bag.quantityAvailable <= 2;
 
@@ -50,6 +54,9 @@ export function BagCard({ bag }: Props) {
             {bag.store.name.charAt(0)}
           </span>
           <p className="truncate text-sm font-medium text-stone-600">{bag.store.name}</p>
+          {distance !== undefined && (
+            <span className="ml-auto shrink-0 text-sm font-medium text-brand-dark">{formatDistance(distance)}</span>
+          )}
         </div>
 
         <h3 className="mt-2 text-lg font-semibold leading-snug">{bag.title}</h3>

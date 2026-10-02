@@ -26,7 +26,7 @@ Demo accounts (password `password123`):
 | Command              | What it does                                              |
 | -------------------- | --------------------------------------------------------- |
 | `npm run dev`        | Start the development server                              |
-| `npm run db:seed`    | Reset the sample data (pickup times are relative to now)  |
+| `npm run db:seed`    | Reset the demo accounts' data; your own accounts are kept |
 | `npm run db:migrate` | Apply changes made in `prisma/schema.prisma`              |
 | `npm run db:studio`  | Browse and edit the database in your browser              |
 | `npm run lint`       | Check the code for common mistakes                        |

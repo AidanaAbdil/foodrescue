@@ -4,6 +4,7 @@
 
 import { redirect } from "next/navigation";
 import { isCategory } from "@/lib/categories";
+import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 
@@ -37,8 +38,19 @@ export async function createStore(_prev: FormState, formData: FormData): Promise
   if (values.city.length < 2) errors.city = "Please enter the city.";
   if (Object.keys(errors).length > 0) return { errors, values };
 
+  // Optional map location from the "Use my current location" button.
+  const latitude = Number(formData.get("latitude"));
+  const longitude = Number(formData.get("longitude"));
+  const hasLocation = formData.has("latitude") && isValidCoords(latitude, longitude);
+
   await prisma.store.create({
-    data: { ...values, description: values.description || null, ownerId: user.id },
+    data: {
+      ...values,
+      description: values.description || null,
+      latitude: hasLocation ? latitude : null,
+      longitude: hasLocation ? longitude : null,
+      ownerId: user.id,
+    },
   });
   redirect("/dashboard");
 }
@@ -131,4 +143,12 @@ export async function markCollected(formData: FormData) {
     data: { status: "COLLECTED" },
   });
   redirect("/dashboard");
+}
+
+// Called directly from the dashboard's "Use my current location" button.
+export async function setStoreLocation(storeId: string, latitude: number, longitude: number) {
+  const user = await requireOwner();
+  if (typeof storeId !== "string" || !isValidCoords(latitude, longitude)) return;
+  // updateMany with ownerId: only changes the store if it's this owner's.
+  await prisma.store.updateMany({ where: { id: storeId, ownerId: user.id }, data: { latitude, longitude } });
 }

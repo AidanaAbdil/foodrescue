@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createStore } from "@/app/actions/dashboard";
 import { FormField, inputClass, submitButtonClass } from "@/components/auth/FormField";
+import { LocationPicker } from "./LocationPicker";
 
 // Shown on the dashboard until the owner has created their first store.
 export function StoreSetupForm() {
@@ -27,6 +28,7 @@ export function StoreSetupForm() {
         <textarea id="description" name="description" rows={2} defaultValue={values.description}
           placeholder="What do you sell?" className={inputClass()} />
       </div>
+      <LocationPicker />
       <button type="submit" disabled={pending} className={submitButtonClass}>
         {pending ? "Creating…" : "Create my store"}
       </button>

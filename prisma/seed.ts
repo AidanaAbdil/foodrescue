@@ -1,5 +1,6 @@
 // Fills the local database with sample data. Run with:  npm run db:seed
-// Safe to re-run: it wipes the tables first.
+// Safe to re-run: it replaces the demo accounts and their stores, bags and
+// orders. Accounts you created yourself are left alone.
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
@@ -14,13 +15,17 @@ const inHours = (hours: number) => new Date(Date.now() + hours * 60 * 60 * 1000)
 // Helper: an Unsplash photo URL from its id (host is allowed in next.config.ts).
 const photo = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&q=70&auto=format&fit=crop`;
 
+const DEMO_EMAILS = ["owner@example.com", "customer@example.com"];
+
 async function main() {
-  // Delete children before parents so foreign keys aren't violated.
-  await prisma.session.deleteMany();
-  await prisma.order.deleteMany();
-  await prisma.surpriseBag.deleteMany();
-  await prisma.store.deleteMany();
-  await prisma.user.deleteMany();
+  // Remove only the demo data. Delete orders first: an order blocks deleting
+  // its bag (onDelete: Restrict). Deleting the demo users then cascades to
+  // their sessions, stores and bags.
+  const demo = { email: { in: DEMO_EMAILS } };
+  await prisma.order.deleteMany({
+    where: { OR: [{ user: demo }, { bag: { store: { owner: demo } } }] },
+  });
+  await prisma.user.deleteMany({ where: demo });
 
   // Both demo accounts log in with the password "password123".
   const passwordHash = await hashPassword("password123");
@@ -39,6 +44,8 @@ async function main() {
       description: "Sourdough, pastries and cakes baked fresh every morning.",
       address: "12 Main St",
       city: "Springfield",
+      latitude: 39.8003,
+      longitude: -89.6496,
       ownerId: owner.id,
       bags: {
         create: [
@@ -74,6 +81,8 @@ async function main() {
       name: "Green Leaf Grocery",
       address: "88 Oak Ave",
       city: "Springfield",
+      latitude: 39.7880,
+      longitude: -89.6610,
       ownerId: owner.id,
       bags: {
         create: [
@@ -109,6 +118,8 @@ async function main() {
       description: "Fresh salads and warm grain bowls.",
       address: "5 Elm St",
       city: "Springfield",
+      latitude: 39.8120,
+      longitude: -89.6380,
       ownerId: owner.id,
       bags: {
         create: {
@@ -128,8 +139,10 @@ async function main() {
   await prisma.store.create({
     data: {
       name: "Slice Pizzeria",
-      address: "301 Maple Rd",
-      city: "Springfield",
+      address: "301 N Main St",
+      city: "Chatham",
+      latitude: 39.6761,
+      longitude: -89.7043,
       ownerId: owner.id,
       bags: {
         create: {

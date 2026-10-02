@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { markCollected, toggleBagActive } from "@/app/actions/dashboard";
+import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreSetupForm } from "@/components/dashboard/StoreSetupForm";
 import type { SurpriseBag } from "@/generated/prisma/client";
 import { CATEGORIES } from "@/lib/categories";
@@ -75,6 +76,21 @@ export default async function DashboardPage() {
           + Add a bag
         </Link>
       </div>
+
+      {stores
+        .filter((store) => store.latitude == null || store.longitude == null)
+        .map((store) => (
+          <div
+            key={store.id}
+            className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-brand-light/60 p-4 ring-1 ring-accent/30"
+          >
+            <p className="text-sm text-stone-700">
+              <strong>{store.name}</strong> has no map location yet, so it won&apos;t appear in &ldquo;Near me&rdquo;
+              results. Set it while you&apos;re at the store.
+            </p>
+            <SetLocationButton storeId={store.id} />
+          </div>
+        ))}
 
       <dl className="mt-6 grid grid-cols-3 gap-3 sm:gap-4">
         <Stat label="Bags live" value={liveBags} />
