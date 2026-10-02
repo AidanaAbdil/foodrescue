@@ -11,7 +11,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
-import { notifyNewOrder } from "@/lib/push";
+import { notifyNewOrder, notifyStoreCancelled } from "@/lib/push";
 import { getPaymentProvider } from "./provider";
 
 export const HOLD_MINUTES = 15;
@@ -145,6 +145,7 @@ export async function storeCancelOrder(orderId: string, by: "store" | "admin", o
   if (count === 0) return false;
   const payment = await prisma.payment.findUnique({ where: { orderId } });
   if (payment) await refundPayment(payment.id);
+  await notifyStoreCancelled(orderId);
   return true;
 }
 

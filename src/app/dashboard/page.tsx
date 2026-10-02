@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { cantHandOver, deleteSchedule, markCollected, noShow, toggleBagActive, toggleSchedule } from "@/app/actions/dashboard";
 import { NewOrderAlert } from "@/components/dashboard/NewOrderAlert";
-import { PushToggle } from "@/components/dashboard/PushToggle";
+import { PushToggle } from "@/components/PushToggle";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreForm } from "@/components/dashboard/StoreForm";
 import { StatCard } from "@/components/StatCard";
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-bold">{t.title}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-          <PushToggle publicKey={pushPublicKey()} />
+          <PushToggle publicKey={pushPublicKey()} hint={dict.push.hint} />
           <NewOrderAlert initial={latestOrder} />
           <Link
             href="/dashboard/bags/new"

@@ -12,6 +12,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 import { cityName } from "@/lib/cities";
 import { formatPhone } from "@/lib/phone";
+import { PushToggle } from "@/components/PushToggle";
+import { pushPublicKey } from "@/lib/push";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.orders };
@@ -42,7 +44,10 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-8">
-      <h1 className="text-3xl font-bold">{t.title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold">{t.title}</h1>
+        <PushToggle publicKey={pushPublicKey()} hint={dict.push.customerHint} />
+      </div>
 
       {(declined || error === "too-late") && (
         <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-red-700">

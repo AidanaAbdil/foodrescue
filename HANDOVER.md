@@ -207,20 +207,29 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
-### Push notifications for stores
+### Push notifications (stores and customers)
 - Web Push (`web-push`), keys in `.env` (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`;
   generated locally, git-ignored — a new server needs its own keys, and changing keys invalidates
   existing subscriptions). `PushSubscription` per device with its locale.
-- Dashboard `PushToggle` ("🔔 Notifications on this device"): asks permission, subscribes via the
-  service worker, saves with `savePushSubscription`. iPhone needs the site installed to the Home
-  Screen first (iOS 16.4+); the toggle explains this.
+- `src/components/PushToggle.tsx` ("🔔 Notifications on this device") on /dashboard and on
+  /orders (customers): asks permission, subscribes via the service worker, saves with
+  `savePushSubscription`. iPhone needs the site installed to the Home Screen first (iOS 16.4+);
+  the toggle checks that first. Waiting for the service worker times out after 10 s (registers it if
+  missing) and failures are shown in red, never silently. When on, a "Test" link sends a test
+  notification to that device only (`sendTestPush`).
+- Customers: `storeCancelOrder` (store "Can't hand over" or admin) → `notifyStoreCancelled` →
+  "Order CODE cancelled · {store} can't hand over… full refund", opens /orders.
 - `confirmPayment` → `notifyNewOrder` (src/lib/push.ts) → "🔔 New order CODE · bag × n · pickup …"
   to all the owner's devices; tapping opens /dashboard (`public/sw.js`, cache `offline-v3`).
   Expired subscriptions (404/410) are deleted. Sending never breaks a payment.
 - The service worker is now registered in development too (push needs it).
 - Verified with a real (non-headless) Chrome window: notification arrived via FCM. Headless Chrome
   has no push service.
-- Header shows "Dashboard (n)" for owners with paid orders waiting today.
+- Header shows "Dashboard (n)" for owners with paid orders waiting today (admins: "Admin (n)" stores
+  to review); `src/lib/header-counts.ts`. `LiveCount` polls `/api/counts` every 15 s and on tab focus
+  and calls `router.refresh()` when the number changed; order/review actions call `refresh()` so
+  the header redraws at once (a `redirect` to the same page alone keeps the old header).
+- Push only reaches the owner of the store whose bag was ordered: test with your own store's bag.
 - This is the start of the "staff app" direction she chose; next: a "pack N bags" reminder before
   pickup (needs a scheduled job on the server), customer notifications.
 
@@ -335,7 +344,7 @@ of every field, prices/amounts computed on the server, no user-supplied URLs ren
 - Tested in headless Chrome: no manifest/installability errors, service worker controls the page,
   offline page shown when the server is killed with `kill -9` (a graceful stop keeps serving open
   keep-alive connections and fools the test), iPhone tip shows/dismisses, not shown on Android.
-- Push notifications not built yet (natural next step for "your bag is ready").
+- Customer push: only "store can't hand over" so far; "pickup starts soon" reminders are next.
 
 ### Demo link (current way to show the app)
 - `npm run demo` (`scripts/demo.mjs`): `next build` + `next start -p 3001` with `DEMO=true`,

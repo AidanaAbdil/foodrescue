@@ -2,6 +2,7 @@
 
 import { getLocale } from "@/i18n/server";
 import { prisma } from "@/lib/prisma";
+import { notifyUser } from "@/lib/push";
 import { requireUser } from "@/lib/session";
 
 type BrowserSubscription = { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
@@ -23,4 +24,15 @@ export async function savePushSubscription(sub: BrowserSubscription) {
 export async function removePushSubscription(endpoint: string) {
   const user = await requireUser("/dashboard");
   await prisma.pushSubscription.deleteMany({ where: { endpoint: String(endpoint), userId: user.id } });
+}
+
+// "Test" button: send a notification to this device only. True if it was accepted.
+export async function sendTestPush(endpoint: string) {
+  const user = await requireUser("/dashboard");
+  const sent = await notifyUser(
+    user.id,
+    (dict) => ({ title: dict.push.testTitle, body: dict.push.testBody, url: user.role === "STORE_OWNER" ? "/dashboard" : "/orders" }),
+    { endpoint: String(endpoint) },
+  );
+  return sent > 0;
 }

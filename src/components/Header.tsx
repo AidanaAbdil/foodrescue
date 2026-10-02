@@ -4,8 +4,8 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Logo } from "@/components/Logo";
 import { MobileMenu } from "@/components/MobileMenu";
 import { getI18n } from "@/i18n/server";
-import { startOfToday } from "@/i18n/shared";
-import { prisma } from "@/lib/prisma";
+import { LiveCount } from "@/components/LiveCount";
+import { headerCount } from "@/lib/header-counts";
 import { getCurrentUser } from "@/lib/session";
 
 const linkClass = "rounded-lg px-3 py-2 hover:bg-stone-100 hover:text-stone-900";
@@ -13,24 +13,18 @@ const linkClass = "rounded-lg px-3 py-2 hover:bg-stone-100 hover:text-stone-900"
 export async function Header() {
   const [user, { locale, dict }] = await Promise.all([getCurrentUser(), getI18n()]);
   const t = dict.header;
-  const pendingStores =
-    user?.role === "ADMIN" ? await prisma.store.count({ where: { status: "PENDING" } }) : 0;
-  // Store owners: paid orders waiting for pickup today, shown as "Dashboard (2)".
-  const waitingOrders =
-    user?.role === "STORE_OWNER"
-      ? await prisma.order.count({
-          where: { status: "RESERVED", bag: { pickupEnd: { gte: startOfToday() }, store: { ownerId: user.id } } },
-        })
-      : 0;
+  // Owners: paid orders waiting for pickup today; admins: stores to review.
+  const count = await headerCount(user);
+  const withCount = (label: string) => (count > 0 ? `${label} (${count})` : label);
 
   // The same links power the desktop nav and the phone menu.
   const links = [
     { href: "/#how-it-works", label: t.howItWorks },
     ...(user?.role === "STORE_OWNER"
-      ? [{ href: "/dashboard", label: waitingOrders > 0 ? `${t.dashboard} (${waitingOrders})` : t.dashboard }]
+      ? [{ href: "/dashboard", label: withCount(t.dashboard) }]
       : []),
     ...(user?.role === "ADMIN"
-      ? [{ href: "/admin", label: pendingStores > 0 ? `${t.admin} (${pendingStores})` : t.admin }]
+      ? [{ href: "/admin", label: withCount(t.admin) }]
       : []),
     // "My orders" is for customers; store accounts don't order.
     ...(user?.role === "CUSTOMER"
@@ -87,6 +81,7 @@ export async function Header() {
           </nav>
 
           <LanguageSwitcher current={locale} label={t.language} />
+          {(user?.role === "STORE_OWNER" || user?.role === "ADMIN") && <LiveCount count={count} />}
 
           {/* Phones: everything in a ☰ menu */}
           <MobileMenu

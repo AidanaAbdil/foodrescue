@@ -2,6 +2,7 @@
 // Store-owner actions. Each one checks that the store, bag or order belongs to
 // the logged-in owner, because a form can be submitted with any IDs.
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getI18n } from "@/i18n/server";
 import { parseLocalDateTime, toDateInput } from "@/i18n/shared";
@@ -249,6 +250,7 @@ export async function toggleBagActive(formData: FormData) {
 export async function cantHandOver(formData: FormData) {
   const user = await requireOwner();
   await storeCancelOrder(text(formData, "orderId"), "store", user.id);
+  refresh(); // also redraws the header count
   redirect("/dashboard");
 }
 
@@ -256,6 +258,7 @@ export async function cantHandOver(formData: FormData) {
 export async function noShow(formData: FormData) {
   const user = await requireOwner();
   await markNoShow(text(formData, "orderId"), user.id);
+  refresh(); // also redraws the header count
   redirect("/dashboard");
 }
 
@@ -268,6 +271,7 @@ export async function markCollected(formData: FormData) {
     where: { id: orderId, status: "RESERVED", bag: { store: { ownerId: user.id } } },
     data: { status: "COLLECTED" },
   });
+  refresh(); // also redraws the header count
   redirect("/dashboard");
 }
 

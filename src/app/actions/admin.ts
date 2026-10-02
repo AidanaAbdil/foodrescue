@@ -2,6 +2,7 @@
 // Admin actions: reviewing stores and refunding orders a store couldn't
 // hand over. Every action checks the ADMIN role first.
 
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { storeCancelOrder } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +16,7 @@ export async function approveStore(formData: FormData) {
     where: { id: text(formData, "storeId") },
     data: { status: "APPROVED", rejectionReason: null, reviewedAt: new Date() },
   });
+  refresh(); // also redraws the header count
   redirect("/admin");
 }
 
@@ -27,11 +29,13 @@ export async function rejectStore(formData: FormData) {
     where: { id: text(formData, "storeId") },
     data: { status: "REJECTED", rejectionReason: reason, reviewedAt: new Date() },
   });
+  refresh(); // also redraws the header count
   redirect("/admin");
 }
 
 export async function cancelAndRefund(formData: FormData) {
   await requireAdmin();
   await storeCancelOrder(text(formData, "orderId"), "admin");
+  refresh(); // also redraws the header count
   redirect("/admin#orders");
 }
