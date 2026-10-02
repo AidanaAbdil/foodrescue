@@ -418,6 +418,13 @@ export const en: Dictionary = {
     denied: "Location is blocked. Allow it in your browser's site settings.",
     failed: "Couldn't get your location. Please try again.",
   },
+  errorPage: {
+    title: "Something went wrong",
+    text: "We've been notified. Please try again; that usually fixes it.",
+    retry: "Try again",
+    home: "Go to homepage",
+    code: "Error code: {code}",
+  },
   notFound: {
     title: "Page not found",
     text: "The link may be out of date, or the bag has been removed.",
