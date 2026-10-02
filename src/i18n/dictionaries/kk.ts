@@ -232,6 +232,8 @@ export const kk: Dictionary = {
     newOrder: "Жаңа тапсырыс: {code} · {bag} × {n}",
     soundOn: "🔔 Дыбыс қосулы",
     soundOff: "🔕 Дыбысты қосу",
+    soundTap: "🔔 Дыбыс жұмыс істеуі үшін басыңыз",
+    soundTapHint: "Браузер дыбысты бетті басқаннан кейін ғана қосады.",
     repeat: "Қайталау",
     repeatOnce: "Бір рет",
     repeatWeekly: "Тұрақты",

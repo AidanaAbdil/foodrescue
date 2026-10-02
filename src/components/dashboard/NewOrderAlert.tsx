@@ -32,6 +32,9 @@ export function NewOrderAlert({ initial }: { initial: LatestOrder }) {
   const lastSeen = useRef(initial?.paidAt ?? "");
   const audio = useRef<AudioContext | null>(null);
   const [soundOn, setSoundOn] = useState(false);
+  // Sound is on, but the browser is waiting for a click before it may play.
+  const [waitingForTap, setWaitingForTap] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   // Polling loop.
@@ -64,23 +67,46 @@ export function NewOrderAlert({ initial }: { initial: LatestOrder }) {
     };
   }, [router, fill, t.newOrder]);
 
-  // Remember the sound choice. Browsers only allow sound after a click, so
-  // a remembered "on" still needs one click on the page to take effect.
+  // Remember the sound choice across reloads. Browsers only allow sound after
+  // a click, so a remembered "on" starts paused and wakes up on the first
+  // click or key press anywhere on the page.
   useEffect(() => {
     try {
       if (localStorage.getItem(SOUND_KEY) !== "1") return;
     } catch {
       return;
     }
-    const enable = () => {
-      audio.current ??= new AudioContext();
-      setSoundOn(true);
+    const context = new AudioContext();
+    audio.current = context;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring a saved choice once
+    setSoundOn(true);
+    if (context.state === "running") return;
+    setWaitingForTap(true);
+    const wake = (event: Event) => {
+      if (button.current?.contains(event.target as Node)) return; // the button handles its own click
+      context.resume().then(() => setWaitingForTap(false));
     };
-    window.addEventListener("pointerdown", enable, { once: true });
-    return () => window.removeEventListener("pointerdown", enable);
+    window.addEventListener("pointerdown", wake);
+    window.addEventListener("keydown", wake);
+    context.addEventListener("statechange", () => {
+      if (context.state !== "running") return;
+      setWaitingForTap(false);
+      window.removeEventListener("pointerdown", wake);
+      window.removeEventListener("keydown", wake);
+    });
+    return () => {
+      window.removeEventListener("pointerdown", wake);
+      window.removeEventListener("keydown", wake);
+    };
   }, []);
 
   function toggleSound() {
+    if (waitingForTap && audio.current) {
+      // Sound was already on: this click just lets the browser play it.
+      audio.current.resume().then(() => audio.current && chime(audio.current));
+      setWaitingForTap(false);
+      return;
+    }
     if (soundOn) {
       setSoundOn(false);
       audio.current?.close();
@@ -98,11 +124,13 @@ export function NewOrderAlert({ initial }: { initial: LatestOrder }) {
   return (
     <>
       <button
+        ref={button}
         type="button"
         onClick={toggleSound}
+        title={waitingForTap ? t.soundTapHint : undefined}
         className="rounded-xl px-4 py-2.5 text-sm font-semibold text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"
       >
-        {soundOn ? t.soundOn : t.soundOff}
+        {waitingForTap ? t.soundTap : soundOn ? t.soundOn : t.soundOff}
       </button>
       {toast && (
         <button

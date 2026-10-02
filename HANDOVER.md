@@ -230,6 +230,9 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   and calls `router.refresh()` when the number changed; order/review actions call `refresh()` so
   the header redraws at once (a `redirect` to the same page alone keeps the old header).
 - Push only reaches the owner of the store whose bag was ordered: test with your own store's bag.
+- Dashboard sound button (`NewOrderAlert`) remembers "on" in localStorage. After a reload the browser
+  may hold sound until the first click: the button then reads "Tap to activate sound" and any click
+  or key press on the page wakes it (clicking the button itself does not turn it off).
 - This is the start of the "staff app" direction she chose; next: a "pack N bags" reminder before
   pickup (needs a scheduled job on the server), customer notifications.
 

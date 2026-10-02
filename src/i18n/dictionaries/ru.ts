@@ -241,6 +241,8 @@ export const ru = {
     newOrder: "Новый заказ: {code} · {bag} × {n}",
     soundOn: "🔔 Звук включён",
     soundOff: "🔕 Включить звук",
+    soundTap: "🔔 Нажмите, чтобы звук заработал",
+    soundTapHint: "Браузер включает звук только после нажатия на страницу.",
     repeat: "Повторять",
     repeatOnce: "Один раз",
     repeatWeekly: "Регулярно",

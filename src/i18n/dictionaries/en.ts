@@ -230,6 +230,8 @@ export const en: Dictionary = {
     newOrder: "New order: {code} · {bag} × {n}",
     soundOn: "🔔 Sound on",
     soundOff: "🔕 Turn on sound",
+    soundTap: "🔔 Tap to activate sound",
+    soundTapHint: "Browsers only allow sound after you tap or click the page.",
     repeat: "Repeat",
     repeatOnce: "Once",
     repeatWeekly: "Regularly",
