@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { markCollected, toggleBagActive } from "@/app/actions/dashboard";
+import { NewOrderAlert } from "@/components/dashboard/NewOrderAlert";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreForm } from "@/components/dashboard/StoreForm";
 import { StatCard } from "@/components/StatCard";
@@ -8,6 +9,7 @@ import type { SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
 import { CATEGORY_EMOJI } from "@/lib/categories";
+import { latestPaidOrder } from "@/lib/new-orders";
 import { paymentHousekeeping } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
@@ -54,7 +56,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const todayStart = startOfToday(); // midnight, Kazakhstan time
 
-  const [pickups, collectedToday] = await Promise.all([
+  const [pickups, collectedToday, latestOrder] = await Promise.all([
     // Reservations still to be picked up (including ones from earlier today,
     // in case the customer is running late).
     prisma.order.findMany({
@@ -65,6 +67,7 @@ export default async function DashboardPage() {
     prisma.order.count({
       where: { status: "COLLECTED", updatedAt: { gte: todayStart }, bag: { store: { ownerId: user.id } } },
     }),
+    latestPaidOrder(user.id),
   ]);
 
   const allBags = stores.flatMap((store) => store.bags);
@@ -92,12 +95,15 @@ export default async function DashboardPage() {
           </p>
           <h1 className="text-3xl font-bold">{t.title}</h1>
         </div>
-        <Link
-          href="/dashboard/bags/new"
-          className="rounded-xl bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
-        >
-          {t.addBag}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <NewOrderAlert initial={latestOrder} />
+          <Link
+            href="/dashboard/bags/new"
+            className="rounded-xl bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
+          >
+            {t.addBag}
+          </Link>
+        </div>
       </div>
 
       {/* Review status: new stores wait for an admin; rejected ones say why. */}
