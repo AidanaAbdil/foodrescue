@@ -1,0 +1,253 @@
+# FoodRescue — handover
+
+Read this before making any change. It is the state of the project as of **2026-10-02**
+(last commit `c6edddc`, pushed to `github.com/AidanaAbdil/foodrescue`, branch `main`).
+Also read `AGENTS.md` and `README.md`.
+
+---
+
+## 1. What this is
+
+A "Too Good To Go"-style web app for **Kazakhstan**: cafés, bakeries and shops sell
+unsold food in discounted **surprise bags**; customers order and pay online, then pick
+the bag up during a time window by showing a short pickup code.
+
+Two kinds of users:
+- **Customers** browse, search, order and pay, see "My orders", cancel (refund before pickup starts).
+- **Store owners** set up a store, add/edit/hide bags (with photos), see who's coming, mark orders collected.
+
+**Next planned step: putting the site online** (see §9). After that: real Kaspi Pay / Halyk ePay.
+
+---
+
+## 2. Working with the user (important)
+
+- **Beginner with dev tooling.** Explain in plain language, give exact copy-paste commands,
+  say what each step does. Warn against things like `sudo git`.
+- **Native Kazakh speaker** (also reads Russian). She reviews all Kazakh text — ask her, don't
+  suggest an outside reviewer. When adding Kazakh strings, list them in a table for her review.
+- **Git:** commit after each finished feature **and `git push` right after every commit**
+  (her standing instruction). Never commit `.env`, `dev.db`, `uploads/`.
+- **Never wipe her data.** Her own accounts exist in the local DB (a store owner with a store, and a
+  customer). `npm run db:seed` is safe (only replaces the two demo accounts), but don't reset the
+  database or delete users without asking. An earlier version of the seed deleted all users and
+  wiped her account — she noticed.
+- **Brand identity matters** to her: she rejected the original teal for looking like Too Good To Go
+  and chose **Terracotta & Sage** (§6). Don't drift back toward TGTG's look.
+- She decided: Kazakhstan only; Russian + Kazakh + English; online payment only; full refund only
+  before pickup starts; sample stores in Almaty and Astana.
+
+---
+
+## 3. Running it
+
+```bash
+npm install            # also runs prisma generate
+npm run dev            # http://localhost:3000
+npm run db:seed        # refresh demo data (keeps real accounts)
+npx prisma migrate dev --name <change> && npx prisma generate   # after editing schema.prisma
+npx tsc --noEmit && npx eslint src prisma                       # run before every commit
+```
+
+- `.env` (git-ignored) contains only `DATABASE_URL="file:./dev.db"`. Optional: `PAYMENT_PROVIDER`
+  (default `test`). There is no `.env.example` yet (a permission check blocked copying `.env`;
+  writing one from scratch is fine if wanted).
+- **Demo accounts** (password `password123`): `customer@example.com` (Алия Нурланова),
+  `owner@example.com` (Ерлан Сейтжанов, owns 4 sample stores: 2 Almaty, 2 Astana).
+
+### Environment quirks (her Mac)
+- Node **24.21** (Prisma 7 CLI needs ≥20.19; an old Node 20.17 caused crashes earlier). If you see
+  `NODE_MODULE_VERSION` errors: `npm rebuild better-sqlite3`.
+- **`head` is not the usual command** on this machine (it's a Perl HTTP tool). Use `sed -n 1,20p`.
+- BSD tools: no `cat -A`; `sed -i ''` syntax. zsh: unquoted globs like `--include=*.tsx` fail.
+- No Homebrew, no `gh` CLI. Git pushes over HTTPS with her stored credentials.
+- `sqlite3` CLI does **not** enforce foreign keys unless you run `PRAGMA foreign_keys=ON;` first.
+
+---
+
+## 4. Stack — and "this is not the Next.js you know"
+
+- **Next.js 16.3** (App Router, Turbopack), **React 19.2**, **Tailwind CSS 4**, **TypeScript**.
+- **Prisma 7** with the `prisma-client` generator → `src/generated/prisma` (git-ignored),
+  SQLite via `@prisma/adapter-better-sqlite3`. Config in `prisma.config.ts`.
+- `AGENTS.md` says: read `node_modules/next/dist/docs/` before writing Next code. Things already
+  relied on:
+  - `params` / `searchParams` are **Promises**; typed with global `PageProps<"/route">`,
+    `LayoutProps`, `RouteContext`.
+  - `cookies()` / `headers()` are async; cookies can only be **set** in Server Actions / Route Handlers.
+  - `redirect()` throws — keep it outside `try/catch`.
+  - Server Action files (`"use server"`) may **only export async functions** (constants live in `src/lib`).
+  - Server Action body limit raised to 5 MB in `next.config.ts` (photo uploads).
+  - `public/` files are only reliably served if present at build time → uploads use a route handler.
+  - Middleware is now called **proxy** (not used yet).
+- No external auth/i18n/validation libraries — all hand-rolled and small (see below).
+
+---
+
+## 5. Architecture map
+
+```
+prisma/schema.prisma        User, Session, Store, SurpriseBag, Order, Payment (+ enums)
+prisma/seed.ts              demo data (Almaty/Astana, tenge); only touches DEMO_EMAILS
+src/app/                    pages; each folder is a URL
+  page.tsx                  home: hero, search, city filter, near-me, categories, grid
+  bags/[id]/page.tsx        bag details + ReserveForm
+  orders/page.tsx           customer's orders (pending/upcoming/past), pay/cancel
+  pay/test/[paymentId]/     TEST payment page (stand-in for Kaspi/Halyk)
+  dashboard/…               store owner: stats, pickups, bag list, new/edit bag, store setup
+  login/, signup/           auth pages (support ?next= return path)
+  uploads/[file]/route.ts   serves uploaded photos
+  not-found.tsx             localized 404
+  actions/                  Server Actions: auth, orders, payments, dashboard, photos, locale
+src/lib/
+  session.ts                sessions, getCurrentUser (cached), requireUser/requireOwner, safeReturnPath
+  password.ts               scrypt hashing (node:crypto)
+  payments/service.ts       the payment state machine (holds, confirm, fail, cancel, refund)
+  payments/provider.ts      provider interface + selection (PAYMENT_PROVIDER)
+  payments/test-provider.ts fake provider
+  uploads.ts                save/validate/delete/read photos in ./uploads
+  format.ts                 price input parsing (tenge→tiyn), discount %
+  geo.ts                    haversine km, coords parsing
+  categories.ts             category emoji + list (names are in dictionaries)
+  orders.ts                 MAX_PER_ORDER = 3
+src/i18n/                   config, server (getI18n), client (useI18n), shared (formatters), dictionaries
+src/components/             Header, MobileMenu, LanguageSwitcher, BagCard, StatCard, ReserveForm,
+                            auth/*, dashboard/* (BagForm, PhotoField, StoreSetupForm, LocationPicker…),
+                            search/NearMeButton
+```
+
+Pattern: **Server Components query Prisma directly**; mutations are **Server Actions** used as
+form `action`s (work without JS too); client components only where interaction needs it.
+
+---
+
+## 6. Key decisions and conventions
+
+### Money, time, units (Kazakhstan)
+- Prices are **Int in tiyn** (1 ₸ = 100 tiyn). Owners type whole tenge (`1490`, `1 490`);
+  `parsePrice` converts. Display: `f.price()` → "1 490 ₸" (no decimals).
+- **All times are Kazakhstan time, UTC+5 (`Asia/Almaty`)**, regardless of server clock:
+  parse form dates with `parseLocalDateTime`, "today" with `startOfToday()`, format with `f.time/f.day`.
+  Never use `new Date(y, m, d)` / `toLocaleTimeString()` without the time zone.
+- Distances in **km**; 24-hour clock.
+
+### Languages (`src/i18n`)
+- Locale from cookie `locale` (set by the РУС · ҚАЗ · ENG switcher), else `Accept-Language`, else **ru**.
+  URLs are not localized (trade-off: weaker SEO for kk/en; could move to `/kk/...` later).
+- `dictionaries/ru.ts` is the source of truth; `kk.ts` and `en.ts` are typed `Dictionary`, so
+  **missing keys fail `tsc`**. Server: `const { dict, f, fill, plural } = await getI18n()`.
+  Client: `useI18n()`. Server Actions return already-translated error strings.
+- Placeholders `{n}`, `{store}` via `fill()`; plurals via `plural(n, forms)` (Intl.PluralRules;
+  Russian needs one/few/many).
+- **Kazakh grammar rules learned:**
+  - Don't attach case endings to numbers/times in templates ("3-ге" is wrong, should be "3-ке";
+    it varies). Rephrase instead, e.g. "Төлеу мерзімі: {time}".
+  - Kazakh puts the number **inside** the sentence: stat labels are templates like
+    `"Бүгін {n} тапсырыс берілді"`; `StatCard` renders text-before / big number / text-after.
+- Glossary she chose for Kazakh: **дүкен** (store), **алып кету** (pickup), **тапсырыс беру**
+  (to order), **тосын сый пакеті** (surprise bag), **Жеке парақша** (dashboard),
+  tagline **"Тағам қоқысқа емес, дастарқанға лайық."**
+- Russian search treats ё = е.
+
+### Brand / UI
+- Colors are tokens in `src/app/globals.css`: `brand` #c2553a (terracotta), `brand-dark` #8f3b26,
+  `brand-light` #e3ebdd (soft sage), `accent` #5e7d5a (sage), page bg #faf6f1. Chosen to pass
+  WCAG AA with white text; terracotta text on the page bg is too faint → use `brand-dark` there.
+- Font Geist with `cyrillic` + `cyrillic-ext` (Kazakh letters).
+- Header: inline links on `lg+`, ☰ `MobileMenu` below. Check layouts at 375 px width.
+
+### Auth & sessions
+- Random 32-byte token in an httpOnly cookie `session`; DB stores only its SHA-256 (`Session.tokenHash`),
+  30-day expiry. `secure` only in production.
+- Login uses one generic error message and a dummy hash for unknown emails (no account enumeration).
+- `?next=` return paths pass through `safeReturnPath` (blocks `//evil.com`).
+- Roles: CUSTOMER, STORE_OWNER (ADMIN exists in schema, unused). Sign-up can't create ADMIN.
+
+### Orders & payments (`src/lib/payments/service.ts`)
+```
+order ──► PENDING_PAYMENT (bag held 15 min, Order.expiresAt)
+            ├─ paid ─────────► RESERVED ──► COLLECTED (owner marks)
+            │                    └─ cancel before pickupStart ─► CANCELLED + refund
+            └─ declined / timed out ─► EXPIRED (stock released)
+late payment on an EXPIRED order → re-take stock if available, else automatic refund
+```
+- **Every state change is a conditional `updateMany` (`where: { status: … }`)**, so double clicks,
+  races and late callbacks can't oversell, pay, refund or release stock twice. Keep this pattern.
+- Stock is held by decrementing `quantityAvailable` in the same conditional update that checks it.
+- Expiry has **no background job**: `releaseExpiredHolds()` runs at the top of pages that show stock
+  (home, bag page, orders, dashboard, pay page, reserveBag).
+- When a hold expires the **Payment stays PENDING on purpose** (customer may still pay at the
+  provider). This was a real bug found in testing — don't "tidy" it to FAILED.
+- Provider interface: `createPayment`, `resumeUrl`, `refund`. Only `test` exists. It throws in
+  production unless `ALLOW_TEST_PAYMENTS=true`.
+- Pickup codes: 2 Latin letters (no I/O) + 4 digits, unique, shown only after payment.
+- Store dashboard shows only paid orders; "reserved" counts RESERVED+COLLECTED.
+
+### Photos (`src/lib/uploads.ts`)
+- Picked in `PhotoField`, shrunk in the browser (≤1600 px JPEG, EXIF rotation), uploaded immediately
+  via `uploadBagPhoto`; URL travels in hidden `imageUrl`. Server checks magic bytes (JPEG/PNG/WebP),
+  ≤4 MB, random UUID names, saves to `./uploads` (git-ignored), served by `/uploads/[file]` with
+  immutable caching + `nosniff`. `saveBag` only accepts the bag's current photo or an existing
+  upload; replaced/removed uploads are deleted. Sample data uses Unsplash (allowed in `next.config.ts`).
+
+### Location / search
+- Customers: "Near me" = browser geolocation → `?near=lat,lng` (3 decimals) → sorted by km.
+- Owners set store coordinates with "use my current location" (setup form or dashboard banner).
+  No address geocoding.
+- Filtering happens in JS after one query (fine at current scale; move to SQL when large).
+
+### Security checklist used everywhere
+Ownership checks inside every owner action (`store: { ownerId: user.id }`), server-side validation
+of every field, prices/amounts computed on the server, no user-supplied URLs rendered by `next/image`.
+
+---
+
+## 7. How things were tested (no test suite in the repo yet)
+
+- `npx tsc --noEmit` + `npx eslint src prisma` before every commit.
+- End-to-end scripts (Node `fetch`) that submit the **real forms the way a no-JS browser does**:
+  fetch the page, copy the form's hidden `$ACTION_*` inputs, add fields, POST with `redirect: "manual"`,
+  carry the `session` cookie. Used for auth, reservations (incl. 6 parallel orders for the last bag),
+  dashboard ownership, i18n pages in all 3 locales, and all payment paths.
+- Headless Chrome via the DevTools protocol (`--remote-debugging-port`) for screenshots, geolocation
+  override, and file uploads (`DOM.setFileInputFiles`). Check `document.documentElement.scrollWidth`
+  for horizontal overflow at 375 px.
+- Gotcha: the first `<form>` on many pages is the **language switcher**, and a hidden **Log out**
+  submit button exists in the mobile menu — select forms/buttons precisely in scripts.
+- Clean up test users/bags/uploads afterwards (they were). Those scripts were not saved to the repo;
+  turning them into a real test suite (e.g. Playwright) would be valuable.
+
+---
+
+## 8. Known gaps / TODO
+
+- **Not deployed.** SQLite file + local `uploads/` folder only.
+- **Real payments**: needs her ИП, a live HTTPS site, a Kaspi Pay contract (Kaspi's API also requires
+  an IPSec VPN tunnel from the server) and/or Halyk ePay (use its hosted payment page to avoid PCI DSS).
+  Then add a provider in `src/lib/payments/` + a webhook route calling `confirmPayment`/`failPayment`
+  (verify signatures!).
+- If a provider **refund call fails**, the order is already CANCELLED but Payment stays PAID — needs
+  retry/alerting.
+- No background job for expiries; abandoned uploads aren't cleaned up.
+- Missing features: **password reset**, **editing store details** (name/address/location after setup),
+  email/SMS notifications, admin tools, login **rate limiting**, store time zones (all UTC+5 assumed),
+  favourites, store pages.
+- Localized URLs for SEO (`/kk/…`) if search ranking matters.
+- New Kazakh strings for **payments** and **photos** were sent to her for review — check whether she
+  replied with corrections.
+
+---
+
+## 9. Suggested next step: deployment
+
+Things to decide/do with her (explain each in plain language):
+1. **Hosting** for a Next.js 16 app with Server Actions (e.g. Vercel, or a VPS in Kazakhstan —
+   Kaspi's VPN requirement may favour a VPS with a fixed IP).
+2. **Database**: move from SQLite to Postgres (change Prisma provider/adapter, new migrations,
+   `DATABASE_URL`).
+3. **Photo storage**: replace disk in `src/lib/uploads.ts` with S3-compatible storage (e.g.
+   Cloudflare R2); add its host to `images.remotePatterns`.
+4. **HTTPS + domain**; session cookie becomes `secure` automatically in production.
+5. **Env vars**: `DATABASE_URL`, `PAYMENT_PROVIDER` (test provider is blocked in production unless
+   `ALLOW_TEST_PAYMENTS=true` — only for a private staging site).
+6. Production build check: `npm run build` hasn't been run yet — do that first and fix anything it finds.
