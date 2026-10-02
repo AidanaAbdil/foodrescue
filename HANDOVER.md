@@ -318,6 +318,12 @@ Still open:
   500 error by design (no stock is held).
 - No background jobs: expiries, refund retries and upload clean-up run during page requests.
   Fine at this size; use a scheduled job once deployed.
+- **Store notifications (decided direction, not built):** today stores only see new orders while the
+  dashboard is open. She prefers a **staff app** approach (like Too Good To Go's store app): staff
+  install the app on a phone/tablet, get push notifications for new orders and a "pack N bags
+  today" reminder before pickup, and confirm pickups there. Telegram bot was discussed as an
+  alternative; cash-register (POS) integration only for big chains, much later. Needs the site
+  deployed (push needs an always-on server with HTTPS).
 - Features not built yet: push/email/SMS notifications, admin tools, store time zones (all UTC+5),
   favourites, public store pages, address geocoding, automated test suite (Playwright).
 - Localized URLs for SEO (`/kk/…`) if search ranking matters.
