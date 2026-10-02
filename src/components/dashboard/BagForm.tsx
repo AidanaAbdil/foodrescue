@@ -7,6 +7,7 @@ import { FormField, inputClass, submitButtonClass } from "@/components/auth/Form
 import { PhotoField } from "@/components/dashboard/PhotoField";
 import { useI18n } from "@/i18n/client";
 import { CATEGORY_EMOJI, CATEGORY_LIST } from "@/lib/categories";
+import { ALLERGENS } from "@/lib/labels";
 
 type Props = {
   stores: { id: string; name: string }[];
@@ -68,6 +69,27 @@ export function BagForm({ stores, bagId, defaults }: Props) {
         </select>
       </Field>
 
+      <fieldset>
+        <legend className="text-sm font-medium text-stone-700">{dict.labels.title}</legend>
+        <p className="text-sm text-stone-500">{dict.labels.hint}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(["isHalal", "isVegetarian", "isVegan"] as const).map((name) => (
+            <Check key={name} name={name} value="true" defaultChecked={values[name] === "true"}>
+              {dict.labels[name === "isHalal" ? "halal" : name === "isVegetarian" ? "vegetarian" : "vegan"]}
+            </Check>
+          ))}
+        </div>
+        <p className="mt-3 text-sm font-medium text-stone-700">{dict.labels.mayContain}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {ALLERGENS.map((code) => (
+            <Check key={code} name="allergens" value={code}
+              defaultChecked={(values.allergens ?? "").split(",").includes(code)}>
+              {dict.labels.allergens[code]}
+            </Check>
+          ))}
+        </div>
+      </fieldset>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <FormField name="originalPrice" label={t.formOriginalPrice} inputMode="decimal" required
           defaultValue={values.originalPrice} error={errors.originalPrice} placeholder="4500" />
@@ -99,6 +121,18 @@ export function BagForm({ stores, bagId, defaults }: Props) {
         </button>
       </div>
     </form>
+  );
+}
+
+// A checkbox styled as a toggle chip.
+function Check({ name, value, defaultChecked, children }: {
+  name: string; value: string; defaultChecked: boolean; children: React.ReactNode;
+}) {
+  return (
+    <label className="cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium text-stone-700 ring-1 ring-stone-300 transition has-checked:bg-accent has-checked:text-white has-checked:ring-accent">
+      <input type="checkbox" name={name} value={value} defaultChecked={defaultChecked} className="sr-only" />
+      {children}
+    </label>
   );
 }
 

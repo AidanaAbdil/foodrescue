@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Store, SurpriseBag } from "@/generated/prisma/client";
+import { FoodLabels } from "@/components/FoodLabels";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { discountPercent } from "@/lib/format";
@@ -69,6 +70,7 @@ export async function BagCard({ bag, distance }: Props) {
           </svg>
           {f.pickupWindow(bag.pickupStart, bag.pickupEnd)}
         </p>
+        <FoodLabels bag={bag} className="mt-2" />
 
         <div className="mt-4 flex items-end justify-between border-t border-stone-100 pt-3">
           <span className="text-xs font-medium text-stone-500">

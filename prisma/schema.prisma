@@ -138,6 +138,12 @@ model SurpriseBag {
   originalPrice Int // e.g. 450000 = 4 500 ₸ worth of food
   price         Int // e.g. 149000 = 1 490 ₸ the customer pays
 
+  // Food labels set by the store (see src/lib/labels.ts).
+  isHalal      Boolean @default(false)
+  isVegetarian Boolean @default(false)
+  isVegan      Boolean @default(false) // vegan bags are always vegetarian too
+  allergens    String  @default("") // "may contain", comma-separated codes, e.g. "GLUTEN,MILK"
+
   quantityAvailable Int      @default(1) // goes down as orders come in
   pickupStart       DateTime
   pickupEnd         DateTime

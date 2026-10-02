@@ -207,6 +207,12 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Food labels
+- `SurpriseBag.isHalal / isVegetarian / isVegan` + `allergens` (comma-separated codes from
+  `ALLERGENS` in `src/lib/labels.ts`). Vegan ⇒ vegetarian (enforced in `saveBag`). Chips via
+  `FoodLabels`; homepage filters `?halal=1&veg=1&vegan=1`; the bag page always shows an allergy note.
+- Pickup windows may cross midnight (end before start = next day), max 12 hours.
+
 ### Location / search
 - Customers: "Near me" = browser geolocation → `?near=lat,lng` (3 decimals) → sorted by km.
 - Owners set store coordinates with "use my current location" (setup form, dashboard banner, or the

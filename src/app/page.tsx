@@ -30,6 +30,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const city = typeof params.city === "string" ? params.city : "";
   const selected = isCategory(params.category) ? params.category : undefined;
   const near = parseCoords(params.near);
+  // Food label filters: ?halal=1, ?veg=1 (vegetarian, incl. vegan), ?vegan=1
+  const halal = params.halal === "1";
+  const veg = params.veg === "1";
+  const vegan = params.vegan === "1";
   await paymentHousekeeping(); // bags held by unpaid orders past their deadline go back on sale
 
   const bags = await prisma.surpriseBag.findMany({
@@ -45,6 +49,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const shown = bags
     .filter((bag) => !selected || bag.category === selected)
     .filter((bag) => !city || bag.store.city === city)
+    .filter((bag) => (!halal || bag.isHalal) && (!veg || bag.isVegetarian) && (!vegan || bag.isVegan))
     .filter((bag) => {
       const text = normalize(`${bag.title} ${bag.description ?? ""} ${bag.store.name}`);
       return words.every((word) => text.includes(word));
@@ -60,7 +65,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   if (near) shown.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
 
   // Build a link to this page with some filters changed (undefined = remove).
-  const current = { q, city, category: selected, near: params.near as string | undefined };
+  const current = {
+    q,
+    city,
+    category: selected,
+    near: params.near as string | undefined,
+    halal: halal ? "1" : undefined,
+    veg: veg ? "1" : undefined,
+    vegan: vegan ? "1" : undefined,
+  };
   const hrefWith = (changes: Partial<typeof current>) => {
     const merged = { ...current, ...changes };
     const query = new URLSearchParams(
@@ -68,7 +81,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     ).toString();
     return query ? `/?${query}` : "/";
   };
-  const isFiltered = Boolean(q || city || selected);
+  const isFiltered = Boolean(q || city || selected || halal || veg || vegan);
 
   const totalSavings = bags.reduce(
     (sum, bag) => sum + (bag.originalPrice - bag.price) * bag.quantityAvailable,
@@ -96,6 +109,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         {/* A plain GET form: submitting it just updates the URL's ?q= and ?city=. */}
         <form action="/#browse" className="mt-4 flex flex-col gap-3 sm:flex-row">
           {selected && <input type="hidden" name="category" value={selected} />}
+          {halal && <input type="hidden" name="halal" value="1" />}
+          {veg && <input type="hidden" name="veg" value="1" />}
+          {vegan && <input type="hidden" name="vegan" value="1" />}
           {near && <input type="hidden" name="near" value={current.near} />}
           <label className="relative flex-1">
             <span className="sr-only">{t.searchLabel}</span>
@@ -140,10 +156,23 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           ))}
         </nav>
 
+        {/* Food label filters: each chip switches its filter on or off. */}
+        <nav className="mt-1 flex gap-2 overflow-x-auto pb-2" aria-label={dict.labels.title}>
+          <FilterChip href={hrefWith({ halal: halal ? undefined : "1" })} active={halal}>
+            {dict.labels.halal}
+          </FilterChip>
+          <FilterChip href={hrefWith({ veg: veg ? undefined : "1" })} active={veg}>
+            🌱 {dict.labels.vegetarian}
+          </FilterChip>
+          <FilterChip href={hrefWith({ vegan: vegan ? undefined : "1" })} active={vegan}>
+            🌱 {dict.labels.vegan}
+          </FilterChip>
+        </nav>
+
         {isFiltered && (
           <p className="mt-2 text-sm text-stone-600">
             {plural(shown.length, t.found)}{" "}
-            <Link href={hrefWith({ q: undefined, city: undefined, category: undefined })} scroll={false}
+            <Link href={hrefWith({ q: undefined, city: undefined, category: undefined, halal: undefined, veg: undefined, vegan: undefined })} scroll={false}
               className="font-medium text-brand-dark underline underline-offset-2">
               {t.clearFilters}
             </Link>

@@ -57,6 +57,9 @@ async function main() {
             title: "Хлебный сюрприз",
             description: "Хлеб и выпечка, оставшиеся за сегодня.",
             category: "BAKERY",
+            isHalal: true,
+            isVegetarian: true,
+            allergens: "MILK,GLUTEN,EGGS,SESAME",
             imageUrl: photo("1509440159596-0249088772ff"),
             originalPrice: tenge(4500),
             price: tenge(1490),
@@ -67,6 +70,9 @@ async function main() {
           {
             title: "Сладкая коробка",
             category: "BAKERY",
+            isHalal: true,
+            isVegetarian: true,
+            allergens: "NUTS,MILK,GLUTEN,EGGS",
             imageUrl: photo("1578985545062-69928b1d9587"),
             originalPrice: tenge(3900),
             price: tenge(1290),
@@ -94,6 +100,9 @@ async function main() {
           {
             title: "Фрукты и овощи",
             category: "PRODUCE",
+            isHalal: true,
+            isVegetarian: true,
+            isVegan: true,
             imageUrl: photo("1610832958506-aa56368176cf"),
             originalPrice: tenge(6000),
             price: tenge(1990),
@@ -131,6 +140,9 @@ async function main() {
         create: {
           title: "Обед-сюрприз",
           category: "MEALS",
+          isHalal: true,
+          isVegetarian: true,
+          allergens: "EGGS,SESAME,SOY",
           imageUrl: photo("1546069901-ba9599a7e63c"),
           originalPrice: tenge(5000),
           price: tenge(1690),
@@ -153,6 +165,7 @@ async function main() {
       bags: {
         create: {
           title: "Пицца в конце дня",
+          allergens: "MILK,GLUTEN",
           description: "Пиццы, оставшиеся к закрытию.",
           category: "MIXED",
           imageUrl: photo("1565299624946-b28f40a0ae38"),

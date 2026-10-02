@@ -7,6 +7,7 @@ import { getI18n } from "@/i18n/server";
 import { parseLocalDateTime } from "@/i18n/shared";
 import { isCategory } from "@/lib/categories";
 import { parsePrice } from "@/lib/format";
+import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
@@ -63,6 +64,20 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
       (key) => [key, text(formData, key)],
     ),
   );
+  // Food labels (checkboxes). Vegan always counts as vegetarian.
+  const isVegan = formData.get("isVegan") === "true";
+  const labels = {
+    isHalal: formData.get("isHalal") === "true",
+    isVegetarian: isVegan || formData.get("isVegetarian") === "true",
+    isVegan,
+    allergens: serializeAllergens(formData.getAll("allergens").map(String)),
+  };
+  Object.assign(values, {
+    isHalal: labels.isHalal ? "true" : "",
+    isVegetarian: labels.isVegetarian ? "true" : "",
+    isVegan: labels.isVegan ? "true" : "",
+    allergens: labels.allergens,
+  });
 
   const t = (await getI18n()).dict.errors;
   const errors: Record<string, string> = {};
@@ -86,10 +101,15 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
 
   // The times are Kazakhstan time (UTC+5), whatever the server's clock says.
   const pickupStart = parseLocalDateTime(values.date, values.start);
-  const pickupEnd = parseLocalDateTime(values.date, values.end);
+  let pickupEnd = parseLocalDateTime(values.date, values.end);
+  // An end time before the start means "after midnight" (e.g. 22:00–01:00).
+  if (pickupStart && pickupEnd && pickupEnd <= pickupStart) {
+    pickupEnd = new Date(pickupEnd.getTime() + 24 * 60 * 60 * 1000);
+  }
+  const MAX_WINDOW_MS = 12 * 60 * 60 * 1000; // longer is almost certainly a typo
   if (!pickupStart || !pickupEnd) {
     errors.end = t.pickupMissing;
-  } else if (pickupEnd <= pickupStart) {
+  } else if (pickupEnd.getTime() - pickupStart.getTime() > MAX_WINDOW_MS) {
     errors.end = t.pickupOrder;
   } else if (pickupEnd <= new Date()) {
     errors.end = t.pickupPast;
@@ -116,6 +136,7 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     title: values.title,
     description: values.description || null,
     imageUrl,
+    ...labels,
     category: category!,
     originalPrice: originalPrice!,
     price: price!,

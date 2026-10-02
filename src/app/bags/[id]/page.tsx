@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReserveForm } from "@/components/ReserveForm";
 import { getI18n } from "@/i18n/server";
+import { FoodLabels } from "@/components/FoodLabels";
 import { CATEGORY_EMOJI } from "@/lib/categories";
+import { parseAllergens } from "@/lib/labels";
 import { discountPercent } from "@/lib/format";
 import { MAX_PER_ORDER } from "@/lib/orders";
 import { paymentHousekeeping } from "@/lib/payments/service";
@@ -130,6 +132,17 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
           <h2 className="font-semibold">{t.whatInside}</h2>
           <p className="mt-2 text-sm text-stone-600">
             {bag.description ?? t.defaultDescription} {t.surprise}
+          </p>
+          <FoodLabels bag={bag} className="mt-3" />
+          {/* Allergens matter for safety: always say something. */}
+          <p className="mt-3 text-sm text-stone-600">
+            {parseAllergens(bag.allergens).length > 0 ? (
+              <>
+                <strong className="font-semibold">{dict.labels.mayContain}:</strong>{" "}
+                {parseAllergens(bag.allergens).map((code) => dict.labels.allergens[code]).join(", ")}.
+              </>
+            ) : null}{" "}
+            {dict.labels.noAllergenInfo}
           </p>
         </section>
         <section className="rounded-2xl bg-white p-6 ring-1 ring-stone-200">
