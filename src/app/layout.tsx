@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
+import { ConsentBanner } from "@/components/ConsentBanner";
 import { Header } from "@/components/Header";
 import { Logo } from "@/components/Logo";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
@@ -56,6 +58,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </p>
           )}
           <Header />
+          <ConsentBanner />
 
           <div className="flex-1">{children}</div>
 
@@ -66,6 +69,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-stone-500 sm:flex-row">
               <Logo />
               <p>{dict.footer.tagline}</p>
+              <nav className="flex gap-4">
+                <Link href="/privacy" className="hover:text-brand-dark hover:underline">{dict.footer.privacy}</Link>
+                <Link href="/terms" className="hover:text-brand-dark hover:underline">{dict.footer.terms}</Link>
+              </nav>
             </div>
           </footer>
         </I18nProvider>

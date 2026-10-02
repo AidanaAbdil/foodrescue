@@ -49,13 +49,17 @@ enum PaymentStatus {
 // ─── Models ─────────────────────────────────────────────────────────────────
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String
-  passwordHash String // never store plain-text passwords
-  role         Role     @default(CUSTOMER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String // never store plain-text passwords
+  role           Role      @default(CUSTOMER)
+  // Proof of consent to the terms and personal data processing (required by
+  // Kazakhstan's personal data law). Version = LEGAL_VERSION in src/content/legal.
+  consentAt      DateTime?
+  consentVersion String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Relation fields: not real columns, they let you write
   // `prisma.user.findUnique({ include: { orders: true } })`.

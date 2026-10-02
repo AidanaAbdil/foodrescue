@@ -4,6 +4,7 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { LEGAL_VERSION } from "../src/content/legal";
 import { hashPassword } from "../src/lib/password";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
@@ -32,12 +33,13 @@ async function main() {
 
   // Both demo accounts log in with the password "password123".
   const passwordHash = await hashPassword("password123");
+  const consent = { consentAt: new Date(), consentVersion: LEGAL_VERSION };
 
   const owner = await prisma.user.create({
-    data: { email: "owner@example.com", name: "Ерлан Сейтжанов", passwordHash, role: "STORE_OWNER" },
+    data: { email: "owner@example.com", name: "Ерлан Сейтжанов", passwordHash, role: "STORE_OWNER", ...consent },
   });
   const customer = await prisma.user.create({
-    data: { email: "customer@example.com", name: "Алия Нурланова", passwordHash },
+    data: { email: "customer@example.com", name: "Алия Нурланова", passwordHash, ...consent },
   });
 
   // ── Almaty ────────────────────────────────────────────────────────────────

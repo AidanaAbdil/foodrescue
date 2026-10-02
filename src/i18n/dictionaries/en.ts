@@ -44,6 +44,8 @@ export const en: Dictionary = {
   footer: {
     tagline: "Good food belongs in bellies, not bins.",
     demo: "Demo version: payments are test-only, no money is charged.",
+    privacy: "Privacy",
+    terms: "Terms of use",
   },
   home: {
     eyebrow: "Save food · Save money",
@@ -153,6 +155,9 @@ export const en: Dictionary = {
     signupButton: "Create account",
     signingUp: "Creating account…",
     forgot: "Forgot password?",
+    consent: "I accept the {terms} and consent to the processing of my personal data under the {privacy}.",
+    termsLink: "Terms of use",
+    privacyLink: "Privacy policy",
   },
   errors: {
     name: "Please enter your name.",
@@ -182,6 +187,7 @@ export const en: Dictionary = {
     pickupPast: "The pickup window has already ended. Pick a later time.",
     notYourBag: "This bag doesn't exist or isn't yours.",
     tooManyAttempts: "Too many attempts. Try again in {n} min.",
+    consentRequired: "To sign up, please accept the terms and consent to data processing.",
   },
   dashboard: {
     title: "Dashboard",
@@ -310,6 +316,12 @@ export const en: Dictionary = {
       SOY: "soy",
     },
     noAllergenInfo: "Ingredients vary: if you have an allergy, ask the store.",
+  },
+  consent: {
+    updated: "We've updated our {terms} and {privacy}. Please review them and confirm.",
+    termsLink: "terms of use",
+    privacyLink: "privacy policy",
+    accept: "I agree",
   },
   location: {
     label: "Location on the map (optional)",

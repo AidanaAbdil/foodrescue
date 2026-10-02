@@ -2,7 +2,9 @@
 
 import { useActionState } from "react";
 import { signup } from "@/app/actions/auth";
+import Link from "next/link";
 import { useI18n } from "@/i18n/client";
+import { rich } from "@/i18n/rich";
 import { FormField, submitButtonClass } from "./FormField";
 
 
@@ -72,6 +74,18 @@ export function SignupForm({ next }: { next: string }) {
         hint={t.passwordHint}
         error={errors?.password}
       />
+      <div>
+        <label className="flex items-start gap-3 text-sm text-stone-700">
+          <input type="checkbox" name="consent" value="yes" required className="mt-0.5 size-4 shrink-0 accent-brand" />
+          <span>
+            {rich(t.consent, {
+              terms: <Link href="/terms" target="_blank" className="font-medium text-brand-dark underline">{t.termsLink}</Link>,
+              privacy: <Link href="/privacy" target="_blank" className="font-medium text-brand-dark underline">{t.privacyLink}</Link>,
+            })}
+          </span>
+        </label>
+        {errors?.consent && <p className="mt-1 text-sm text-red-600">{errors.consent}</p>}
+      </div>
       <button type="submit" disabled={pending} className={submitButtonClass}>
         {pending ? t.signingUp : t.signupButton}
       </button>

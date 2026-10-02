@@ -45,7 +45,7 @@ export const getCurrentUser = cache(async () => {
   const session = await prisma.session.findUnique({
     where: { tokenHash: hashToken(token) },
     // Select only safe fields: never send passwordHash anywhere.
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
+    include: { user: { select: { id: true, name: true, email: true, role: true, consentVersion: true } } },
   });
   if (!session) return null;
 

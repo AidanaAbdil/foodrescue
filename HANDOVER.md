@@ -207,6 +207,15 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### Legal pages & consent
+- `/privacy` and `/terms` render `src/content/legal/{ru,kk,en}.ts` (DRAFTS with `[placeholders]` for
+  the ИП details and contact email; lawyer review needed; `LEGAL_IS_DRAFT` shows a draft note).
+- Sign-up requires a consent checkbox; `User.consentAt/consentVersion` record it. `ConsentBanner`
+  asks logged-in users without the current `LEGAL_VERSION` to agree (`acceptTerms`). Bump
+  `LEGAL_VERSION` when the texts change meaningfully.
+- `rich()` in `src/i18n/rich.tsx` puts links inside translated sentences (cases differ per language).
+- The terms promise a full refund if a store can't hand over an order → admins can cancel+refund.
+
 ### Food labels
 - `SurpriseBag.isHalal / isVegetarian / isVegan` + `allergens` (comma-separated codes from
   `ALLERGENS` in `src/lib/labels.ts`). Vegan ⇒ vegetarian (enforced in `saveBag`). Chips via

@@ -5,17 +5,18 @@
 import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
+import { LEGAL_VERSION } from "@/content/legal";
 import { getI18n } from "@/i18n/server";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, siteUrl } from "@/lib/mailer";
 import { clearAttempts, clientIp, recordAttempt, retryAfterMinutes } from "@/lib/rate-limit";
 import { hashResetToken, RESET_HOURS } from "@/lib/reset-tokens";
-import { createSession, deleteSession, safeReturnPath } from "@/lib/session";
+import { createSession, deleteSession, getCurrentUser, safeReturnPath } from "@/lib/session";
 
 export type AuthFormState =
   | {
-      errors?: { name?: string; email?: string; password?: string; form?: string };
+      errors?: { name?: string; email?: string; password?: string; consent?: string; form?: string };
       // Echoed back so the form keeps what the user typed after an error.
       values?: { name?: string; email?: string; role?: string };
     }
@@ -40,12 +41,21 @@ export async function signup(_prev: AuthFormState, formData: FormData): Promise<
   if (name.length < 2) errors.name = t.name;
   if (!EMAIL_PATTERN.test(email)) errors.email = t.email;
   if (password.length < MIN_PASSWORD_LENGTH) errors.password = fill(t.passwordShort, { n: MIN_PASSWORD_LENGTH });
+  // Consent to the terms and personal data processing is required by law.
+  if (formData.get("consent") !== "yes") errors.consent = t.consentRequired;
   if (Object.keys(errors).length > 0) return { errors, values };
 
   let userId: string;
   try {
     const user = await prisma.user.create({
-      data: { name, email, role, passwordHash: await hashPassword(password) },
+      data: {
+        name,
+        email,
+        role,
+        passwordHash: await hashPassword(password),
+        consentAt: new Date(), // proof of consent: when, and to which version
+        consentVersion: LEGAL_VERSION,
+      },
     });
     userId = user.id;
   } catch (error) {
@@ -157,6 +167,16 @@ export async function resetPassword(_prev: ResetState, formData: FormData): Prom
   await clearAttempts("login", user.email);
   await createSession(userId);
   redirect(user.role === "STORE_OWNER" ? "/dashboard" : "/");
+}
+
+// Consent banner: record agreement to the current terms and privacy policy.
+export async function acceptTerms() {
+  const user = await getCurrentUser();
+  if (!user) return;
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { consentAt: new Date(), consentVersion: LEGAL_VERSION },
+  });
 }
 
 export async function logout() {
