@@ -29,6 +29,7 @@ export default async function EditBagPage({ params }: PageProps<"/dashboard/bags
       <p className="mt-1 text-stone-600">{t.editBagSubtitle}</p>
       <div className="mt-6 rounded-2xl bg-white p-6 ring-1 ring-stone-200 sm:p-8">
         <BagForm
+          mode="bag"
           stores={stores}
           bagId={bag.id}
           defaults={{

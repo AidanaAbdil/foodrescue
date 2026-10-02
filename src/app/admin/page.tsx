@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { approveStore, cancelAndRefund, rejectStore } from "@/app/actions/admin";
 import type { Store, StoreStatus } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
-import { paymentHousekeeping } from "@/lib/payments/service";
+import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
@@ -18,7 +18,7 @@ const STATUS_STYLES: Record<StoreStatus, string> = {
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   await requireAdmin();
-  await paymentHousekeeping();
+  await runHousekeeping();
   const { error } = await searchParams;
   const { dict, f } = await getI18n();
   const t = dict.admin;

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { testPayDecline, testPaySucceed } from "@/app/actions/payments";
 import { getI18n } from "@/i18n/server";
 import { prisma } from "@/lib/prisma";
-import { paymentHousekeeping } from "@/lib/payments/service";
+import { runHousekeeping } from "@/lib/housekeeping";
 import { requireUser } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function TestPaymentPage({ params }: PageProps<"/pay/test/[paymentId]">) {
   const { paymentId } = await params;
   const user = await requireUser(`/pay/test/${paymentId}`);
-  await paymentHousekeeping();
+  await runHousekeeping();
   const { dict, f, fill } = await getI18n();
   const t = dict.pay;
 

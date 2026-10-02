@@ -4,14 +4,15 @@
 
 import { redirect } from "next/navigation";
 import { getI18n } from "@/i18n/server";
-import { parseLocalDateTime } from "@/i18n/shared";
+import { parseLocalDateTime, toDateInput } from "@/i18n/shared";
 import { isCategory } from "@/lib/categories";
 import { parsePrice } from "@/lib/format";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
-import { deleteUpload, uploadExists } from "@/lib/uploads";
+import { publishScheduledBags, parseWeekdays, untouchedUpcoming } from "@/lib/schedules";
+import { deleteUploadIfUnused, uploadExists } from "@/lib/uploads";
 
 export type FormState =
   | {
@@ -60,10 +61,15 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
   redirect("/dashboard");
 }
 
-// Create a new bag (no bagId) or update an existing one.
+// Saves the bag form. Three cases:
+//   - a one-off bag: new (no bagId) or edited (bagId)
+//   - a new regular bag (repeat=1): creates a BagSchedule
+//   - an edited regular bag (scheduleId)
 export async function saveBag(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireOwner();
   const bagId = text(formData, "bagId");
+  const scheduleId = text(formData, "scheduleId");
+  const isSchedule = Boolean(scheduleId) || (!bagId && formData.get("repeat") === "1");
   const values = Object.fromEntries(
     ["storeId", "title", "description", "category", "originalPrice", "price", "quantity", "date", "start", "end", "imageUrl"].map(
       (key) => [key, text(formData, key)],
@@ -77,11 +83,15 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     isVegan,
     allergens: serializeAllergens(formData.getAll("allergens").map(String)),
   };
+  // Weekdays for regular bags (ISO 1 = Monday … 7 = Sunday).
+  const weekdays = parseWeekdays(formData.getAll("weekdays").map(String).join(","));
   Object.assign(values, {
     isHalal: labels.isHalal ? "true" : "",
     isVegetarian: labels.isVegetarian ? "true" : "",
     isVegan: labels.isVegan ? "true" : "",
     allergens: labels.allergens,
+    repeat: isSchedule ? "1" : "",
+    weekdays: weekdays.join(","),
   });
 
   const t = (await getI18n()).dict.errors;
@@ -105,8 +115,10 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
   if (!Number.isInteger(quantity) || quantity < 0 || quantity > 100) errors.quantity = t.quantity;
 
   // The times are Kazakhstan time (UTC+5), whatever the server's clock says.
-  const pickupStart = parseLocalDateTime(values.date, values.start);
-  let pickupEnd = parseLocalDateTime(values.date, values.end);
+  // Regular bags have no date: check the times against today.
+  const date = isSchedule ? toDateInput(new Date()) : values.date;
+  const pickupStart = parseLocalDateTime(date, values.start);
+  let pickupEnd = parseLocalDateTime(date, values.end);
   // An end time before the start means "after midnight" (e.g. 22:00–01:00).
   if (pickupStart && pickupEnd && pickupEnd <= pickupStart) {
     pickupEnd = new Date(pickupEnd.getTime() + 24 * 60 * 60 * 1000);
@@ -116,27 +128,34 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     errors.end = t.pickupMissing;
   } else if (pickupEnd.getTime() - pickupStart.getTime() > MAX_WINDOW_MS) {
     errors.end = t.pickupOrder;
-  } else if (pickupEnd <= new Date()) {
+  } else if (!isSchedule && pickupEnd <= new Date()) {
     errors.end = t.pickupPast;
   }
+  if (isSchedule && weekdays.length === 0) errors.weekdays = t.pickDays;
 
-  let existing = null;
+  let existingBag = null;
   if (bagId) {
-    existing = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id } } });
-    if (!existing) errors.form = t.notYourBag;
+    existingBag = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id } } });
+    if (!existingBag) errors.form = t.notYourBag;
   }
+  let existingSchedule = null;
+  if (scheduleId) {
+    existingSchedule = await prisma.bagSchedule.findFirst({ where: { id: scheduleId, store: { ownerId: user.id } } });
+    if (!existingSchedule) errors.form = t.notYourBag;
+  }
+  const previousImage = existingBag?.imageUrl ?? existingSchedule?.imageUrl ?? null;
 
-  // The photo must be the bag's current one, or a file we stored via
-  // uploadBagPhoto. Any other URL (another site, someone's file) is refused.
+  // The photo must be the current one, or a file we stored via uploadBagPhoto.
+  // Any other URL (another site, someone's file) is refused.
   const imageUrl = values.imageUrl || null;
-  if (imageUrl && imageUrl !== existing?.imageUrl && !(await uploadExists(imageUrl))) {
+  if (imageUrl && imageUrl !== previousImage && !(await uploadExists(imageUrl))) {
     errors.form ??= (await getI18n()).dict.photo.missing;
-    values.imageUrl = existing?.imageUrl ?? ""; // don't echo an unknown URL back into the form
+    values.imageUrl = previousImage ?? ""; // don't echo an unknown URL back into the form
   }
 
   if (Object.keys(errors).length > 0) return { errors, values };
 
-  const data = {
+  const common = {
     storeId: values.storeId,
     title: values.title,
     description: values.description || null,
@@ -145,18 +164,61 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     category: category!,
     originalPrice: originalPrice!,
     price: price!,
-    quantityAvailable: quantity,
-    pickupStart: pickupStart!,
-    pickupEnd: pickupEnd!,
   };
 
-  if (existing) {
+  if (isSchedule) {
+    const scheduleData = { ...common, quantity, weekdays: weekdays.join(","), startTime: values.start, endTime: values.end };
+    let id = existingSchedule?.id;
+    if (existingSchedule) {
+      await prisma.bagSchedule.update({ where: { id: existingSchedule.id }, data: scheduleData });
+      // Upcoming bags nobody has ordered yet are re-published with the new details.
+      await prisma.surpriseBag.deleteMany({ where: untouchedUpcoming(existingSchedule.id) });
+    } else {
+      id = (await prisma.bagSchedule.create({ data: scheduleData })).id;
+    }
+    await publishScheduledBags([id!]);
+  } else if (existingBag) {
     // Existing orders keep the price they paid (Order.totalPrice).
-    await prisma.surpriseBag.update({ where: { id: existing.id }, data });
-    // Replaced or removed the photo: delete the old file (if it was an upload).
-    if (existing.imageUrl !== imageUrl) await deleteUpload(existing.imageUrl);
+    await prisma.surpriseBag.update({
+      where: { id: existingBag.id },
+      data: { ...common, quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
+    });
   } else {
-    await prisma.surpriseBag.create({ data });
+    await prisma.surpriseBag.create({
+      data: { ...common, quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
+    });
+  }
+  // Replaced or removed the photo: delete the old file if nothing uses it now.
+  if (previousImage && previousImage !== imageUrl) await deleteUploadIfUnused(previousImage);
+  redirect("/dashboard");
+}
+
+// Pause a regular bag (hides its upcoming, not-yet-ordered bags) or resume it.
+export async function toggleSchedule(formData: FormData) {
+  const user = await requireOwner();
+  const schedule = await prisma.bagSchedule.findFirst({
+    where: { id: text(formData, "scheduleId"), store: { ownerId: user.id } },
+  });
+  if (schedule) {
+    const isActive = !schedule.isActive;
+    await prisma.bagSchedule.update({ where: { id: schedule.id }, data: { isActive } });
+    await prisma.surpriseBag.updateMany({ where: untouchedUpcoming(schedule.id), data: { isActive } });
+    if (isActive) await publishScheduledBags([schedule.id]);
+  }
+  redirect("/dashboard");
+}
+
+// Delete a regular bag. Upcoming bags nobody ordered go too; bags with orders
+// stay (they just stop being linked to the schedule).
+export async function deleteSchedule(formData: FormData) {
+  const user = await requireOwner();
+  const schedule = await prisma.bagSchedule.findFirst({
+    where: { id: text(formData, "scheduleId"), store: { ownerId: user.id } },
+  });
+  if (schedule) {
+    await prisma.surpriseBag.deleteMany({ where: untouchedUpcoming(schedule.id) });
+    await prisma.bagSchedule.delete({ where: { id: schedule.id } });
+    await deleteUploadIfUnused(schedule.imageUrl);
   }
   redirect("/dashboard");
 }

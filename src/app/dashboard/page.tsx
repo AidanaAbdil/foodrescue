@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { markCollected, toggleBagActive } from "@/app/actions/dashboard";
+import { deleteSchedule, markCollected, toggleBagActive, toggleSchedule } from "@/app/actions/dashboard";
 import { NewOrderAlert } from "@/components/dashboard/NewOrderAlert";
 import { SetLocationButton } from "@/components/dashboard/SetLocationButton";
 import { StoreForm } from "@/components/dashboard/StoreForm";
@@ -10,7 +10,8 @@ import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { latestPaidOrder } from "@/lib/new-orders";
-import { paymentHousekeeping } from "@/lib/payments/service";
+import { parseWeekdays } from "@/lib/schedules";
+import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DashboardPage() {
   const user = await requireOwner();
-  await paymentHousekeeping();
+  await runHousekeeping();
   const { dict, f, fill } = await getI18n();
   const t = dict.dashboard;
 
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
         // "Reserved" = paid orders only (not unpaid holds, cancelled or expired).
         include: { _count: { select: { orders: { where: { status: { in: ["RESERVED", "COLLECTED"] } } } } } },
       },
+      schedules: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -184,6 +186,61 @@ export default async function DashboardPage() {
         )}
       </section>
 
+      {stores.some((store) => store.schedules.length > 0) && (
+        <section className="mt-10">
+          <h2 className="text-xl font-bold">🔁 {t.schedulesTitle}</h2>
+          <ul className="mt-4 divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-stone-200">
+            {stores.flatMap((store) =>
+              store.schedules.map((schedule) => {
+                const days = parseWeekdays(schedule.weekdays);
+                return (
+                  <li key={schedule.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">
+                        {CATEGORY_EMOJI[schedule.category]} {schedule.title}
+                      </p>
+                      <p className="text-stone-600">
+                        {days.length === 7 ? t.everyDay : days.map((day) => t.weekdays[day - 1]).join(", ")} ·{" "}
+                        {schedule.startTime}–{schedule.endTime} · {fill(t.perDay, { n: schedule.quantity })} ·{" "}
+                        {f.price(schedule.price)}
+                        {showStoreName && ` · ${store.name}`}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        schedule.isActive ? "bg-accent text-white" : "bg-stone-200 text-stone-700"
+                      }`}
+                    >
+                      {schedule.isActive ? t.scheduleActive : t.schedulePaused}
+                    </span>
+                    <div className="flex gap-1">
+                      <Link
+                        href={`/dashboard/schedules/${schedule.id}/edit`}
+                        className="rounded-lg px-3 py-1.5 font-medium text-stone-700 hover:bg-stone-100"
+                      >
+                        {t.edit}
+                      </Link>
+                      <form action={toggleSchedule}>
+                        <input type="hidden" name="scheduleId" value={schedule.id} />
+                        <button type="submit" className="rounded-lg px-3 py-1.5 font-medium text-stone-700 hover:bg-stone-100">
+                          {schedule.isActive ? t.pause : t.resume}
+                        </button>
+                      </form>
+                      <form action={deleteSchedule}>
+                        <input type="hidden" name="scheduleId" value={schedule.id} />
+                        <button type="submit" className="rounded-lg px-3 py-1.5 font-medium text-red-700 hover:bg-red-50">
+                          {t.deleteSchedule}
+                        </button>
+                      </form>
+                    </div>
+                  </li>
+                );
+              }),
+            )}
+          </ul>
+        </section>
+      )}
+
       <section className="mt-10">
         <h2 className="text-xl font-bold">{t.bagsTitle}</h2>
         {allBags.length === 0 ? (
@@ -215,6 +272,11 @@ export default async function DashboardPage() {
                         <div>
                           <p className="font-semibold">
                             {CATEGORY_EMOJI[bag.category]} {bag.title}
+                            {bag.scheduleId && (
+                              <span title={t.fromSchedule} aria-label={t.fromSchedule}>
+                                {" "}🔁
+                              </span>
+                            )}
                           </p>
                           {showStoreName && <p className="text-stone-500">{store.name}</p>}
                         </div>

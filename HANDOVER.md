@@ -207,6 +207,19 @@ late payment on an EXPIRED order → re-take stock if available, else automatic 
   upload; replaced/removed uploads are deleted, and uploads older than a day that no bag uses are
 cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next.config.ts`).
 
+### New-order alerts & regular bags
+- Dashboard `NewOrderAlert` polls `/dashboard/updates` (owner-only JSON: newest paid order) every
+  10 s → pop-up, `router.refresh()`, 🔔 in the tab title, optional Web-Audio chime (button; choice in
+  localStorage). No email/push yet.
+- `BagSchedule` = a regular bag (weekdays "1,…,7" ISO, start/end "HH:MM" Almaty, quantity per day).
+  `publishScheduledBags()` (src/lib/schedules.ts) creates the SurpriseBag for today and tomorrow;
+  `@@unique([scheduleId, scheduleDate])` prevents duplicates. Runs via `runHousekeeping()`
+  (src/lib/housekeeping.ts), which replaced direct `paymentHousekeeping()` calls in pages.
+- Editing a schedule deletes its upcoming, not-yet-ordered bags and re-publishes; pause hides them
+  (ordered bags stay on sale); delete removes them and unlinks ordered ones (`untouchedUpcoming`).
+- Photos can be shared by a schedule and its bags → always use `deleteUploadIfUnused`.
+- `BagForm` has `mode`: "new" (Once/Regularly switch) · "bag" · "schedule".
+
 ### Store approval & admin
 - `Store.status` PENDING → APPROVED / REJECTED (+ `rejectionReason`). New stores start PENDING; only
   APPROVED stores' bags reach the homepage, bag pages (owner/admin can preview) and `reserveBag`.

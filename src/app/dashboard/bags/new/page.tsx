@@ -22,8 +22,10 @@ export default async function NewBagPage() {
       <p className="mt-1 text-stone-600">{t.newBagSubtitle}</p>
       <div className="mt-6 rounded-2xl bg-white p-6 ring-1 ring-stone-200 sm:p-8">
         <BagForm
+          mode="new"
           stores={stores}
           defaults={{
+            weekdays: "1,2,3,4,5,6,7", // a new regular bag starts as every day
             storeId: stores[0].id,
             category: "MIXED",
             quantity: "3",

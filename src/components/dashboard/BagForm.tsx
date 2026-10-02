@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveBag } from "@/app/actions/dashboard";
 import { FormField, inputClass, submitButtonClass } from "@/components/auth/FormField";
 import { PhotoField } from "@/components/dashboard/PhotoField";
@@ -11,15 +11,20 @@ import { ALLERGENS } from "@/lib/labels";
 
 type Props = {
   stores: { id: string; name: string }[];
-  bagId?: string; // set when editing
+  // "new": add a bag (one-off or regular) · "bag": edit one bag · "schedule": edit a regular bag
+  mode: "new" | "bag" | "schedule";
+  bagId?: string;
+  scheduleId?: string;
   defaults: Record<string, string>; // initial field values
 };
 
-export function BagForm({ stores, bagId, defaults }: Props) {
+export function BagForm({ stores, mode, bagId, scheduleId, defaults }: Props) {
   const [state, action, pending] = useActionState(saveBag, undefined);
   const { dict } = useI18n();
   const t = dict.dashboard;
   const values = state?.values ?? defaults;
+  // Regular bag? Chosen with the Once / Regularly switch when adding a bag.
+  const [repeat, setRepeat] = useState(mode === "schedule" || values.repeat === "1");
   const errors = state?.errors ?? {};
   // With one store there's no store picker to show its error next to.
   const formError = errors.form ?? (stores.length > 1 ? undefined : errors.storeId);
@@ -28,6 +33,8 @@ export function BagForm({ stores, bagId, defaults }: Props) {
     // `key` remounts the fields after an error so they show what was submitted.
     <form key={JSON.stringify(values)} action={action} className="space-y-5">
       {bagId && <input type="hidden" name="bagId" value={bagId} />}
+      {scheduleId && <input type="hidden" name="scheduleId" value={scheduleId} />}
+      {mode === "new" && <input type="hidden" name="repeat" value={repeat ? "1" : ""} />}
 
       {formError && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -101,9 +108,44 @@ export function BagForm({ stores, bagId, defaults }: Props) {
 
       <fieldset>
         <legend className="text-sm font-medium text-stone-700">{t.formPickup}</legend>
-        <div className="mt-1 grid gap-4 sm:grid-cols-3">
-          <input aria-label={t.formDate} type="date" name="date" required defaultValue={values.date}
-            className={inputClass(errors.end)} />
+
+        {mode === "new" && (
+          <div className="mt-1 inline-flex rounded-lg bg-stone-100 p-1 text-sm font-medium" role="radiogroup" aria-label={t.repeat}>
+            {[false, true].map((option) => (
+              <button
+                key={String(option)}
+                type="button"
+                role="radio"
+                aria-checked={repeat === option}
+                onClick={() => setRepeat(option)}
+                className={`rounded-md px-4 py-1.5 ${repeat === option ? "bg-white text-brand-dark shadow-sm" : "text-stone-600"}`}
+              >
+                {option ? `🔁 ${t.repeatWeekly}` : t.repeatOnce}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {repeat && (
+          <div className="mt-3">
+            <p className="text-sm text-stone-500">{t.repeatHint}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {t.weekdays.map((label, i) => (
+                <Check key={label} name="weekdays" value={String(i + 1)}
+                  defaultChecked={(values.weekdays ?? "").split(",").includes(String(i + 1))}>
+                  {label}
+                </Check>
+              ))}
+            </div>
+            {errors.weekdays && <p className="mt-1 text-sm text-red-600">{errors.weekdays}</p>}
+          </div>
+        )}
+
+        <div className={`mt-3 grid gap-4 ${repeat ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+          {!repeat && (
+            <input aria-label={t.formDate} type="date" name="date" required defaultValue={values.date}
+              className={inputClass(errors.end)} />
+          )}
           <input aria-label={t.formFrom} type="time" name="start" required defaultValue={values.start}
             className={inputClass(errors.end)} />
           <input aria-label={t.formUntil} type="time" name="end" required defaultValue={values.end}

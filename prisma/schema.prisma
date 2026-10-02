@@ -135,7 +135,8 @@ model Store {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  bags SurpriseBag[]
+  bags      SurpriseBag[]
+  schedules BagSchedule[]
 
   @@index([ownerId])
   @@index([city])
@@ -172,8 +173,45 @@ model SurpriseBag {
 
   orders Order[]
 
+  // Bags published automatically from a regular schedule: which schedule,
+  // and for which day ("2026-10-02", Kazakhstan time).
+  scheduleId   String?
+  schedule     BagSchedule? @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  scheduleDate String?
+
+  @@unique([scheduleId, scheduleDate]) // one bag per schedule per day
   @@index([storeId])
   @@index([isActive, pickupEnd]) // speeds up "available right now" queries
+}
+
+// A regular bag ("every Mon–Fri, 18:00–20:00, 5 bags"). The app publishes a
+// SurpriseBag from it for today and tomorrow (see src/lib/schedules.ts).
+model BagSchedule {
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  category      BagCategory @default(MIXED)
+  imageUrl      String?
+  isHalal       Boolean     @default(false)
+  isVegetarian  Boolean     @default(false)
+  isVegan       Boolean     @default(false)
+  allergens     String      @default("")
+  originalPrice Int // tiyn
+  price         Int // tiyn
+  quantity      Int // bags per day
+  weekdays      String // ISO weekdays, 1 = Monday … 7 = Sunday, e.g. "1,2,3,4,5"
+  startTime     String // "18:00", Kazakhstan time
+  endTime       String // "20:00"; earlier than startTime = after midnight
+  isActive      Boolean     @default(true) // paused schedules publish nothing
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  bags SurpriseBag[]
+
+  @@index([storeId])
 }
 
 model Order {

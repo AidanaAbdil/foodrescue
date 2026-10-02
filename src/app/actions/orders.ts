@@ -8,7 +8,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { MAX_PER_ORDER } from "@/lib/orders";
 import { getPaymentProvider } from "@/lib/payments/provider";
-import { cancelPaidOrder, expireOrder, HOLD_MINUTES, paymentHousekeeping } from "@/lib/payments/service";
+import { runHousekeeping } from "@/lib/housekeeping";
+import { cancelPaidOrder, expireOrder, HOLD_MINUTES } from "@/lib/payments/service";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/session";
 
@@ -41,7 +42,7 @@ export async function reserveBag(_prev: ReserveState, formData: FormData): Promi
   }
 
   // Bags held by unpaid orders that timed out go back on sale first.
-  await paymentHousekeeping();
+  await runHousekeeping();
 
   let created: { orderId: string; paymentId: string; amount: number; description: string } | undefined;
   // A pickup code could (rarely) collide with an existing one; just try again.

@@ -7,7 +7,7 @@ import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI, CATEGORY_LIST, isCategory } from "@/lib/categories";
 import { distanceKm, parseCoords } from "@/lib/geo";
-import { paymentHousekeeping } from "@/lib/payments/service";
+import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 
 const STEP_EMOJI = ["🔍", "📱", "🛍️"];
@@ -34,7 +34,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const halal = params.halal === "1";
   const veg = params.veg === "1";
   const vegan = params.vegan === "1";
-  await paymentHousekeeping(); // bags held by unpaid orders past their deadline go back on sale
+  await runHousekeeping(); // bags held by unpaid orders past their deadline go back on sale
 
   const bags = await prisma.surpriseBag.findMany({
     where: {

@@ -60,11 +60,17 @@ export async function uploadExists(url: string) {
   }
 }
 
-// Delete an uploaded photo that's no longer used. Ignores non-upload URLs
-// (like the Unsplash photos in the sample data) and missing files.
-export async function deleteUpload(url: string | null | undefined) {
+// Delete an uploaded photo once nothing uses it any more. A regular bag's
+// photo is shared by its schedule and every bag published from it, so check
+// all of them. Ignores non-upload URLs (like the sample-data photos).
+export async function deleteUploadIfUnused(url: string | null | undefined) {
   const name = url?.match(UPLOAD_URL)?.[1];
-  if (name) await unlink(path.join(UPLOAD_DIR, name)).catch(() => {});
+  if (!name) return;
+  const [bags, schedules] = await Promise.all([
+    prisma.surpriseBag.count({ where: { imageUrl: url } }),
+    prisma.bagSchedule.count({ where: { imageUrl: url } }),
+  ]);
+  if (bags + schedules === 0) await unlink(path.join(UPLOAD_DIR, name)).catch(() => {});
 }
 
 // Photos uploaded but never saved with a bag (the owner closed the form).
@@ -76,9 +82,12 @@ export async function cleanUpAbandonedUploads() {
   } catch {
     return; // no uploads folder yet
   }
+  const where = { imageUrl: { startsWith: "/uploads/" } };
   const inUse = new Set(
-    (await prisma.surpriseBag.findMany({ where: { imageUrl: { startsWith: "/uploads/" } }, select: { imageUrl: true } }))
-      .map((bag) => bag.imageUrl),
+    [
+      ...(await prisma.surpriseBag.findMany({ where, select: { imageUrl: true } })),
+      ...(await prisma.bagSchedule.findMany({ where, select: { imageUrl: true } })),
+    ].map((row) => row.imageUrl),
   );
   const dayAgo = Date.now() - 86_400_000;
   for (const name of names) {

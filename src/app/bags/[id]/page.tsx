@@ -8,7 +8,7 @@ import { CATEGORY_EMOJI } from "@/lib/categories";
 import { parseAllergens } from "@/lib/labels";
 import { discountPercent } from "@/lib/format";
 import { MAX_PER_ORDER } from "@/lib/orders";
-import { paymentHousekeeping } from "@/lib/payments/service";
+import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, loginUrl } from "@/lib/session";
 
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/bags/[id]">) {
 
 export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
   const { id } = await params;
-  await paymentHousekeeping();
+  await runHousekeeping();
   const [bag, user, { dict, f, fill }] = await Promise.all([
     prisma.surpriseBag.findUnique({ where: { id }, include: { store: true } }),
     getCurrentUser(),
