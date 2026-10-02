@@ -43,6 +43,7 @@ export const en: Dictionary = {
   },
   footer: {
     tagline: "Good food belongs in bellies, not bins.",
+    demo: "Demo version: payments are test-only, no money is charged.",
   },
   home: {
     eyebrow: "Save food · Save money",

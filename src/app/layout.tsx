@@ -24,6 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
     // Pages set their own title; "%s · FoodRescue" adds the brand after it.
     title: { default: dict.meta.title, template: "%s · FoodRescue" },
     description: dict.meta.description,
+    // Demo site (DEMO=true): ask search engines not to list it.
+    ...(process.env.DEMO === "true" && { robots: { index: false, follow: false } }),
     // Installed on an iPhone home screen: open full screen, with this name.
     appleWebApp: { capable: true, title: "FoodRescue", statusBarStyle: "default" },
   };
@@ -48,6 +50,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {/* Makes the language available to client components (useI18n). */}
         <I18nProvider locale={locale} dict={dict}>
+          {process.env.DEMO === "true" && (
+            <p className="bg-amber-100 px-4 pt-[env(safe-area-inset-top)] text-center text-xs font-medium leading-7 text-amber-900">
+              🧪 {dict.footer.demo}
+            </p>
+          )}
           <Header />
 
           <div className="flex-1">{children}</div>

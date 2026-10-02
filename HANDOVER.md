@@ -235,6 +235,15 @@ of every field, prices/amounts computed on the server, no user-supplied URLs ren
   keep-alive connections and fools the test), iPhone tip shows/dismisses, not shown on Android.
 - Push notifications not built yet (natural next step for "your bag is ready").
 
+### Demo link (current way to show the app)
+- `npm run demo` (`scripts/demo.mjs`): `next build` + `next start -p 3001` with `DEMO=true`,
+  `PAYMENT_PROVIDER=test`, `ALLOW_TEST_PAYMENTS=true`, then a Cloudflare quick tunnel
+  (`~/.local/bin/cloudflared`, official signed/notarized binary) → random `*.trycloudflare.com`
+  HTTPS link. `DEMO=true` shows a demo banner (`footer.demo` text), adds noindex meta and a
+  disallow-all `robots.txt`. Verified through the tunnel: private files (.env, dev.db, code, .git)
+  all 404; login/order/pay work; session cookie is Secure.
+- She runs it herself in her own terminal so she controls when the link is open.
+
 ## 7. How things were tested (no test suite in the repo yet)
 
 - `npx tsc --noEmit` + `npx eslint src prisma` before every commit.

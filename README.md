@@ -83,3 +83,17 @@ from `scripts/generate-icons.mjs`), and `public/sw.js`, a service worker that sh
 live. The service worker only runs in production builds (`npm run build && npm start`), and
 installing needs HTTPS (localhost is fine for testing).
 
+## Demo link (share from your Mac)
+
+```bash
+npm run demo
+```
+
+Builds the production version, starts it on port 3001 with a "demo" banner, test payments and
+"don't index" settings, and opens a temporary public HTTPS link through Cloudflare
+(`cloudflared`, installed in `~/.local/bin`). The link is printed in the terminal; it works only
+while that terminal is running and changes every time. Press **Ctrl+C** to stop.
+
+Visitors can only reach the website itself (not your files); anything they sign up with is saved
+in the local database on your Mac. Share the link with friends only.
+
