@@ -288,6 +288,19 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Platform report for the owner (2026-10-03)
+- /admin → "📊 Отчёты" (`/admin/reports?period=week|month|last-month`), admins only.
+  `src/lib/platform-report.ts` (reuses periodRange/platformFeePercent from earnings.ts; orders count
+  on their pickup day). Shows: sales (paid, not refunded), commission (PLATFORM_FEE_PERCENT), owed to
+  stores, refunds; daily sales bars; by city; orders (handed over, waiting, no-shows, cancelled by
+  stores/customers, abandoned payments); bags rescued; growth (new/active/repeat customers, new/active/
+  pending stores, complaints); a table of every store (bags, sales, commission, payout, no-shows,
+  cancellations, complaints, rating).
+- CSV: `/admin/reports/export?period=…` (same escaping as the stores' CSV).
+- The test site runs with PLATFORM_FEE_PERCENT=10 (scripts/test-server.mjs) so tests check the
+  commission maths. tests/e2e/report.spec.ts (35 tests in total).
+- Not built: payout tracking (marking a store as paid), which needs real payments first.
+
 ### Opening hours picker (2026-10-03)
 - Store form: "Указать часы работы" → a row per weekday (open checkbox + two time inputs, "use
   Monday's hours for every day"). Saved in `Store.openingHours` as JSON, 7 entries Monday-first,

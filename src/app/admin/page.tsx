@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { approveStore, cancelAndRefund, rejectStore, resolveReport } from "@/app/actions/admin";
 import { isProblemKind } from "@/lib/feedback";
 import type { Store, StoreStatus } from "@/generated/prisma/client";
@@ -61,7 +62,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <h1 className="text-3xl font-bold">{t.title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold">{t.title}</h1>
+        <Link href="/admin/reports" className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50">
+          {dict.report.link}
+        </Link>
+      </div>
 
       {error === "reason" && (
         <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-red-700">

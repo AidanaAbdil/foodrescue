@@ -12,6 +12,7 @@ export const TEST_ENV = {
   PAYMENT_PROVIDER: "test",
   ALLOW_TEST_PAYMENTS: "true",
   APP_URL: "http://localhost:3100",
+  PLATFORM_FEE_PERCENT: "10", // so the tests check the commission maths
 };
 const env = { ...process.env, ...TEST_ENV };
 
