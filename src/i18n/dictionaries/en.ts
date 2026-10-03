@@ -283,6 +283,8 @@ export const en: Dictionary = {
     repeatOnce: "Once",
     repeatWeekly: "Regularly",
     repeatHint: "The bag is published automatically on the chosen days, a day ahead so customers can order in advance.",
+    fromScheduleNote: "This bag comes from a regular bag. Changes here only affect this day.",
+    fromScheduleLink: "Edit the regular bag →",
     weekdays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     everyDay: "Every day",
     schedulesTitle: "Regular bags",

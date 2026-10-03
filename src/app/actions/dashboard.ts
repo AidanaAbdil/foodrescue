@@ -5,7 +5,7 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { getI18n } from "@/i18n/server";
-import { parseLocalDateTime, toDateInput } from "@/i18n/shared";
+import { dayKey, parseLocalDateTime, toDateInput } from "@/i18n/shared";
 import { isCategory } from "@/lib/categories";
 import { isCity } from "@/lib/cities";
 import { parsePrice } from "@/lib/format";
@@ -81,12 +81,13 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
 // Saves the bag form. Three cases:
 //   - a one-off bag: new (no bagId) or edited (bagId)
 //   - a new regular bag (repeat=1): creates a BagSchedule
+//   - a one-off bag turned into a regular one (bagId + repeat=1)
 //   - an edited regular bag (scheduleId)
 export async function saveBag(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireOwner();
   const bagId = text(formData, "bagId");
   const scheduleId = text(formData, "scheduleId");
-  const isSchedule = Boolean(scheduleId) || (!bagId && formData.get("repeat") === "1");
+  const isSchedule = Boolean(scheduleId) || formData.get("repeat") === "1";
   const values = Object.fromEntries(
     ["storeId", "title", "description", "category", "originalPrice", "price", "quantity", "date", "start", "end", "imageUrl"].map(
       (key) => [key, text(formData, key)],
@@ -154,6 +155,8 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
   if (bagId) {
     existingBag = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id } } });
     if (!existingBag) errors.form = t.notYourBag;
+    // A bag from a regular bag is changed through that regular bag instead.
+    else if (isSchedule && existingBag.scheduleId) errors.form = t.notYourBag;
   }
   let existingSchedule = null;
   if (scheduleId) {
@@ -192,6 +195,19 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
       await prisma.surpriseBag.deleteMany({ where: untouchedUpcoming(existingSchedule.id) });
     } else {
       id = (await prisma.bagSchedule.create({ data: scheduleData })).id;
+    }
+    if (existingBag) {
+      // A one-off bag became a regular one. Nobody ordered it: the regular bag
+      // replaces it. Otherwise it stays (its customers keep their orders) and
+      // counts as that day's regular bag, so the day isn't published twice.
+      const orders = await prisma.order.count({ where: { bagId: existingBag.id } });
+      if (orders === 0) await prisma.surpriseBag.delete({ where: { id: existingBag.id } });
+      else {
+        await prisma.surpriseBag.update({
+          where: { id: existingBag.id },
+          data: { scheduleId: id, scheduleDate: dayKey(existingBag.pickupStart) },
+        });
+      }
     }
     await publishScheduledBags([id!]);
   } else if (existingBag) {

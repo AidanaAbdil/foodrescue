@@ -75,8 +75,10 @@ export async function publishScheduledBags(scheduleIds?: string[]) {
             scheduleDate: date,
           },
         });
-      } catch {
+      } catch (error) {
         // Another request published it at the same moment (unique constraint): fine.
+        // Anything else is a real problem: log it, and keep publishing the rest.
+        if ((error as { code?: string }).code !== "P2002") console.error("Publishing a regular bag failed", error);
       }
     }
   }

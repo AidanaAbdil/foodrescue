@@ -15,15 +15,18 @@ type Props = {
   mode: "new" | "bag" | "schedule";
   bagId?: string;
   scheduleId?: string;
+  fromScheduleId?: string | null; // editing one bag that a regular bag published
   defaults: Record<string, string>; // initial field values
 };
 
-export function BagForm({ stores, mode, bagId, scheduleId, defaults }: Props) {
+export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, defaults }: Props) {
   const [state, action, pending] = useActionState(saveBag, undefined);
   const { dict } = useI18n();
   const t = dict.dashboard;
   const values = state?.values ?? defaults;
-  // Regular bag? Chosen with the Once / Regularly switch when adding a bag.
+  // Regular bag? Chosen with the Once / Regularly switch when adding a bag or
+  // editing a one-off bag (which can then become a regular one).
+  const canChooseRepeat = mode === "new" || (mode === "bag" && !fromScheduleId);
   const [repeat, setRepeat] = useState(mode === "schedule" || values.repeat === "1");
   const errors = state?.errors ?? {};
   // With one store there's no store picker to show its error next to.
@@ -34,7 +37,7 @@ export function BagForm({ stores, mode, bagId, scheduleId, defaults }: Props) {
     <form key={JSON.stringify(values)} action={action} className="space-y-5">
       {bagId && <input type="hidden" name="bagId" value={bagId} />}
       {scheduleId && <input type="hidden" name="scheduleId" value={scheduleId} />}
-      {mode === "new" && <input type="hidden" name="repeat" value={repeat ? "1" : ""} />}
+      {canChooseRepeat && <input type="hidden" name="repeat" value={repeat ? "1" : ""} />}
 
       {formError && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -109,7 +112,15 @@ export function BagForm({ stores, mode, bagId, scheduleId, defaults }: Props) {
       <fieldset>
         <legend className="text-sm font-medium text-stone-700">{t.formPickup}</legend>
 
-        {mode === "new" && (
+        {fromScheduleId && (
+          <p className="mt-1 text-sm text-stone-600">
+            🔁 {t.fromScheduleNote}{" "}
+            <Link href={`/dashboard/schedules/${fromScheduleId}/edit`} className="font-medium text-brand-dark underline underline-offset-2">
+              {t.fromScheduleLink}
+            </Link>
+          </p>
+        )}
+        {canChooseRepeat && (
           <div className="mt-1 inline-flex rounded-lg bg-stone-100 p-1 text-sm font-medium" role="radiogroup" aria-label={t.repeat}>
             {[false, true].map((option) => (
               <button

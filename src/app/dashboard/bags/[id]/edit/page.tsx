@@ -32,6 +32,7 @@ export default async function EditBagPage({ params }: PageProps<"/dashboard/bags
           mode="bag"
           stores={stores}
           bagId={bag.id}
+          fromScheduleId={bag.scheduleId}
           defaults={{
             storeId: bag.storeId,
             title: bag.title,
@@ -48,6 +49,8 @@ export default async function EditBagPage({ params }: PageProps<"/dashboard/bags
             date: toDateInput(bag.pickupStart),
             start: toTimeInput(bag.pickupStart),
             end: toTimeInput(bag.pickupEnd),
+            // If it's turned into a regular bag: start with its own weekday ticked (1 = Monday).
+            weekdays: String(((new Date(`${toDateInput(bag.pickupStart)}T12:00:00Z`).getUTCDay() + 6) % 7) + 1),
           }}
         />
       </div>
