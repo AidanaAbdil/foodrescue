@@ -17,13 +17,13 @@ test("a store picks a price level; the value is set to at least twice the price"
   await login(page, owner.email);
   await fillBag(page, "Пакет по уровню");
   await expect(page.locator('input[name="originalPrice"]')).toHaveCount(0); // no free-form prices any more
-  await page.locator("label").filter({ hasText: /ценность от 2\s980/ }).click(); // 1 490 ₸
+  await page.locator("label").filter({ hasText: /ценность от 3\s980/ }).click(); // 1 990 ₸
   await page.getByRole("button", { name: "Опубликовать" }).click();
   await page.waitForURL(/\/dashboard$/);
 
   const bag = await db.surpriseBag.findFirstOrThrow({ where: { storeId: store.id, title: "Пакет по уровню" } });
-  expect(bag.price).toBe(1490_00);
-  expect(bag.originalPrice).toBe(2980_00);
+  expect(bag.price).toBe(1990_00);
+  expect(bag.originalPrice).toBe(3980_00);
 });
 
 test("a price that isn't one of the levels is refused", async ({ page }) => {
@@ -39,8 +39,8 @@ test("a price that isn't one of the levels is refused", async ({ page }) => {
 
 test("editing an older bag starts on the nearest level", async ({ page }) => {
   const { owner, store } = await createOwnerWithStore();
-  const bag = await createBag(store.id, { price: 1300, originalPrice: 4000 }); // from before fixed prices
+  const bag = await createBag(store.id, { price: 1800, originalPrice: 4000 }); // from before fixed prices
   await login(page, owner.email);
   await page.goto(`/dashboard/bags/${bag.id}/edit`);
-  await expect(page.locator('input[name="priceLevel"][value="1490"]')).toBeChecked();
+  await expect(page.locator('input[name="priceLevel"][value="1990"]')).toBeChecked();
 });

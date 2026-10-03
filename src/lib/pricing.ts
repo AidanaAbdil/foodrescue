@@ -2,12 +2,12 @@
 // promises food worth at least VALUE_MULTIPLIER × the price inside.
 //
 // To change them, set in .env (then restart the site):
-//   PRICE_LEVELS=990,1490,1990,2990   (tenge)
+//   PRICE_LEVELS=990,1990,2990,3990   (tenge)
 //   VALUE_MULTIPLIER=2                (2 = at least 50% off, 3 = about 66% off)
 // Existing bags keep their price until edited; `npm run prices:apply` moves
 // upcoming bags and regular bags to the nearest level.
 
-const DEFAULT_LEVELS = [990, 1490, 1990, 2990];
+const DEFAULT_LEVELS = [990, 1990, 2990, 3990]; // Astana prices, Oct 2026: pastries · a meal · dinner/groceries · sushi
 const DEFAULT_MULTIPLIER = 2;
 
 export type PriceLevel = { price: number; value: number }; // both in tiyn (1 ₸ = 100)
