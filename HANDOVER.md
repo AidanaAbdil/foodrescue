@@ -453,6 +453,9 @@ Still open:
 - Kazakh strings for **payments**, **photos**, **password reset**, **store editing**, **rate
   limiting**, **push/test notification**, **sound button**, **Иә/Жоқ confirmations** and **store
   cancellation apology/reasons** were written by Claude and sent to her for review. Check for corrections.
+- **Kazakh review happens once, at the end, before launch:** the user will go through all
+  Kazakh text with a friend who is a professional Kazakh teacher. Write Kazakh in Kazakh (Turkic,
+  verb-final) word order, not copied from the Russian.
 
 ## 9. Next step: deployment (researched, paused on 2026-10-02)
 
