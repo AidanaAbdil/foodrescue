@@ -112,11 +112,16 @@ test("new store: sign up, create store, hidden until an admin approves it", asyn
   await page.locator('select[name="city"]').selectOption("ALMATY");
   await page.locator('input[name="address"]').fill("ул. Новая, 5");
   await page.locator('input[name="phone"]').fill("8 701 123 45 67");
+  // Opening hours: 09:00–21:00 by default; Sunday off, Saturday shorter.
+  await page.getByLabel("Указать часы работы").check();
+  await page.getByLabel("Сб: закрытие").fill("18:00");
+  await page.getByRole("checkbox", { name: "Вс" }).uncheck();
   await page.getByRole("button", { name: "Создать заведение" }).click();
   await expect(page.getByText(/проверк/i).first()).toBeVisible(); // "under review" notice
 
   const store = await db.store.findFirstOrThrow({ where: { name: storeName } });
   expect(store).toMatchObject({ status: "PENDING", phone: "+77011234567", city: "ALMATY" });
+  expect(JSON.parse(store.openingHours!)).toEqual([...Array(5).fill(["09:00", "21:00"]), ["09:00", "18:00"], null]);
   await page.goto(`/?tab=stores&q=${encodeURIComponent(storeName)}`);
   await expect(page.getByText(storeName)).toHaveCount(0);
 
@@ -128,6 +133,8 @@ test("new store: sign up, create store, hidden until an admin approves it", asyn
 
   await page.goto(`/?tab=stores&q=${encodeURIComponent(storeName)}`);
   await expect(page.getByText(storeName)).toBeVisible();
+  await page.goto(`/stores/${store.id}`);
+  await expect(page.getByText("Пн–Пт 09:00–21:00, Сб 09:00–18:00, Вс выходной")).toBeVisible();
 });
 
 test("editing a one-off bag can turn it into a regular bag", async ({ page }) => {

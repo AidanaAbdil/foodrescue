@@ -8,6 +8,7 @@ import { useI18n } from "@/i18n/client";
 import { CITY_LIST, cityAt, isCity, type City } from "@/lib/cities";
 import type { Coords } from "@/lib/geo";
 import { formatPhone } from "@/lib/phone";
+import { HoursPicker } from "@/components/dashboard/HoursPicker";
 import { MapPicker } from "./MapPicker";
 
 type StoreDefaults = {
@@ -139,12 +140,11 @@ export function StoreForm({ store }: { store?: StoreDefaults }) {
           )}
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
+      <div className="sm:w-1/2">
         <FormField name="phone" label={t.phone} type="tel" required autoComplete="tel" inputMode="tel"
           placeholder="+7 701 123 45 67" defaultValue={values.phone} error={errors.phone} />
-        <FormField name="openingHours" label={t.hours} maxLength={200}
-          placeholder={t.hoursPlaceholder} defaultValue={values.openingHours} />
       </div>
+      <HoursPicker initial={values.openingHours} />
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-stone-700">
           {t.storeDescription}

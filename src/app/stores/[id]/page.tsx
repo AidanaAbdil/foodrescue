@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { BagCard } from "@/components/BagCard";
 import { RatingBadge } from "@/components/RatingBadge";
 import { publicRatings } from "@/lib/ratings";
+import { formatHours } from "@/lib/hours";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
@@ -56,6 +57,11 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
   const soldOut = store.bags.filter((bag) => bag.quantityAvailable === 0);
   const hasLocation = store.latitude != null && store.longitude != null;
   const rating = (await publicRatings([store.id])).get(store.id);
+  const hours = formatHours(store.openingHours, {
+    weekdays: dict.dashboard.weekdays,
+    daily: dict.dashboard.hoursDaily,
+    closed: dict.dashboard.hoursDayOff,
+  });
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -83,7 +89,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
                 </>
               )}
             </p>
-            {store.openingHours && <p className="mt-1 text-sm text-stone-600">{fill(t.hours, { hours: store.openingHours })}</p>}
+            {hours && <p className="mt-1 text-sm text-stone-600">{fill(t.hours, { hours })}</p>}
             {store.phone && (
               <a href={`tel:${store.phone}`} className="mt-2 inline-block rounded-full bg-brand-light px-3 py-1 text-sm font-semibold text-brand-dark hover:bg-brand-light/70">
                 {t.call} · {formatPhone(store.phone)}

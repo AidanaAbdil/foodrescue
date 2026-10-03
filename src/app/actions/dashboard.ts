@@ -11,6 +11,7 @@ import { isCity } from "@/lib/cities";
 import { parsePrice } from "@/lib/format";
 import { normalizePhone } from "@/lib/phone";
 import { isCancelReason } from "@/lib/orders";
+import { parseHours } from "@/lib/hours";
 import { bagSearchText, storeSearchText } from "@/lib/search";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
@@ -39,7 +40,7 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
     city: text(formData, "city"),
     description: text(formData, "description"),
     phone: text(formData, "phone"),
-    openingHours: text(formData, "openingHours").slice(0, 200),
+    openingHours: text(formData, "openingHours").slice(0, 400),
   };
   const t = (await getI18n()).dict.errors;
   const phone = normalizePhone(values.phone);
@@ -59,7 +60,8 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
     ...values,
     description: values.description || null,
     phone,
-    openingHours: values.openingHours || null,
+    // Only well-formed hours from the picker are kept (see src/lib/hours.ts).
+    openingHours: parseHours(values.openingHours) ? values.openingHours : null,
     ...location,
   };
   const data = { ...fields, searchText: storeSearchText(fields) };

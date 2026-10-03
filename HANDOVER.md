@@ -288,6 +288,14 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Opening hours picker (2026-10-03)
+- Store form: "Указать часы работы" → a row per weekday (open checkbox + two time inputs, "use
+  Monday's hours for every day"). Saved in `Store.openingHours` as JSON, 7 entries Monday-first,
+  `["09:00","22:00"]` or null (closed); overnight like 18:00–02:00 allowed. `src/lib/hours.ts`
+  (parse/serialize/format). The store page shows "Пн–Пт 09:00–21:00, Сб 09:00–18:00, Вс выходной"
+  or "Ежедневно 09:00–22:00". Older free text still displays as is; the 4 demo stores in dev.db
+  were converted.
+
 ### Map view on the homepage (2026-10-03)
 - "☰ Список | 🗺 Карта" next to the tabs (`?view=map`). One pin per store (number = matching bags,
   grey "·" = none now), same filters as the list (search, city, category, labels). Popup: name,

@@ -7,6 +7,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { LEGAL_VERSION } from "../src/content/legal";
 import { hashPassword } from "../src/lib/password";
 import { refreshSearchText } from "../src/lib/search";
+import { serializeHours } from "../src/lib/hours";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -19,6 +20,9 @@ const photo = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&q=7
 
 // Helper: tenge → tiyn, the unit prices are stored in (1 ₸ = 100 tiyn).
 const tenge = (amount: number) => amount * 100;
+
+// Opening hours as the store form saves them (see src/lib/hours.ts).
+const DAILY_9_TO_22 = serializeHours(Array.from({ length: 7 }, () => ["09:00", "22:00"] as [string, string]));
 
 const DEMO_EMAILS = ["owner@example.com", "customer@example.com", "admin@example.com"];
 
@@ -60,7 +64,7 @@ async function main() {
       ownerId: owner.id,
       status: "APPROVED",
       phone: "+77272000001", // demo number
-      openingHours: "Пн–Вс 09:00–22:00",
+      openingHours: DAILY_9_TO_22,
       bags: {
         create: [
           {
@@ -107,7 +111,7 @@ async function main() {
       ownerId: owner.id,
       status: "APPROVED",
       phone: "+77272000002", // demo number
-      openingHours: "Пн–Вс 09:00–22:00",
+      openingHours: DAILY_9_TO_22,
       bags: {
         create: [
           {
@@ -151,7 +155,7 @@ async function main() {
       ownerId: owner.id,
       status: "APPROVED",
       phone: "+77172000003", // demo number
-      openingHours: "Пн–Вс 09:00–22:00",
+      openingHours: DAILY_9_TO_22,
       bags: {
         create: {
           title: "Обед-сюрприз",
@@ -180,7 +184,7 @@ async function main() {
       ownerId: owner.id,
       status: "APPROVED",
       phone: "+77172000004", // demo number
-      openingHours: "Пн–Вс 09:00–22:00",
+      openingHours: DAILY_9_TO_22,
       bags: {
         create: {
           title: "Пицца в конце дня",
