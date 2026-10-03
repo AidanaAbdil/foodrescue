@@ -256,6 +256,18 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   Note: with `loading.tsx`, pages stream, so `redirect()` during rendering arrives as a 200 with a
   `<meta http-equiv="refresh">` instead of a 307. Browsers follow it; tests must look for it.
 
+### Homepage: Bags | Stores tabs, search, "Show more" (2026-10-03)
+- `/?tab=stores` switches to the store list; the search box only searches the open tab. Category and
+  label chips belong to the Bags tab. Tabs show counts.
+- All filtering runs in the database. Search uses `searchText` columns on SurpriseBag and Store
+  (lowercased in JS, ё→е; SQLite can't lowercase Cyrillic). **Any code that saves a bag's
+  title/description or a store's name/description/address must also save `searchText`**
+  (`bagSearchText` / `storeSearchText` in src/lib/search.ts). `npm run db:search` recomputes all
+  (run once after deploying the migration; the seed calls it).
+- `?show=24` etc.: 12 per page, max 240. "Near me" sorts up to 500 matches by distance in JS.
+- Stores tab: stores with bags on sale first (A–Z), then the rest (A–Z).
+- Sold-out bags appear only once the available list is fully shown.
+
 ### Cities, map & store list
 - `Store.city` holds a code from `src/lib/cities.ts` (ALMATY, ASTANA; names in `dict.cities`,
   shown via `cityName`). Store form uses a select; `saveStore` rejects anything else. Existing
@@ -396,9 +408,7 @@ store pages, so shared links show a card in WhatsApp/Telegram).
   still empty: "🔔 Notifications on this device" never finished on her laptop (as danchik@mail.ru) or
   phone. Ask which browser and the exact red message the toggle now shows (Brave/Arc block push
   by default; iPhone needs the Home Screen app). Then test with "Проверить" (Test).
-- **Homepage redesign proposed, she hasn't answered:** "Пакеты | Заведения" tabs, search scoped
-  to the open tab, "Показать ещё" pagination, filtering in the database instead of in memory,
-  later a list/map toggle. Ask whether to do it.
+- Homepage tabs/search/pagination done 2026-10-03; a list/map toggle is still to do.
 - Customer push so far only covers "store can't hand over"; "pickup starts soon" is the natural next one.
 - Possible goodwill voucher after a store cancels (she said "offer smth idk"); needs a voucher system.
 

@@ -153,6 +153,7 @@ model Store {
   name         String
   description  String?
   address      String
+  searchText   String   @default("") // lowercased name + description + address, see src/lib/search.ts
   city         String
   latitude     Float? // optional, for "near me" sorting
   longitude    Float?
@@ -184,6 +185,7 @@ model SurpriseBag {
   id          String      @id @default(cuid())
   title       String
   description String?
+  searchText  String      @default("") // lowercased title + description, see src/lib/search.ts
   category    BagCategory @default(MIXED)
   imageUrl    String?
 

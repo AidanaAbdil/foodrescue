@@ -11,6 +11,7 @@ import { isCity } from "@/lib/cities";
 import { parsePrice } from "@/lib/format";
 import { normalizePhone } from "@/lib/phone";
 import { isCancelReason } from "@/lib/orders";
+import { bagSearchText, storeSearchText } from "@/lib/search";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
 import { prisma } from "@/lib/prisma";
@@ -54,13 +55,14 @@ export async function saveStore(_prev: FormState, formData: FormData): Promise<F
   const latitude = Number(formData.get("latitude"));
   const longitude = Number(formData.get("longitude"));
   const location = formData.has("latitude") && isValidCoords(latitude, longitude) ? { latitude, longitude } : {};
-  const data = {
+  const fields = {
     ...values,
     description: values.description || null,
     phone,
     openingHours: values.openingHours || null,
     ...location,
   };
+  const data = { ...fields, searchText: storeSearchText(fields) };
 
   if (storeId) {
     // updateMany with ownerId: only changes the store if it's this owner's.
@@ -196,11 +198,11 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
     // Existing orders keep the price they paid (Order.totalPrice).
     await prisma.surpriseBag.update({
       where: { id: existingBag.id },
-      data: { ...common, quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
+      data: { ...common, searchText: bagSearchText(common), quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
     });
   } else {
     await prisma.surpriseBag.create({
-      data: { ...common, quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
+      data: { ...common, searchText: bagSearchText(common), quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
     });
   }
   // Replaced or removed the photo: delete the old file if nothing uses it now.

@@ -6,6 +6,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { LEGAL_VERSION } from "../src/content/legal";
 import { hashPassword } from "../src/lib/password";
+import { refreshSearchText } from "../src/lib/search";
 
 const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -217,6 +218,8 @@ async function main() {
       data: { quantityAvailable: { decrement: 1 } },
     }),
   ]);
+
+  await refreshSearchText(prisma); // search needs it (see src/lib/search.ts)
 
   const counts = {
     users: await prisma.user.count(),

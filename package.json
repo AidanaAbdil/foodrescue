@@ -14,7 +14,8 @@
     "db:reset": "prisma migrate reset",
     "icons": "node scripts/generate-icons.mjs",
     "demo": "node scripts/demo.mjs",
-    "make-admin": "tsx scripts/make-admin.ts"
+    "make-admin": "tsx scripts/make-admin.ts",
+    "db:search": "tsx scripts/refresh-search.ts"
   },
   "dependencies": {
     "@prisma/adapter-better-sqlite3": "7.10",

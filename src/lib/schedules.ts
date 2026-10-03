@@ -7,6 +7,7 @@ import "server-only";
 import type { BagSchedule } from "@/generated/prisma/client";
 import { dayKey, parseLocalDateTime } from "@/i18n/shared";
 import { prisma } from "@/lib/prisma";
+import { bagSearchText } from "@/lib/search";
 
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const; // ISO: 1 = Monday … 7 = Sunday
 
@@ -32,6 +33,7 @@ export const bagFieldsFrom = (schedule: BagSchedule) => ({
   storeId: schedule.storeId,
   title: schedule.title,
   description: schedule.description,
+  searchText: bagSearchText(schedule),
   category: schedule.category,
   imageUrl: schedule.imageUrl,
   isHalal: schedule.isHalal,
