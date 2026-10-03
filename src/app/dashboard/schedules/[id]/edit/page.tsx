@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BagForm } from "@/components/dashboard/BagForm";
 import { getI18n } from "@/i18n/server";
-import { toPriceInput } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { nearestLevel, priceLevels } from "@/lib/pricing";
 import { requireOwner } from "@/lib/session";
 import { Doodle } from "@/components/Doodle";
 
@@ -31,6 +31,7 @@ export default async function EditSchedulePage({ params }: PageProps<"/dashboard
           mode="schedule"
           scheduleId={schedule.id}
           stores={stores}
+          levels={priceLevels()}
           defaults={{
             storeId: schedule.storeId,
             title: schedule.title,
@@ -41,8 +42,8 @@ export default async function EditSchedulePage({ params }: PageProps<"/dashboard
             isVegan: schedule.isVegan ? "true" : "",
             allergens: schedule.allergens,
             category: schedule.category,
-            originalPrice: toPriceInput(schedule.originalPrice),
-            price: toPriceInput(schedule.price),
+            // Older bags may have any price: start on the nearest level.
+            priceLevel: String(nearestLevel(schedule.price).price / 100),
             quantity: String(schedule.quantity),
             weekdays: schedule.weekdays,
             start: schedule.startTime,

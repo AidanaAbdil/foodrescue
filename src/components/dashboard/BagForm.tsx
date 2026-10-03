@@ -8,6 +8,10 @@ import { PhotoField } from "@/components/dashboard/PhotoField";
 import { useI18n } from "@/i18n/client";
 import { CATEGORY_LIST } from "@/lib/categories";
 import { ALLERGENS } from "@/lib/labels";
+import type { PriceLevel } from "@/lib/pricing";
+
+// "1 490 ₸" (prices come in tiyn).
+const formatTenge = (tiyn: number) => `${new Intl.NumberFormat("ru-RU").format(tiyn / 100)} ₸`;
 import { Doodle } from "@/components/Doodle";
 
 type Props = {
@@ -17,12 +21,13 @@ type Props = {
   bagId?: string;
   scheduleId?: string;
   fromScheduleId?: string | null; // editing one bag that a regular bag published
+  levels: PriceLevel[]; // the fixed bag prices (src/lib/pricing.ts)
   defaults: Record<string, string>; // initial field values
 };
 
-export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, defaults }: Props) {
+export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, levels, defaults }: Props) {
   const [state, action, pending] = useActionState(saveBag, undefined);
-  const { dict } = useI18n();
+  const { dict, fill } = useI18n();
   const t = dict.dashboard;
   const values = state?.values ?? defaults;
   // Regular bag? Chosen with the Once / Regularly switch when adding a bag or
@@ -101,11 +106,25 @@ export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, defau
         </div>
       </fieldset>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <FormField name="originalPrice" label={t.formOriginalPrice} inputMode="decimal" required
-          defaultValue={values.originalPrice} error={errors.originalPrice} placeholder="4500" />
-        <FormField name="price" label={t.formPrice} inputMode="decimal" required
-          defaultValue={values.price} error={errors.price} placeholder="1490" />
+      {/* Fixed price levels: the store picks one; the value comes with it. */}
+      <fieldset>
+        <legend className="text-sm font-medium text-stone-700">{t.formPriceLevel}</legend>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {levels.map((level) => (
+            <label key={level.price}
+              className="cursor-pointer rounded-xl border border-stone-300 bg-white p-3 text-center transition has-checked:border-brand has-checked:bg-brand-light/40 has-checked:ring-1 has-checked:ring-brand">
+              <input type="radio" name="priceLevel" value={level.price / 100} required className="sr-only"
+                defaultChecked={values.priceLevel === String(level.price / 100)} />
+              <span className="block text-lg font-bold text-brand-dark">{formatTenge(level.price)}</span>
+              <span className="block text-xs text-stone-500">{fill(t.valueFrom, { value: formatTenge(level.value) })}</span>
+            </label>
+          ))}
+        </div>
+        <p className="mt-1.5 text-sm text-stone-500">{t.formPriceHint}</p>
+        {errors.priceLevel && <p className="mt-1 text-sm text-red-600">{errors.priceLevel}</p>}
+      </fieldset>
+
+      <div className="sm:w-1/3">
         <FormField name="quantity" label={t.formQuantity} type="number" min={0} max={100} required
           defaultValue={values.quantity} error={errors.quantity} />
       </div>

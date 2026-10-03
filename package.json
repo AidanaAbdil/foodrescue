@@ -18,6 +18,7 @@
     "make-admin": "tsx scripts/make-admin.ts",
     "db:search": "tsx scripts/refresh-search.ts",
     "demo:stores": "tsx scripts/add-demo-stores.ts",
+    "prices:apply": "tsx scripts/apply-price-levels.ts",
     "test": "playwright test",
     "test:report": "playwright show-report"
   },

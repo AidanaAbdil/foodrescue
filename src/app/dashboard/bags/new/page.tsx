@@ -4,6 +4,7 @@ import { BagForm } from "@/components/dashboard/BagForm";
 import { getI18n } from "@/i18n/server";
 import { toDateInput } from "@/i18n/shared";
 import { prisma } from "@/lib/prisma";
+import { priceLevels } from "@/lib/pricing";
 import { requireOwner } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,11 +25,13 @@ export default async function NewBagPage() {
         <BagForm
           mode="new"
           stores={stores}
+          levels={priceLevels()}
           defaults={{
             weekdays: "1,2,3,4,5,6,7", // a new regular bag starts as every day
             storeId: stores[0].id,
             category: "MIXED",
             quantity: "3",
+            priceLevel: String(priceLevels()[0].price / 100),
             date: toDateInput(new Date()),
             start: "17:00",
             end: "19:00",

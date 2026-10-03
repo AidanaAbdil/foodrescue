@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { BagForm } from "@/components/dashboard/BagForm";
 import { getI18n } from "@/i18n/server";
 import { toDateInput, toTimeInput } from "@/i18n/shared";
-import { toPriceInput } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
+import { nearestLevel, priceLevels } from "@/lib/pricing";
 import { requireOwner } from "@/lib/session";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,6 +31,7 @@ export default async function EditBagPage({ params }: PageProps<"/dashboard/bags
         <BagForm
           mode="bag"
           stores={stores}
+          levels={priceLevels()}
           bagId={bag.id}
           fromScheduleId={bag.scheduleId}
           defaults={{
@@ -43,8 +44,8 @@ export default async function EditBagPage({ params }: PageProps<"/dashboard/bags
             isVegan: bag.isVegan ? "true" : "",
             allergens: bag.allergens,
             category: bag.category,
-            originalPrice: toPriceInput(bag.originalPrice),
-            price: toPriceInput(bag.price),
+            // Older bags may have any price: start on the nearest level.
+            priceLevel: String(nearestLevel(bag.price).price / 100),
             quantity: String(bag.quantityAvailable),
             date: toDateInput(bag.pickupStart),
             start: toTimeInput(bag.pickupStart),

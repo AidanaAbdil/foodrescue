@@ -34,8 +34,7 @@ test("a new bag notifies customers who favourited the store, at most once per 12
   const addBag = async (title: string) => {
     await page.goto("/dashboard/bags/new");
     await page.locator('input[name="title"]').fill(title);
-    await page.locator('input[name="originalPrice"]').fill("3000");
-    await page.locator('input[name="price"]').fill("1000");
+    await page.locator("label").filter({ hasText: /ценность от 1\s980/ }).click(); // the 990 ₸ level
     await page.locator('input[name="quantity"]').fill("3");
     const tomorrow = new Date(Date.now() + 86_400_000).toLocaleDateString("en-CA", { timeZone: "Asia/Almaty" });
     await page.locator('input[name="date"]').fill(tomorrow);

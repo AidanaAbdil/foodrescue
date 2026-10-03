@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PartnerForm } from "@/components/partners/PartnerForm";
 import { getI18n } from "@/i18n/server";
 import { platformFeePercent } from "@/lib/earnings";
+import { priceLevels, valueMultiplier } from "@/lib/pricing";
 import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,11 +15,16 @@ const BENEFIT_DOODLES = ["coin", "star", "clock", "sprout"] as const;
 
 // "For businesses": why join, how it works, common questions, and a request form.
 export default async function PartnersPage({ searchParams }: PageProps<"/partners">) {
-  const { dict, fill } = await getI18n();
+  const { dict, f, fill } = await getI18n();
   const t = dict.partners;
   const { sent } = await searchParams;
   const fee = platformFeePercent();
-  const faq = [{ q: t.faqCostQ, a: fee > 0 ? fill(t.faqCostSet, { percent: fee }) : t.faqCostUnset }, ...t.faq];
+  const levels = priceLevels().map((level) => f.price(level.price)).join(", ");
+  const faq = [
+    { q: t.faqCostQ, a: fee > 0 ? fill(t.faqCostSet, { percent: fee }) : t.faqCostUnset },
+    { q: t.faqPriceQ, a: fill(t.faqPriceA, { levels, multiplier: valueMultiplier() }) },
+    ...t.faq,
+  ];
 
   return (
     <main>

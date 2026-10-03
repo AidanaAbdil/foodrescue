@@ -3,8 +3,7 @@
 // client components).
 
 // Prices are stored in tiyn (1/100 tenge) as whole numbers, which avoids
-// rounding errors. Tiyn → "1490" (or "1490.50") for a price input.
-export const toPriceInput = (tiyn: number) => (tiyn % 100 === 0 ? String(tiyn / 100) : (tiyn / 100).toFixed(2));
+// rounding errors.
 
 // "1490", "1 490" or "1490.50" tenge → tiyn, or null if it isn't a valid amount.
 export function parsePrice(value: string) {

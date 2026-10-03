@@ -288,6 +288,18 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Fixed bag prices (2026-10-03)
+- Decision: like Too Good To Go, stores pick one of a few **fixed price levels**; the food inside must
+  be worth at least **2× the price** (≥ 50% off). Settings in `src/lib/pricing.ts`, overridable in .env:
+  `PRICE_LEVELS=990,1490,1990,2990` (tenge) and `VALUE_MULTIPLIER=2`; restart after changing.
+- Bag form: price cards ("1 490 ₸ · ценность от 2 980 ₸") instead of "usual value" / "your price"
+  inputs. `saveBag` accepts only a level (`levelFor`) and sets `originalPrice` = level value itself, so
+  stores can't inflate the value. Editing older bags starts on `nearestLevel`.
+- `npm run prices:apply` moves upcoming bags and all regular bags to the nearest level (run after
+  changing the levels; already run on dev.db). Paid orders keep Order.totalPrice. The demo-stores
+  script snaps to levels too.
+- "Для заведений" FAQ explains the levels. Tests: tests/e2e/pricing.spec.ts (50 tests in total).
+
 ### Doodle icons instead of emoji (2026-10-03)
 - `src/components/Doodle.tsx`: hand-drawn style line icons (`<Doodle name="bell" />`, `filled` for full
   hearts/stars), using currentColor; thicker strokes at small sizes. Bag categories map to doodles via

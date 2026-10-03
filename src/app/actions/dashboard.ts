@@ -12,6 +12,7 @@ import { parsePrice } from "@/lib/format";
 import { normalizePhone } from "@/lib/phone";
 import { isCancelReason } from "@/lib/orders";
 import { parseHours } from "@/lib/hours";
+import { levelFor } from "@/lib/pricing";
 import { notifyFavoritesAboutBag } from "@/lib/push";
 import { bagSearchText, storeSearchText } from "@/lib/search";
 import { serializeAllergens } from "@/lib/labels";
@@ -92,7 +93,7 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
   const scheduleId = text(formData, "scheduleId");
   const isSchedule = Boolean(scheduleId) || formData.get("repeat") === "1";
   const values = Object.fromEntries(
-    ["storeId", "title", "description", "category", "originalPrice", "price", "quantity", "date", "start", "end", "imageUrl"].map(
+    ["storeId", "title", "description", "category", "priceLevel", "quantity", "date", "start", "end", "imageUrl"].map(
       (key) => [key, text(formData, key)],
     ),
   );
@@ -125,12 +126,12 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
   const category = isCategory(values.category) ? values.category : null;
   if (!category) errors.category = t.category;
 
-  // Prices are typed in tenge and stored in tiyn (see parsePrice).
-  const originalPrice = parsePrice(values.originalPrice);
-  const price = parsePrice(values.price);
-  if (originalPrice === null || originalPrice <= 0) errors.originalPrice = t.originalPrice;
-  if (price === null || price <= 0) errors.price = t.price;
-  else if (originalPrice && price >= originalPrice) errors.price = t.priceTooHigh;
+  // Only the fixed price levels are allowed; the value comes with the level
+  // (src/lib/pricing.ts), so a store can't type in a fake "original price".
+  const level = levelFor((parsePrice(values.priceLevel) ?? 0));
+  if (!level) errors.priceLevel = t.priceLevel;
+  const price = level?.price;
+  const originalPrice = level?.value;
 
   const quantity = Number(values.quantity);
   if (!Number.isInteger(quantity) || quantity < 0 || quantity > 100) errors.quantity = t.quantity;

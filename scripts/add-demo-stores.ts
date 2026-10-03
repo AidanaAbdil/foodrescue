@@ -9,6 +9,7 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient, type BagCategory } from "../src/generated/prisma/client";
 import { LEGAL_VERSION } from "../src/content/legal";
 import { serializeHours } from "../src/lib/hours";
+import { nearestLevel } from "../src/lib/pricing";
 import { hashPassword } from "../src/lib/password";
 import { storeSearchText } from "../src/lib/search";
 
@@ -154,7 +155,8 @@ async function main() {
             schedules: {
               create: demo.bags.map((bag) => ({
                 title: bag.title, description: bag.description, category: bag.category, imageUrl: bag.image,
-                originalPrice: tenge(bag.original), price: tenge(bag.price), quantity: bag.quantity,
+                // Snapped to the fixed price levels (src/lib/pricing.ts).
+                originalPrice: nearestLevel(tenge(bag.price)).value, price: nearestLevel(tenge(bag.price)).price, quantity: bag.quantity,
                 weekdays: EVERY_DAY, startTime: bag.start, endTime: bag.end,
                 isHalal: bag.halal ?? false, isVegetarian: bag.vegetarian ?? false, isVegan: bag.vegan ?? false,
                 allergens: bag.allergens ?? "",
