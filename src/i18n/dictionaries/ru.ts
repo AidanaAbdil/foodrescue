@@ -96,6 +96,12 @@ export const ru = {
     shownOf: "Показано {shown} из {total}",
     noStoresTitle: "Заведения не найдены",
     noStoresText: "Попробуйте другое название, улицу или город.",
+    viewList: "☰ Список",
+    viewMap: "🗺 Карта",
+    fromPrice: "от {price}",
+    openStore: "Открыть →",
+    youAreHere: "Вы здесь",
+    notOnMap: "Без точки на карте: {n}",
     howTitle: "Как это работает",
     steps: [
       { title: "Найдите пакет", text: "Выберите пакет-сюрприз в пекарне, кафе или магазине рядом с вами." },

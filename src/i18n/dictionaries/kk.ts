@@ -92,6 +92,12 @@ export const kk: Dictionary = {
     shownOf: "Көрсетілді: {shown} / {total}",
     noStoresTitle: "Дүкендер табылмады",
     noStoresText: "Басқа атауды, көшені немесе қаланы көріңіз.",
+    viewList: "☰ Тізім",
+    viewMap: "🗺 Карта",
+    fromPrice: "{price} бастап",
+    openStore: "Ашу →",
+    youAreHere: "Сіз осындасыз",
+    notOnMap: "Картада белгісі жоқ дүкендер: {n}",
     howTitle: "Қалай жұмыс істейді",
     steps: [
       { title: "Пакет табыңыз", text: "Жаныңыздағы наубайхана, кафе немесе дүкеннен тосын сый пакетін таңдаңыз." },

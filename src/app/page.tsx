@@ -8,10 +8,12 @@ import { publicRatings } from "@/lib/ratings";
 import { communityBagsRescued } from "@/lib/impact";
 import { AutoSubmitSelect } from "@/components/search/AutoSubmitSelect";
 import { NearMeButton } from "@/components/search/NearMeButton";
+import { ResultsMapLoader } from "@/components/search/ResultsMapLoader";
+import type { MapPlace } from "@/components/search/ResultsMap";
 import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI, CATEGORY_LIST, isCategory } from "@/lib/categories";
-import { CITY_LIST, cityName, isCity } from "@/lib/cities";
+import { CITIES, CITY_LIST, cityName, isCity } from "@/lib/cities";
 import { distanceKm, parseCoords } from "@/lib/geo";
 import { nextWindow } from "@/lib/schedules";
 import { runHousekeeping } from "@/lib/housekeeping";
@@ -38,6 +40,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // so they survive a refresh and can be shared as a link.
   const params = await searchParams;
   const tab: Tab = params.tab === "stores" ? "stores" : "bags";
+  const view = params.view === "map" ? "map" : "list"; // ?view=map shows the results on a map
   const q = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
   const city = isCity(params.city) ? params.city : "";
   const selected = isCategory(params.category) ? params.category : undefined;
@@ -100,7 +103,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // ── Bags tab ──
   let shown: { bag: SurpriseBag & { store: Store }; distance?: number }[] = [];
   let soldOut: (SurpriseBag & { store: Store })[] = [];
-  if (tab === "bags") {
+  if (tab === "bags" && view === "list") {
     const bags = await prisma.surpriseBag.findMany({
       where: available,
       include: { store: true },
@@ -124,7 +127,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // ── Stores tab ──
   // Every live store, including those with nothing on sale right now.
   let directory: { store: Store; onSale: number; next?: { start: Date; end: Date }; distance?: number }[] = [];
-  if (tab === "stores") {
+  if (tab === "stores" && view === "list") {
     const include = { _count: { select: { bags: { where: liveBag } } }, schedules: { where: { isActive: true } } };
     let stores;
     if (near) {
@@ -156,6 +159,51 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     if (near) directory = directory.sort(byDistance).slice(0, show);
   }
 
+  // ── Map view: one pin per store, with the same filters ──
+  const places: MapPlace[] = [];
+  let notOnMap = 0; // stores without a map point
+  if (view === "map") {
+    const pins: { id: string; name: string; lat: number | null; lng: number | null; count: number; minPrice?: number }[] = [];
+    if (tab === "bags") {
+      const bags = await prisma.surpriseBag.findMany({
+        where: available,
+        select: { storeId: true, price: true, store: { select: { name: true, latitude: true, longitude: true } } },
+        take: 2000,
+      });
+      const byStore = new Map<string, (typeof pins)[number]>();
+      for (const bag of bags) {
+        const pin = byStore.get(bag.storeId) ?? { id: bag.storeId, name: bag.store.name, lat: bag.store.latitude, lng: bag.store.longitude, count: 0, minPrice: bag.price };
+        pin.count += 1;
+        pin.minPrice = Math.min(pin.minPrice!, bag.price);
+        byStore.set(bag.storeId, pin);
+      }
+      pins.push(...byStore.values());
+    } else {
+      const stores = await prisma.store.findMany({
+        where: storeSearch,
+        select: { id: true, name: true, latitude: true, longitude: true, _count: { select: { bags: { where: liveBag } } } },
+        take: 1000,
+      });
+      pins.push(...stores.map((store) => ({ id: store.id, name: store.name, lat: store.latitude, lng: store.longitude, count: store._count.bags })));
+    }
+    for (const pin of pins) {
+      if (pin.lat == null || pin.lng == null) {
+        notOnMap += 1;
+        continue;
+      }
+      const onSale = pin.count > 0 ? plural(pin.count, t.onSale) : t.noBagsNow;
+      places.push({
+        id: pin.id,
+        name: pin.name,
+        lat: pin.lat,
+        lng: pin.lng,
+        count: pin.count,
+        label: pin.minPrice !== undefined ? `${onSale} · ${fill(t.fromPrice, { price: f.price(pin.minPrice) })}` : onSale,
+        href: `/stores/${pin.id}`,
+      });
+    }
+  }
+
   // "★ 4.6 (12)" for stores with enough ratings.
   const ratings = await publicRatings([
     ...shown.map(({ bag }) => bag.storeId),
@@ -166,6 +214,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // Build a link to this page with some filters changed (undefined = remove).
   const current = {
     tab: tab === "stores" ? "stores" : undefined,
+    view: view === "map" ? "map" : undefined,
     q,
     city,
     category: selected,
@@ -184,7 +233,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   };
   const isFiltered = Boolean(q || city || (tab === "bags" && (selected || halal || veg || vegan)));
   const total = tab === "bags" ? bagTotal : storeTotal;
-  const shownCount = tab === "bags" ? shown.length : directory.length;
+  const shownCount = view === "map" ? places.length + notOnMap : tab === "bags" ? shown.length : directory.length;
 
   return (
     <main>
@@ -205,6 +254,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       <section id="browse" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pt-10">
         <h2 className="sr-only">{near ? t.closest : t.availableNow}</h2>
 
+        <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Bags | Stores. The search below only searches the open tab. */}
         <nav className="inline-flex rounded-xl bg-stone-200/70 p-1" aria-label={t.searchLabel}>
           {(["bags", "stores"] as const).map((value) => (
@@ -222,10 +272,26 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             </Link>
           ))}
         </nav>
+        {/* List | Map */}
+        <nav className="inline-flex rounded-xl bg-stone-200/70 p-1 text-sm font-semibold" aria-label={t.viewMap}>
+          {(["list", "map"] as const).map((value) => (
+            <Link
+              key={value}
+              href={hrefWith({ view: value === "map" ? "map" : undefined })}
+              scroll={false}
+              aria-current={view === value ? "page" : undefined}
+              className={`rounded-lg px-4 py-2 transition ${view === value ? "bg-white text-stone-900 shadow-sm" : "text-stone-600 hover:text-stone-900"}`}
+            >
+              {value === "list" ? t.viewList : t.viewMap}
+            </Link>
+          ))}
+        </nav>
+        </div>
 
         {/* A GET form: it updates the URL (?q=…&city=…) without reloading the page. */}
         <Form action="/" scroll={false} className="mt-4 flex flex-col gap-3 sm:flex-row">
           {tab === "stores" && <input type="hidden" name="tab" value="stores" />}
+          {view === "map" && <input type="hidden" name="view" value="map" />}
           {tab === "bags" && selected && <input type="hidden" name="category" value={selected} />}
           {tab === "bags" && halal && <input type="hidden" name="halal" value="1" />}
           {tab === "bags" && veg && <input type="hidden" name="veg" value="1" />}
@@ -302,7 +368,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </p>
         )}
 
-        {tab === "bags" && (
+        {view === "map" && shownCount > 0 && (
+          <div className="mt-6">
+            <ResultsMapLoader places={places} center={city ? CITIES[city] : null} me={near}
+              labels={{ open: t.openStore, you: t.youAreHere }} />
+            {notOnMap > 0 && <p className="mt-2 text-sm text-stone-500">{fill(t.notOnMap, { n: notOnMap })}</p>}
+          </div>
+        )}
+
+        {tab === "bags" && view === "list" && (
           <>
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {shown.map(({ bag, distance }) => (
@@ -327,7 +401,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </>
         )}
 
-        {tab === "stores" && (
+        {tab === "stores" && view === "list" && (
           <>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {directory.map(({ store, onSale, next, distance }) => (

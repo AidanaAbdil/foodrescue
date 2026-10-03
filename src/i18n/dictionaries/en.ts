@@ -90,6 +90,12 @@ export const en: Dictionary = {
     shownOf: "Showing {shown} of {total}",
     noStoresTitle: "No stores found",
     noStoresText: "Try another name, street or city.",
+    viewList: "☰ List",
+    viewMap: "🗺 Map",
+    fromPrice: "from {price}",
+    openStore: "Open →",
+    youAreHere: "You are here",
+    notOnMap: "Not on the map: {n}",
     howTitle: "How it works",
     steps: [
       { title: "Find a bag", text: "Browse surprise bags from bakeries, cafés and shops near you." },

@@ -56,3 +56,25 @@ test("shared bag links get a preview card", async ({ page }) => {
   const response = await page.request.get(image!);
   expect(response.headers()["content-type"]).toBe("image/png");
 });
+
+test("map view: one pin per store, same search, stores without a point counted", async ({ page }) => {
+  const word = `Карта${Date.now()}`;
+  const a = await createOwnerWithStore("Кафе А", { lat: 43.24, lng: 76.92 });
+  const b = await createOwnerWithStore("Кафе Б", { lat: 43.25, lng: 76.95 });
+  const noPoint = await createOwnerWithStore("Кафе без точки");
+  for (const store of [a.store, a.store, b.store, noPoint.store]) await createBag(store.id, { title: `${word} пакет` });
+  await createBag(b.store.id, { title: "Другой пакет" }); // doesn't match the search
+
+  await page.goto(`/?q=${word}`);
+  await page.getByRole("link", { name: "🗺 Карта" }).click();
+  await expect(page).toHaveURL(/view=map/);
+  const pins = page.locator(".leaflet-marker-icon");
+  await expect(pins).toHaveCount(2);
+  await expect(pins.filter({ hasText: "2" })).toHaveCount(1); // Кафе А has two matching bags
+  await expect(page.getByText("Без точки на карте: 1")).toBeVisible();
+
+  await pins.filter({ hasText: "2" }).click();
+  await expect(page.locator(".leaflet-popup")).toContainText("Кафе А");
+  await page.locator(".leaflet-popup").getByRole("link", { name: "Открыть →" }).click();
+  await expect(page).toHaveURL(`/stores/${a.store.id}`);
+});

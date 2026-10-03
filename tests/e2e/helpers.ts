@@ -24,13 +24,14 @@ export async function createCustomer() {
 }
 
 // A store owner with one approved store in Almaty.
-export async function createOwnerWithStore(storeName = "Тестовая пекарня") {
+export async function createOwnerWithStore(storeName = "Тестовая пекарня", location?: { lat: number; lng: number }) {
   const owner = await db.user.create({
     data: { email: uniqueEmail("owner"), name: "Тест Владелец", passwordHash: await hashPassword(PASSWORD), role: "STORE_OWNER", ...consent },
   });
   const fields = { name: storeName, address: "ул. Тестовая, 1", description: null };
   const store = await db.store.create({
-    data: { ...fields, searchText: storeSearchText(fields), city: "ALMATY", phone: "+77270000000", status: "APPROVED", ownerId: owner.id },
+    data: { ...fields, searchText: storeSearchText(fields), city: "ALMATY", phone: "+77270000000", status: "APPROVED", ownerId: owner.id,
+      latitude: location?.lat, longitude: location?.lng },
   });
   return { owner, store };
 }

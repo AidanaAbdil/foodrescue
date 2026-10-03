@@ -288,6 +288,15 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Map view on the homepage (2026-10-03)
+- "☰ Список | 🗺 Карта" next to the tabs (`?view=map`). One pin per store (number = matching bags,
+  grey "·" = none now), same filters as the list (search, city, category, labels). Popup: name,
+  "N bags · from X ₸", link to the store page. Stores without a map point are counted below the map.
+- `src/components/search/ResultsMap.tsx` (Leaflet, loaded only in the browser via
+  ResultsMapLoader). Fits all pins (+ "near me" dot), or the chosen city. Caps: 2000 bags / 1000
+  stores per map; at real scale, load pins for the visible area instead.
+- OpenStreetMap tiles; switch to a tile provider (e.g. 2GIS) before heavy traffic.
+
 ### Impact counter (2026-10-03)
 - My orders: "🌱 Ваш вклад" card (bags rescued, money saved vs. full price, CO₂ avoided) once a
   customer has a COLLECTED order. `src/lib/impact.ts`; `CO2_KG_PER_BAG = 2.5` is an assumption
@@ -455,7 +464,7 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
-All "must-haves" are done (2026-10-03). Next candidates: a map view, and UI improvements (ask the user which screens first).
+All "must-haves" are done (2026-10-03). Next candidates: UI improvements (ask the user which screens first).
 
 **Open at the end of 2026-10-02:**
 - **Push on her own devices is not confirmed yet.** As of the end of the session, `PushSubscription` was
