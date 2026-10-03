@@ -51,6 +51,7 @@ export function formatters(locale: Locale, dict: Dictionary) {
   return {
     price: (tiyn: number) => money.format(tiyn / 100),
     time: (date: Date) => time.format(date),
+    date: (date: Date) => shortDate.format(date), // "пт, 3 окт."
     // "Today", "Tomorrow", or a short date.
     day: (date: Date) => {
       const days = Math.round(

@@ -268,6 +268,16 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
 - Stores tab: stores with bags on sale first (A–Z), then the rest (A–Z).
 - Sold-out bags appear only once the available list is fully shown.
 
+### Earnings report for stores (2026-10-03)
+- Dashboard → "📊 Доходы" (`/dashboard/earnings?period=week|month|last-month`, Kazakhstan time,
+  weeks start Monday). Orders count on their pickup day. Sold = paid and not refunded (collected,
+  no-show, or still reserved). Shows revenue, payout, food value saved, waiting/no-show/refunded
+  counts, tables by day and by bag. Logic in `src/lib/earnings.ts`.
+- Commission: `PLATFORM_FEE_PERCENT` in .env (e.g. 10). Not set = "no commission". Business decision
+  still open; payouts aren't connected (test payments).
+- "Скачать CSV" → `/dashboard/earnings/export?period=…`: `;`-separated with a BOM for Excel; cells
+  starting with = + - @ are escaped (CSV formula injection).
+
 ### Cities, map & store list
 - `Store.city` holds a code from `src/lib/cities.ts` (ALMATY, ASTANA; names in `dict.cities`,
   shown via `cityName`). Store form uses a select; `saveStore` rejects anything else. Existing
@@ -398,8 +408,7 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
-**Planned for the next session** (her "must-haves" not done yet): earnings reports for stores
-(sold per day/week/month, what they'll be paid), an automated test suite (Playwright: ordering,
+**Planned for the next session** ("must-haves" not done yet): an automated test suite (Playwright: ordering,
 payments/refunds, admin, owner actions), and link previews (Open Graph images/titles for bag and
 store pages, so shared links show a card in WhatsApp/Telegram).
 

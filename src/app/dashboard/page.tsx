@@ -105,6 +105,12 @@ export default async function DashboardPage() {
           <PushToggle publicKey={pushPublicKey()} hint={dict.push.hint} />
           <NewOrderAlert initial={latestOrder} />
           <Link
+            href="/dashboard/earnings"
+            className="rounded-xl px-4 py-2.5 text-sm font-semibold text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"
+          >
+            {dict.earnings.link}
+          </Link>
+          <Link
             href="/dashboard/bags/new"
             className="rounded-xl bg-brand px-5 py-2.5 font-semibold text-white hover:bg-brand-dark"
           >
