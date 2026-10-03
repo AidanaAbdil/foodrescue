@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState, useTransition } from "react";
 import { uploadBagPhoto } from "@/app/actions/photos";
 import { useI18n } from "@/i18n/client";
+import { Doodle } from "@/components/Doodle";
 
 const MAX_SIDE = 1600; // px; plenty for a card and the bag page
 
@@ -71,7 +72,7 @@ export function PhotoField({ defaultUrl }: { defaultUrl?: string }) {
           {url ? (
             <Image src={url} alt="" fill sizes="160px" className="object-cover" />
           ) : (
-            <span aria-hidden>📷</span>
+            <Doodle name="camera" size={40} className="text-brand" />
           )}
           {uploading && (
             <span className="absolute inset-0 grid place-items-center bg-white/70 text-sm font-medium text-stone-700">
@@ -81,6 +82,7 @@ export function PhotoField({ defaultUrl }: { defaultUrl?: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={uploading} onClick={() => input.current?.click()} className={`${button} text-stone-800`}>
+            {!url && <Doodle name="camera" size={16} className="mr-1.5" />}
             {url ? t.change : t.choose}
           </button>
           {url && !uploading && (

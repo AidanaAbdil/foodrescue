@@ -15,7 +15,7 @@ test("hand over an order: marked collected, header count goes down", async ({ pa
   await login(page, owner.email);
   await page.goto("/dashboard");
   await expect(dashboardLink(page)).toHaveText("Кабинет (1)");
-  await orderRow(page, order.pickupCode).getByRole("button", { name: "✓ Выдано" }).click();
+  await orderRow(page, order.pickupCode).getByRole("button", { name: "Выдано", exact: true }).click();
 
   await expect(orderRow(page, order.pickupCode)).toHaveCount(0);
   await expect(dashboardLink(page)).toHaveText("Кабинет");
@@ -82,7 +82,7 @@ test("earnings: sold bags and revenue for this month, only this store's", async 
 
   await login(page, owner.email);
   await page.goto("/dashboard");
-  await page.getByRole("link", { name: "📊 Доходы" }).click();
+  await page.getByRole("link", { name: "Доходы", exact: true }).click();
   const stat = (label: string) => page.locator("p").filter({ hasText: label });
   await expect(stat("Продано пакетов")).toContainText("2");
   await expect(stat("Выручка")).toContainText(/3\s500\s₸/);

@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { rateOrder, reportProblem } from "@/app/actions/feedback";
 import { useI18n } from "@/i18n/client";
 import { PROBLEM_KINDS } from "@/lib/feedback";
+import { Doodle } from "@/components/Doodle";
 
 type Props = {
   orderId: string;
@@ -37,10 +38,10 @@ export function OrderFeedback({ orderId, review, report, canRate, canReport }: P
               {/* Five radio buttons drawn as stars. */}
               <div className="mt-1 flex" onMouseLeave={() => setHover(0)}>
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <label key={n} className="cursor-pointer p-0.5 text-3xl leading-none" onMouseEnter={() => setHover(n)}>
-                    <input type="radio" name="rating" value={n} required className="sr-only" onChange={() => setRating(n)} />
-                    <span aria-hidden className={(hover || rating) >= n ? "text-amber-400" : "text-stone-300"}>
-                      ★
+                  <label key={n} className="cursor-pointer p-1" onMouseEnter={() => setHover(n)}>
+                    <input type="radio" name="rating" value={n} required className="peer sr-only" onChange={() => setRating(n)} />
+                    <span className={`block rounded peer-focus-visible:ring-2 peer-focus-visible:ring-brand ${(hover || rating) >= n ? "text-amber-400" : "text-stone-300"}`}>
+                      <Doodle name="star" size={30} filled={(hover || rating) >= n} />
                     </span>
                     <span className="sr-only">{fill(t.star, { n })}</span>
                   </label>
@@ -105,9 +106,10 @@ export function OrderFeedback({ orderId, review, report, canRate, canReport }: P
 
 function Stars({ value }: { value: number }) {
   return (
-    <span className="text-amber-400" aria-label={`${value} / 5`}>
-      {"★".repeat(value)}
-      <span className="text-stone-300">{"★".repeat(5 - value)}</span>
+    <span className="inline-flex gap-0.5 align-middle" role="img" aria-label={`${value} / 5`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Doodle key={n} name="star" size={16} filled={n <= value} className={n <= value ? "text-amber-400" : "text-stone-300"} />
+      ))}
     </span>
   );
 }

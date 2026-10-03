@@ -5,6 +5,7 @@ import { useTransition } from "react";
 import { setStoreLocation } from "@/app/actions/dashboard";
 import { useI18n } from "@/i18n/client";
 import { useCurrentLocation } from "./LocationPicker";
+import { Doodle } from "@/components/Doodle";
 
 // Dashboard button for stores that don't have a location yet.
 export function SetLocationButton({ storeId }: { storeId: string }) {
@@ -30,6 +31,7 @@ export function SetLocationButton({ storeId }: { storeId: string }) {
         disabled={locating || saving}
         className="rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
       >
+        {!locating && !saving && <Doodle name="pin" size={15} className="mr-1.5 text-brand" />}
         {locating ? t.finding : saving ? t.saving : t.use}
       </button>
       {error && <span className="mt-1 text-sm text-red-600">{error}</span>}

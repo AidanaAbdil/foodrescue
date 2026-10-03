@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { cancelOrder } from "@/app/actions/orders";
 import type { Order, Payment, Store, SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
-import { CATEGORY_EMOJI } from "@/lib/categories";
+import { CATEGORY_DOODLE } from "@/lib/categories";
 import { getPaymentProvider } from "@/lib/payments/provider";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
@@ -20,6 +20,7 @@ import { isCancelReason } from "@/lib/orders";
 import { canRate, canReport } from "@/lib/feedback";
 import { OrderFeedback } from "@/components/OrderFeedback";
 import { pushPublicKey } from "@/lib/push";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.orders };
@@ -99,7 +100,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
       {impact.bags > 0 && (
         <section className="mt-6 rounded-2xl bg-brand-light/60 p-5 ring-1 ring-accent/20">
-          <h2 className="font-semibold text-brand-dark">🌱 {dict.impact.title}</h2>
+          <h2 className="flex items-center gap-2 font-semibold text-brand-dark"><Doodle name="sprout" size={22} />{dict.impact.title}</h2>
           <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
             <StatCard template={dict.impact.bags} value={impact.bags} />
             <StatCard template={dict.impact.money} value={f.price(impact.saved)} />
@@ -109,7 +110,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
       {recentlyCancelled.map((order) => (
         <div key={order.id} role="status" className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-stone-200">
-          <p className="text-lg font-semibold">{fill(t.sorryTitle, { code: order.pickupCode })}</p>
+          <p className="flex items-center gap-2 text-lg font-semibold"><Doodle name="sad" size={24} className="text-brand" />{fill(t.sorryTitle, { code: order.pickupCode })}</p>
           <p className="mt-1 text-stone-700">
             {fill(t.sorryText, { store: order.bag.store.name })}{" "}
             {order.cancelReason && order.cancelReason !== "OTHER" && isCancelReason(order.cancelReason) &&
@@ -136,7 +137,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
       {justReserved && (
         <div role="status" className="mt-6 rounded-2xl bg-accent p-5 text-white">
-          <p className="text-lg font-semibold">{t.reservedTitle}</p>
+          <p className="flex items-center gap-2 text-lg font-semibold"><Doodle name="party" size={26} />{t.reservedTitle}</p>
           <p className="mt-1">
             {/* Split around {code} so the code itself can be shown in bold. */}
             {fill(t.reservedText, {
@@ -216,7 +217,7 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         {bag.imageUrl ? (
           <Image src={bag.imageUrl} alt="" fill sizes="96px" className="object-cover" />
         ) : (
-          <span className="grid h-full place-items-center text-3xl">{CATEGORY_EMOJI[bag.category]}</span>
+          <span className="grid h-full place-items-center text-brand"><Doodle name={CATEGORY_DOODLE[bag.category]} size={44} /></span>
         )}
       </Link>
 
@@ -239,7 +240,7 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
         </p>
         {(isUpcoming || isPending) && bag.store.phone && (
           <a href={`tel:${bag.store.phone}`} className="mt-1 inline-block text-sm font-medium text-brand-dark underline underline-offset-2">
-            {dict.store.call} · {formatPhone(bag.store.phone)}
+            <Doodle name="phone" size={15} className="mr-1" />{dict.store.call} · {formatPhone(bag.store.phone)}
           </a>
         )}
         {isPending && order.expiresAt && (

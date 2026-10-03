@@ -9,7 +9,7 @@ import { StatCard } from "@/components/StatCard";
 import type { SurpriseBag } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
-import { CATEGORY_EMOJI } from "@/lib/categories";
+import { CATEGORY_DOODLE } from "@/lib/categories";
 import { latestPaidOrder } from "@/lib/new-orders";
 import { pushPublicKey } from "@/lib/push";
 import { nextWindow, parseWeekdays } from "@/lib/schedules";
@@ -19,6 +19,7 @@ import { requireOwner } from "@/lib/session";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { CANCEL_REASONS } from "@/lib/orders";
 import { roundRating } from "@/lib/feedback";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.dashboard };
@@ -47,9 +48,7 @@ export default async function DashboardPage() {
     return (
       <main className="mx-auto w-full max-w-xl px-4 py-12">
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 sm:p-8">
-          <p className="text-3xl" aria-hidden>
-            🏪
-          </p>
+          <Doodle name="store" size={44} className="text-brand" />
           <h1 className="mt-2 text-2xl font-bold">{t.setupTitle}</h1>
           <p className="mt-1 text-stone-600">{t.setupSubtitle}</p>
           <div className="mt-6">
@@ -107,7 +106,7 @@ export default async function DashboardPage() {
                   title={t.editStore}
                   className="underline decoration-stone-300 underline-offset-2 hover:text-brand-dark"
                 >
-                  {store.name} ✎
+                  {store.name} <Doodle name="pencil" size={13} />
                 </Link>
               </span>
             ))}
@@ -121,7 +120,7 @@ export default async function DashboardPage() {
             href="/dashboard/earnings"
             className="rounded-xl px-4 py-2.5 text-sm font-semibold text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"
           >
-            {dict.earnings.link}
+            <Doodle name="chart" className="mr-1.5 text-brand" />{dict.earnings.link}
           </Link>
           <Link
             href="/dashboard/bags/new"
@@ -213,7 +212,7 @@ export default async function DashboardPage() {
                       type="submit"
                       className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
                     >
-                      {t.markCollected}
+                      <Doodle name="check" size={15} className="mr-1" />{t.markCollected}
                     </button>
                   </form>
                   {/* Only once pickup has started can a customer be a no-show. */}
@@ -259,7 +258,7 @@ export default async function DashboardPage() {
 
       {stores.some((store) => store.schedules.length > 0) && (
         <section className="mt-10">
-          <h2 className="text-xl font-bold">🔁 {t.schedulesTitle}</h2>
+          <h2 className="flex items-center gap-2 text-xl font-bold"><Doodle name="repeat" size={22} className="text-accent" />{t.schedulesTitle}</h2>
           <ul className="mt-4 divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white text-sm ring-1 ring-stone-200">
             {stores.flatMap((store) =>
               store.schedules.map((schedule) => {
@@ -268,7 +267,7 @@ export default async function DashboardPage() {
                   <li key={schedule.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">
-                        {CATEGORY_EMOJI[schedule.category]} {schedule.title}
+                        <Doodle name={CATEGORY_DOODLE[schedule.category]} className="mr-1.5 text-brand" />{schedule.title}
                       </p>
                       <p className="text-stone-600">
                         {days.length === 7 ? t.everyDay : days.map((day) => t.weekdays[day - 1]).join(", ")} ·{" "}
@@ -347,10 +346,10 @@ export default async function DashboardPage() {
                       <div className="flex items-start justify-between gap-3 md:block">
                         <div>
                           <p className="font-semibold">
-                            {CATEGORY_EMOJI[bag.category]} {bag.title}
+                            <Doodle name={CATEGORY_DOODLE[bag.category]} className="mr-1.5 text-brand" />{bag.title}
                             {bag.scheduleId && (
-                              <span title={t.fromSchedule} aria-label={t.fromSchedule}>
-                                {" "}🔁
+                              <span title={t.fromSchedule}>
+                                {" "}<Doodle name="repeat" size={15} className="text-accent" title={t.fromSchedule} />
                               </span>
                             )}
                           </p>
@@ -412,7 +411,7 @@ export default async function DashboardPage() {
         ) : (
           <>
             <p className="mt-1 text-stone-700">
-              <span className="text-amber-400" aria-hidden>★ </span>
+              <Doodle name="star" size={16} filled className="mr-1 text-amber-400" />
               {fill(dict.feedback.averageLine, {
                 rating: roundRating(reviewStats._avg.rating ?? 0).toLocaleString(locale === "en" ? "en" : "ru", { minimumFractionDigits: 1 }),
                 n: reviewStats._count,
@@ -423,9 +422,10 @@ export default async function DashboardPage() {
               {reviews.map((review) => (
                 <li key={review.id} className="p-4 text-sm">
                   <p className="flex flex-wrap items-baseline gap-x-3">
-                    <span className="text-amber-400" aria-label={`${review.rating} / 5`}>
-                      {"★".repeat(review.rating)}
-                      <span className="text-stone-300">{"★".repeat(5 - review.rating)}</span>
+                    <span className="inline-flex gap-0.5" role="img" aria-label={`${review.rating} / 5`}>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Doodle key={n} name="star" size={15} filled={n <= review.rating} className={n <= review.rating ? "text-amber-400" : "text-stone-300"} />
+                      ))}
                     </span>
                     <span className="text-stone-500">
                       {review.order.bag.title} · {f.date(review.order.bag.pickupStart)}

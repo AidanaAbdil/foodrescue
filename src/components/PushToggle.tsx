@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { removePushSubscription, savePushSubscription, sendTestPush } from "@/app/actions/push";
 import { useI18n } from "@/i18n/client";
+import { Doodle } from "@/components/Doodle";
 
 type Status = "checking" | "unsupported" | "ios-install" | "blocked" | "off" | "on" | "working";
 
@@ -111,7 +112,7 @@ export function PushToggle({ publicKey, hint }: { publicKey: string | null; hint
     <div className="flex flex-wrap items-center gap-2">
       {status === "on" ? (
         <>
-          <span className="rounded-xl bg-brand-light px-4 py-2.5 text-sm font-semibold text-brand-dark">{t.enabled}</span>
+          <span className="rounded-xl bg-brand-light px-4 py-2.5 text-sm font-semibold text-brand-dark"><Doodle name="bell" size={16} className="mr-1.5" />{t.enabled}</span>
           <button type="button" onClick={test} className="text-sm font-medium text-brand-dark underline underline-offset-2">
             {t.test}
           </button>
@@ -127,6 +128,7 @@ export function PushToggle({ publicKey, hint }: { publicKey: string | null; hint
           title={hint}
           className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
         >
+          <Doodle name="bell" size={16} className="mr-1.5 text-brand" />
           {t.enable}
         </button>
       )}

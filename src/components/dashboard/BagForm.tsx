@@ -6,8 +6,9 @@ import { saveBag } from "@/app/actions/dashboard";
 import { FormField, inputClass, submitButtonClass } from "@/components/auth/FormField";
 import { PhotoField } from "@/components/dashboard/PhotoField";
 import { useI18n } from "@/i18n/client";
-import { CATEGORY_EMOJI, CATEGORY_LIST } from "@/lib/categories";
+import { CATEGORY_LIST } from "@/lib/categories";
 import { ALLERGENS } from "@/lib/labels";
+import { Doodle } from "@/components/Doodle";
 
 type Props = {
   stores: { id: string; name: string }[];
@@ -73,7 +74,7 @@ export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, defau
         <select id="category" name="category" defaultValue={values.category} className={inputClass(errors.category)}>
           {CATEGORY_LIST.map((value) => (
             <option key={value} value={value}>
-              {CATEGORY_EMOJI[value]} {dict.categories[value]}
+              {dict.categories[value]}
             </option>
           ))}
         </select>
@@ -114,7 +115,7 @@ export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, defau
 
         {fromScheduleId && (
           <p className="mt-1 text-sm text-stone-600">
-            🔁 {t.fromScheduleNote}{" "}
+            <Doodle name="repeat" size={15} className="mr-1 text-accent" />{t.fromScheduleNote}{" "}
             <Link href={`/dashboard/schedules/${fromScheduleId}/edit`} className="font-medium text-brand-dark underline underline-offset-2">
               {t.fromScheduleLink}
             </Link>
@@ -131,7 +132,8 @@ export function BagForm({ stores, mode, bagId, scheduleId, fromScheduleId, defau
                 onClick={() => setRepeat(option)}
                 className={`rounded-md px-4 py-1.5 ${repeat === option ? "bg-white text-brand-dark shadow-sm" : "text-stone-600"}`}
               >
-                {option ? `🔁 ${t.repeatWeekly}` : t.repeatOnce}
+                {option && <Doodle name="repeat" size={15} className="mr-1" />}
+                {option ? t.repeatWeekly : t.repeatOnce}
               </button>
             ))}
           </div>

@@ -5,6 +5,7 @@ import { useI18n } from "@/i18n/client";
 import { CITIES, type City } from "@/lib/cities";
 import type { Coords } from "@/lib/geo";
 import { useCurrentLocation } from "./LocationPicker";
+import { Doodle } from "@/components/Doodle";
 
 // Leaflet touches `window`, so the map only loads in the browser.
 const StoreMap = dynamic(() => import("./StoreMap"), {
@@ -43,9 +44,10 @@ export function MapPicker({ city, coords, onPick }: Props) {
           }}
           className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
         >
+          {!locating && <Doodle name="pin" size={15} className="mr-1.5 text-brand" />}
           {locating ? t.finding : t.use}
         </button>
-        {coords && <span className="text-sm text-accent">{t.pinSet}</span>}
+        {coords && <span className="text-sm text-accent"><Doodle name="check" size={15} className="mr-1" />{t.pinSet}</span>}
       </div>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>

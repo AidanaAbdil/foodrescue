@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useI18n } from "@/i18n/client";
+import { Doodle } from "@/components/Doodle";
 
 type Props = {
   active: boolean; // already sorting by distance?
@@ -47,7 +48,7 @@ export function NearMeButton({ active, hrefWithout }: Props) {
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       {active ? (
         <span className="flex items-center gap-2 rounded-lg bg-brand-light px-3 py-2.5 text-sm font-medium text-brand-dark">
-          📍 {t.sorted}
+          <Doodle name="pin" size={16} />{t.sorted}
           <Link href={hrefWithout} scroll={false} className="underline underline-offset-2 hover:no-underline">
             {t.clear}
           </Link>
@@ -59,7 +60,8 @@ export function NearMeButton({ active, hrefWithout }: Props) {
           disabled={status === "locating"}
           className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-60"
         >
-          {status === "locating" ? t.locating : `📍 ${t.button}`}
+          {status !== "locating" && <Doodle name="pin" size={16} className="mr-1.5 text-brand" />}
+          {status === "locating" ? t.locating : t.button}
         </button>
       )}
       {status === "error" && (

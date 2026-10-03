@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useI18n } from "@/i18n/client";
 import { rich } from "@/i18n/rich";
 import { FormField, submitButtonClass } from "./FormField";
+import { Doodle } from "@/components/Doodle";
 
 
 // `next` = where to go after success (e.g. back to the bag being reserved).
@@ -14,8 +15,8 @@ export function SignupForm({ next, initialRole = "CUSTOMER" }: { next: string; i
   const [state, action, pending] = useActionState(signup, undefined);
   const t = useI18n().dict.auth;
   const roles = [
-    { value: "CUSTOMER", emoji: "🛍️", title: t.customerTitle, text: t.customerText },
-    { value: "STORE_OWNER", emoji: "🏪", title: t.ownerTitle, text: t.ownerText },
+    { value: "CUSTOMER", doodle: "bag" as const, title: t.customerTitle, text: t.customerText },
+    { value: "STORE_OWNER", doodle: "store" as const, title: t.ownerTitle, text: t.ownerText },
   ];
   const errors = state?.errors;
   const role = state?.values?.role ?? initialRole;
@@ -38,9 +39,7 @@ export function SignupForm({ next, initialRole = "CUSTOMER" }: { next: string; i
                 defaultChecked={option.value === role}
                 className="sr-only"
               />
-              <span className="text-2xl" aria-hidden>
-                {option.emoji}
-              </span>
+              <Doodle name={option.doodle} size={34} className="text-brand" />
               <span className="mt-1 block text-sm font-semibold">{option.title}</span>
               <span className="block text-xs text-stone-500">{option.text}</span>
             </label>

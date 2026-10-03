@@ -6,6 +6,7 @@ import { getI18n } from "@/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { requireUser } from "@/lib/session";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.pay.title };
@@ -32,7 +33,7 @@ export default async function TestPaymentPage({ params }: PageProps<"/pay/test/[
   return (
     <main className="mx-auto w-full max-w-md px-4 py-10">
       <p role="note" className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">
-        🧪 {t.testBanner}
+        <Doodle name="flask" size={16} className="mr-1" />{t.testBanner}
       </p>
 
       <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">

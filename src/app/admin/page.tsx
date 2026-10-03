@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 import { type City, cityName } from "@/lib/cities";
 import { formatPhone } from "@/lib/phone";
+import { Doodle, type DoodleName } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.admin };
@@ -72,12 +73,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         <h1 className="text-3xl font-bold">{t.title}</h1>
         <nav className="flex flex-wrap gap-2">
           {[
-            ["/admin/search", dict.adminTools.searchLink],
-            ["/admin/reports", dict.report.link],
-            ["/admin/log", dict.adminTools.logLink],
-          ].map(([href, label]) => (
+            ["/admin/search", dict.adminTools.searchLink, "search"],
+            ["/admin/reports", dict.report.link, "chart"],
+            ["/admin/log", dict.adminTools.logLink, "notebook"],
+          ].map(([href, label, icon]) => (
             <Link key={href} href={href} className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50">
-              {label}
+              <Doodle name={icon as DoodleName} className="mr-1.5 text-brand" />{label}
             </Link>
           ))}
         </nav>
@@ -173,7 +174,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 </div>
                 <p className="mt-1 text-sm">
                   {request.contactName} ·{" "}
-                  <a href={`tel:${request.phone}`} className="font-semibold text-brand-dark underline underline-offset-2">📞 {formatPhone(request.phone)}</a>
+                  <a href={`tel:${request.phone}`} className="font-semibold text-brand-dark underline underline-offset-2"><Doodle name="phone" size={15} className="mr-1" />{formatPhone(request.phone)}</a>
                   {request.email && <> · <a href={`mailto:${request.email}`} className="text-brand-dark underline underline-offset-2">{request.email}</a></>}
                 </p>
                 {request.message && <p className="mt-2 whitespace-pre-line text-sm text-stone-700">{request.message}</p>}
@@ -225,7 +226,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   <form action={approveStore}>
                     <input type="hidden" name="storeId" value={store.id} />
                     <button type="submit" className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
-                      ✓ {t.approve}
+                      <Doodle name="check" size={15} className="mr-1" />{t.approve}
                     </button>
                   </form>
                   <RejectForm storeId={store.id} label={t.reject} reasonLabel={t.reasonLabel} />
@@ -257,7 +258,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                     <form action={approveStore}>
                       <input type="hidden" name="storeId" value={store.id} />
                       <button type="submit" className="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90">
-                        ✓ {t.approve}
+                        <Doodle name="check" size={15} className="mr-1" />{t.approve}
                       </button>
                     </form>
                   )}
@@ -335,7 +336,7 @@ function StoreDetails({ store, t, created, cities }: {
           t.noLocation
         )}
       </p>
-      {store.phone && <p className="text-stone-600">📞 {formatPhone(store.phone)}</p>}
+      {store.phone && <p className="text-stone-600"><Doodle name="phone" size={14} className="mr-1" />{formatPhone(store.phone)}</p>}
       {store.description && <p className="mt-1 text-stone-600">{store.description}</p>}
       <p className="mt-1 text-stone-500">
         {t.owner}: {store.owner.name} ({store.owner.email}) · {t.created}: {created}

@@ -10,6 +10,7 @@ import type { Coords } from "@/lib/geo";
 import { formatPhone } from "@/lib/phone";
 import { HoursPicker } from "@/components/dashboard/HoursPicker";
 import { MapPicker } from "./MapPicker";
+import { Doodle } from "@/components/Doodle";
 
 type StoreDefaults = {
   id: string;
@@ -119,10 +120,12 @@ export function StoreForm({ store }: { store?: StoreDefaults }) {
             disabled={searching || address.trim().length < 3}
             className="mt-2 rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50 disabled:opacity-50"
           >
+            {!searching && <Doodle name="pin" size={15} className="mr-1 text-brand" />}
             {searching ? loc.searching : loc.findOnMap}
           </button>
           {findResult && (
             <p className={`mt-1 text-sm ${findResult === "found" ? "text-accent" : "text-amber-800"}`}>
+              {findResult === "found" && <Doodle name="check" size={15} className="mr-1" />}
               {findResult === "found" ? loc.found : loc.notFound}
             </p>
           )}

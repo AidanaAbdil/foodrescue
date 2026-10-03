@@ -5,6 +5,7 @@ import { getI18n } from "@/i18n/server";
 import { toPriceInput } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.editSchedule };
@@ -23,7 +24,7 @@ export default async function EditSchedulePage({ params }: PageProps<"/dashboard
 
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <h1 className="text-3xl font-bold">🔁 {t.editScheduleTitle}</h1>
+      <h1 className="flex items-center gap-3 text-3xl font-bold"><Doodle name="repeat" size={32} className="text-accent" />{t.editScheduleTitle}</h1>
       <p className="mt-1 text-stone-600">{t.editScheduleSubtitle}</p>
       <div className="mt-6 rounded-2xl bg-white p-6 ring-1 ring-stone-200 sm:p-8">
         <BagForm

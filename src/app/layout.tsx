@@ -9,6 +9,7 @@ import { I18nProvider } from "@/i18n/client";
 import { getI18n } from "@/i18n/server";
 import { siteUrl } from "@/lib/mailer";
 import "./globals.css";
+import { Doodle } from "@/components/Doodle";
 
 // cyrillic-ext includes the extra Kazakh letters (ә, ғ, қ, ң, ө, ұ, ү, һ, і).
 const geistSans = Geist({
@@ -60,7 +61,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <I18nProvider locale={locale} dict={dict}>
           {process.env.DEMO === "true" && (
             <p className="bg-amber-100 px-4 pt-[env(safe-area-inset-top)] text-center text-xs font-medium leading-7 text-amber-900">
-              🧪 {dict.footer.demo}
+              <Doodle name="flask" size={14} className="mr-1" />{dict.footer.demo}
             </p>
           )}
           <Header />

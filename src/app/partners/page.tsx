@@ -3,13 +3,14 @@ import Link from "next/link";
 import { PartnerForm } from "@/components/partners/PartnerForm";
 import { getI18n } from "@/i18n/server";
 import { platformFeePercent } from "@/lib/earnings";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { dict } = await getI18n();
   return { title: dict.partners.title, description: dict.partners.sub };
 }
 
-const BENEFIT_ICONS = ["₸", "★", "⏱", "♻"];
+const BENEFIT_DOODLES = ["coin", "star", "clock", "sprout"] as const;
 
 // "For businesses": why join, how it works, common questions, and a request form.
 export default async function PartnersPage({ searchParams }: PageProps<"/partners">) {
@@ -37,7 +38,7 @@ export default async function PartnersPage({ searchParams }: PageProps<"/partner
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {t.benefits.map((benefit, i) => (
             <li key={benefit.title} className="rounded-2xl bg-white p-6 ring-1 ring-stone-200">
-              <span className="grid size-10 place-items-center rounded-full bg-brand-light text-lg font-bold text-brand-dark" aria-hidden>{BENEFIT_ICONS[i]}</span>
+              <span className="grid size-12 place-items-center rounded-full bg-brand-light text-brand-dark"><Doodle name={BENEFIT_DOODLES[i]} size={26} /></span>
               <h2 className="mt-3 font-semibold">{benefit.title}</h2>
               <p className="mt-1 text-sm text-stone-600">{benefit.text}</p>
             </li>

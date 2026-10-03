@@ -288,6 +288,15 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Doodle icons instead of emoji (2026-10-03)
+- `src/components/Doodle.tsx`: hand-drawn style line icons (`<Doodle name="bell" />`, `filled` for full
+  hearts/stars), using currentColor; thicker strokes at small sizes. Bag categories map to doodles via
+  `CATEGORY_DOODLE` (src/lib/categories.ts; CATEGORY_EMOJI is gone).
+- All on-screen emoji and icon glyphs (🔔 📍 🗺 📊 📞 ♡ ★ ✓ 🔁 ✎ ⬇ 🥡 🏪 🌱 📷 ☰ ✕, category emoji, line icons)
+  were replaced; the texts in the dictionaries no longer start with emoji. Kept on purpose: emoji in
+  push-notification titles and the browser-tab "🔔" (both are plain text only). `<option>`s can't hold
+  icons, so the bag form's category list is text only.
+
 ### "For businesses" page and partner requests (2026-10-03)
 - `/partners` (header link "Для заведений" for visitors and customers): benefits, 4 steps for stores,
   FAQ (the cost answer uses PLATFORM_FEE_PERCENT, else "terms when you join"), request form, and

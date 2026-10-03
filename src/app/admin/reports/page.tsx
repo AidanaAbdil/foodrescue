@@ -7,6 +7,7 @@ import { isPeriod, PERIODS } from "@/lib/earnings";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { platformReport } from "@/lib/platform-report";
 import { requireAdmin } from "@/lib/session";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.report.title };
@@ -121,7 +122,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
             <p className="hidden text-sm text-stone-500 sm:block">{t.downloadHint}</p>
             <a href={`/admin/reports/export?period=${period}`} download
               className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50">
-              ⬇ {t.download}
+              <Doodle name="download" size={16} className="mr-1.5" />{t.download}
             </a>
           </div>
         </div>
@@ -152,7 +153,7 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
                   <td className={`px-4 py-2.5 text-right tabular-nums ${row.noShows > 0 ? "text-amber-700" : ""}`}>{row.noShows}</td>
                   <td className={`px-4 py-2.5 text-right tabular-nums ${row.storeCancels > 0 ? "text-red-700" : ""}`}>{row.storeCancels}</td>
                   <td className={`px-4 py-2.5 text-right tabular-nums ${row.complaints > 0 ? "text-red-700" : ""}`}>{row.complaints}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{row.rating !== null ? `★ ${row.rating} (${row.ratingCount})` : "—"}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums">{row.rating !== null ? <><Doodle name="star" size={13} filled className="mr-1 text-amber-400" />{row.rating} ({row.ratingCount})</> : "—"}</td>
                 </tr>
               ))}
             </tbody>

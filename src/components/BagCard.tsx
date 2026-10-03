@@ -5,8 +5,9 @@ import { FoodLabels } from "@/components/FoodLabels";
 import { RatingBadge } from "@/components/RatingBadge";
 import type { StoreRating } from "@/lib/ratings";
 import { getI18n } from "@/i18n/server";
-import { CATEGORY_EMOJI } from "@/lib/categories";
+import { CATEGORY_DOODLE } from "@/lib/categories";
 import { discountPercent } from "@/lib/format";
+import { Doodle } from "@/components/Doodle";
 
 type Props = {
   bag: SurpriseBag & { store: Store };
@@ -17,7 +18,7 @@ type Props = {
 // One surprise bag in the listing grid; the whole card links to its page.
 export async function BagCard({ bag, distance, rating }: Props) {
   const { dict, f, plural } = await getI18n();
-  const emoji = CATEGORY_EMOJI[bag.category];
+  const doodle = CATEGORY_DOODLE[bag.category];
   const soldOut = bag.quantityAvailable === 0;
   const fewLeft = bag.quantityAvailable <= 2;
 
@@ -38,9 +39,9 @@ export async function BagCard({ bag, distance, rating }: Props) {
             className="object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
-          // No photo yet: show the category emoji instead.
-          <div className="grid h-full place-items-center text-6xl" aria-hidden>
-            {emoji}
+          // No photo yet: show the category doodle instead.
+          <div className="grid h-full place-items-center text-brand" aria-hidden>
+            <Doodle name={doodle} size={96} />
           </div>
         )}
 
@@ -71,17 +72,14 @@ export async function BagCard({ bag, distance, rating }: Props) {
         <h3 className="mt-2 text-lg font-semibold leading-snug">{bag.title}</h3>
 
         <p className="mt-1 flex items-center gap-1.5 text-sm text-stone-500">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4" aria-hidden>
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
+          <Doodle name="clock" size={15} />
           {f.pickupWindow(bag.pickupStart, bag.pickupEnd)}
         </p>
         <FoodLabels bag={bag} className="mt-2" />
 
         <div className="mt-4 flex items-end justify-between border-t border-stone-100 pt-3">
           <span className="text-xs font-medium text-stone-500">
-            {emoji} {dict.categories[bag.category]}
+            <Doodle name={doodle} size={14} className="mr-1" /> {dict.categories[bag.category]}
           </span>
           <span className="text-right">
             <span className="block text-xs text-stone-400 line-through">{f.price(bag.originalPrice)}</span>

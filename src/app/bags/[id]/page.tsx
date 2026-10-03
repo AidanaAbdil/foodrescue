@@ -7,7 +7,7 @@ import { ReserveForm } from "@/components/ReserveForm";
 import { getI18n } from "@/i18n/server";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { FoodLabels } from "@/components/FoodLabels";
-import { CATEGORY_EMOJI } from "@/lib/categories";
+import { CATEGORY_DOODLE } from "@/lib/categories";
 import { parseAllergens } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
 import { discountPercent } from "@/lib/format";
@@ -16,6 +16,7 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, loginUrl } from "@/lib/session";
 import { cityName } from "@/lib/cities";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata({ params }: PageProps<"/bags/[id]">) {
   const { id } = await params;
@@ -45,7 +46,7 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
   if (!approved && !isOwnStore && user?.role !== "ADMIN") notFound();
 
   const t = dict.bag;
-  const emoji = CATEGORY_EMOJI[bag.category];
+  const doodle = CATEGORY_DOODLE[bag.category];
   const available = approved && bag.isActive && bag.quantityAvailable > 0 && bag.pickupEnd > new Date();
 
   return (
@@ -71,8 +72,8 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
               className="object-cover"
             />
           ) : (
-            <div className="grid h-full place-items-center text-8xl" aria-hidden>
-              {emoji}
+            <div className="grid h-full place-items-center text-brand" aria-hidden>
+              <Doodle name={doodle} size={140} />
             </div>
           )}
           <span className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-sm font-bold text-white shadow">
@@ -93,7 +94,7 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
           </div>
           <h1 className="mt-3 text-3xl font-bold leading-tight">{bag.title}</h1>
           <p className="mt-2 text-sm font-medium text-stone-500">
-            {emoji} {dict.categories[bag.category]}
+            <Doodle name={doodle} className="mr-1" /> {dict.categories[bag.category]}
           </p>
 
           <p className="mt-4 flex items-baseline gap-3">

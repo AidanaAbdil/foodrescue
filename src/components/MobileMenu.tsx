@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/actions/auth";
+import { Doodle } from "@/components/Doodle";
 
 type Props = {
   label: string;
@@ -21,10 +22,8 @@ export function MobileMenu({ label, links, user, logoutLabel }: Props) {
         aria-label={label}
         className="grid size-10 cursor-pointer list-none place-items-center rounded-lg text-stone-700 hover:bg-stone-100 [&::-webkit-details-marker]:hidden"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-6" aria-hidden>
-          <path className="group-open:hidden" d="M4 6h16M4 12h16M4 18h16" />
-          <path className="hidden group-open:block" d="M6 6l12 12M18 6 6 18" />
-        </svg>
+        <span className="group-open:hidden"><Doodle name="list" size={26} /></span>
+        <span className="hidden group-open:inline"><Doodle name="close" size={24} /></span>
       </summary>
       <div className="absolute right-0 top-12 w-60 rounded-2xl bg-white p-2 text-base shadow-lg ring-1 ring-stone-200">
         {user && <p className="px-3 pb-2 pt-1 text-sm text-stone-500">{user.name}</p>}

@@ -4,6 +4,7 @@ import { useActionState, type ReactNode } from "react";
 import { deleteAccount, updateEmail, updateName, updatePassword, type AccountState } from "@/app/actions/account";
 import { FormField, submitButtonClass } from "@/components/auth/FormField";
 import { useI18n } from "@/i18n/client";
+import { Doodle } from "@/components/Doodle";
 
 type Action = (prev: AccountState, formData: FormData) => Promise<AccountState>;
 
@@ -29,7 +30,7 @@ function Section({ title, action, button, danger = false, okText, children }: {
         )}
         {state?.ok && (
           <p role="status" className="text-sm font-medium text-accent">
-            {okText}
+            <Doodle name="check" size={15} className="mr-1" />{okText}
           </p>
         )}
         <button

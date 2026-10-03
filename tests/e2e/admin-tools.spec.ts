@@ -90,7 +90,7 @@ test("the activity log lists what admins did", async ({ page }) => {
   await page.locator("li").filter({ hasText: store.name }).getByRole("button", { name: "Одобрить" }).first().click();
   await expect.poll(async () => (await db.store.findUniqueOrThrow({ where: { id: store.id } })).status).toBe("APPROVED");
 
-  await page.getByRole("link", { name: "🗒 Журнал" }).click();
+  await page.getByRole("link", { name: "Журнал", exact: true }).click();
   const entry = page.locator("li").filter({ hasText: store.name }).first();
   await expect(entry).toContainText("Заведение одобрено");
   await expect(entry).toContainText("admin@example.com");

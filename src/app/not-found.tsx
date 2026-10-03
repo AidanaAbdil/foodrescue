@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getI18n } from "@/i18n/server";
+import { Doodle } from "@/components/Doodle";
 
 // Shown for unknown URLs and whenever a page calls notFound().
 export default async function NotFound() {
@@ -7,9 +8,9 @@ export default async function NotFound() {
 
   return (
     <main className="mx-auto w-full max-w-md px-4 py-20 text-center">
-      <p className="text-5xl" aria-hidden>
-        🥡
-      </p>
+      <div className="flex justify-center text-brand" aria-hidden>
+        <Doodle name="bowl" size={72} />
+      </div>
       <h1 className="mt-4 text-2xl font-bold">{t.title}</h1>
       <p className="mt-2 text-stone-600">{t.text}</p>
       <Link

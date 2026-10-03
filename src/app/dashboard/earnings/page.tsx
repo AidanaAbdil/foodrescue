@@ -5,6 +5,7 @@ import { getI18n } from "@/i18n/server";
 import { earningsReport, isPeriod, PERIODS } from "@/lib/earnings";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { requireOwner } from "@/lib/session";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.earnings.title };
@@ -93,7 +94,7 @@ export default async function EarningsPage({ searchParams }: PageProps<"/dashboa
             download
             className="rounded-xl bg-white px-5 py-2.5 font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50"
           >
-            ⬇ {t.download}
+            <Doodle name="download" size={16} className="mr-1.5" />{t.download}
           </a>
           <p className="text-sm text-stone-500">{t.downloadHint}</p>
         </div>

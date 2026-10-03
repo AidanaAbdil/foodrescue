@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/i18n/client";
 import type { LatestOrder } from "@/lib/new-orders";
+import { Doodle } from "@/components/Doodle";
 
 const POLL_MS = 10_000;
 const SOUND_KEY = "newOrderSound";
@@ -130,6 +131,7 @@ export function NewOrderAlert({ initial }: { initial: LatestOrder }) {
         title={waitingForTap ? t.soundTapHint : undefined}
         className="rounded-xl px-4 py-2.5 text-sm font-semibold text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"
       >
+        <Doodle name={soundOn || waitingForTap ? "bell" : "bellOff"} size={16} className="mr-1.5 text-brand" />
         {waitingForTap ? t.soundTap : soundOn ? t.soundOn : t.soundOff}
       </button>
       {toast && (
@@ -139,7 +141,7 @@ export function NewOrderAlert({ initial }: { initial: LatestOrder }) {
           onClick={() => setToast(null)}
           className="fixed inset-x-3 top-20 z-30 mx-auto block max-w-md rounded-2xl bg-accent px-5 py-4 text-left font-semibold text-white shadow-lg sm:inset-x-auto sm:right-4"
         >
-          🔔 {toast}
+          <Doodle name="bell" size={20} className="mr-2" />{toast}
         </button>
       )}
     </>

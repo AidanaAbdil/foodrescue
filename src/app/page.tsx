@@ -12,7 +12,7 @@ import { ResultsMapLoader } from "@/components/search/ResultsMapLoader";
 import type { MapPlace } from "@/components/search/ResultsMap";
 import { StatCard } from "@/components/StatCard";
 import { getI18n } from "@/i18n/server";
-import { CATEGORY_EMOJI, CATEGORY_LIST, isCategory } from "@/lib/categories";
+import { CATEGORY_DOODLE, CATEGORY_LIST, isCategory } from "@/lib/categories";
 import { CITIES, CITY_LIST, cityName, isCity } from "@/lib/cities";
 import { distanceKm, parseCoords } from "@/lib/geo";
 import { nextWindow } from "@/lib/schedules";
@@ -20,8 +20,9 @@ import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
 import { searchWords } from "@/lib/search";
 import type { Store, SurpriseBag } from "@/generated/prisma/client";
+import { Doodle } from "@/components/Doodle";
 
-const STEP_EMOJI = ["🔍", "📱", "🛍️"];
+const STEP_DOODLES = ["search", "phoneScreen", "bag"] as const;
 const PAGE_SIZE = 12; // "Show more" adds this many each time
 const MAX_SHOWN = 240;
 const MAX_NEAR = 500; // "near me" sorts this many of the matches by distance
@@ -282,6 +283,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               aria-current={view === value ? "page" : undefined}
               className={`rounded-lg px-4 py-2 transition ${view === value ? "bg-white text-stone-900 shadow-sm" : "text-stone-600 hover:text-stone-900"}`}
             >
+              <Doodle name={value === "list" ? "list" : "map"} className="mr-1.5" />
               {value === "list" ? t.viewList : t.viewMap}
             </Link>
           ))}
@@ -299,11 +301,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           {near && <input type="hidden" name="near" value={current.near} />}
           <label className="relative flex-1">
             <span className="sr-only">{t.searchLabel}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden
-              className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-stone-400">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
+            <Doodle name="search" size={19} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
             <input type="search" name="q" defaultValue={q} placeholder={tab === "bags" ? t.searchPlaceholder : t.searchStoresPlaceholder}
               className="w-full rounded-lg border border-stone-300 bg-white py-2.5 pl-10 pr-3 outline-none focus:border-brand focus:ring-2 focus:ring-brand-light" />
           </label>
@@ -337,7 +335,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               </FilterChip>
               {CATEGORY_LIST.map((value) => (
                 <FilterChip key={value} href={hrefWith({ category: value })} active={selected === value}>
-                  {CATEGORY_EMOJI[value]} {dict.categories[value]}
+                  <Doodle name={CATEGORY_DOODLE[value]} className="mr-1.5" /> {dict.categories[value]}
                 </FilterChip>
               ))}
             </nav>
@@ -348,10 +346,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 {dict.labels.halal}
               </FilterChip>
               <FilterChip href={hrefWith({ veg: veg ? undefined : "1" })} active={veg}>
-                🌱 {dict.labels.vegetarian}
+                <Doodle name="sprout" className="mr-1" /> {dict.labels.vegetarian}
               </FilterChip>
               <FilterChip href={hrefWith({ vegan: vegan ? undefined : "1" })} active={vegan}>
-                🌱 {dict.labels.vegan}
+                <Doodle name="sprout" className="mr-1" /> {dict.labels.vegan}
               </FilterChip>
             </nav>
           </>
@@ -444,9 +442,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
         {shownCount === 0 && soldOut.length === 0 && (
           <div className="mt-6 rounded-2xl border border-dashed border-stone-300 bg-white py-16 text-center">
-            <p className="text-4xl" aria-hidden>
-              {tab === "bags" ? "🥡" : "🏪"}
-            </p>
+            <div className="flex justify-center">
+              <Doodle name={tab === "bags" ? "bowl" : "store"} size={56} className="text-brand" />
+            </div>
             <p className="mt-3 font-semibold">
               {tab === "stores" ? t.noStoresTitle : isFiltered ? t.noMatchTitle : t.emptyTitle}
             </p>
@@ -466,7 +464,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             <ol className="mt-4 space-y-4">
               {t.steps.map((step, i) => (
                 <li key={step.title} className="flex gap-4">
-                  <span className="text-3xl" aria-hidden>{STEP_EMOJI[i]}</span>
+                  <Doodle name={STEP_DOODLES[i]} size={36} className="text-brand" />
                   <span>
                     <span className="block font-semibold">{i + 1}. {step.title}</span>
                     <span className="block text-sm text-stone-600">{step.text}</span>

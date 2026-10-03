@@ -66,7 +66,7 @@ test("map view: one pin per store, same search, stores without a point counted",
   await createBag(b.store.id, { title: "Другой пакет" }); // doesn't match the search
 
   await page.goto(`/?q=${word}`);
-  await page.getByRole("link", { name: "🗺 Карта" }).click();
+  await page.getByRole("link", { name: "Карта", exact: true }).click();
   await expect(page).toHaveURL(/view=map/);
   const pins = page.locator(".leaflet-marker-icon");
   await expect(pins).toHaveCount(2);

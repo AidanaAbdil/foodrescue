@@ -16,7 +16,7 @@ test("the store table adds up sales, commission, payouts, no-shows and cancellat
 
   await login(page, "admin@example.com");
   await page.goto("/admin");
-  await page.getByRole("link", { name: "📊 Отчёты" }).click();
+  await page.getByRole("link", { name: "Отчёты", exact: true }).click();
   const row = page.locator("tr").filter({ hasText: name });
   const cells = row.locator("td");
   await expect(cells.nth(2)).toHaveText("2"); // bags sold

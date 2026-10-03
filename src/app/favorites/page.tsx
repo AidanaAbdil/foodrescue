@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { nextWindow } from "@/lib/schedules";
 import { requireUser } from "@/lib/session";
 import { cityName } from "@/lib/cities";
+import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.favorites };
@@ -44,7 +45,7 @@ export default async function FavoritesPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold">♥ {t.title}</h1>
+        <h1 className="flex items-center gap-2 text-3xl font-bold"><Doodle name="heart" size={28} filled className="text-brand" />{t.title}</h1>
         {/* "❤️ New bag" alerts from these stores (src/lib/push.ts, notifyFavoritesAboutBag). */}
         <PushToggle publicKey={pushPublicKey()} hint={dict.push.favoritesHint} />
       </div>

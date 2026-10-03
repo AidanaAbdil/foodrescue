@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/client";
+import { Doodle } from "@/components/Doodle";
 
 const DISMISSED_KEY = "installHintDismissed";
 
@@ -53,7 +54,7 @@ export function InstallHint() {
         aria-label={t.close}
         className="-m-1 grid size-8 shrink-0 place-items-center rounded-lg text-stone-500 hover:bg-stone-100"
       >
-        ✕
+        <Doodle name="close" size={16} />
       </button>
     </div>
   );

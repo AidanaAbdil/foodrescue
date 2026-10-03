@@ -3,6 +3,7 @@ import { toggleFavorite } from "@/app/actions/favorites";
 import { getI18n } from "@/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, loginUrl } from "@/lib/session";
+import { Doodle } from "@/components/Doodle";
 
 // ♡ button for a store. Logged out → log in first and come back.
 // Hidden for store and admin accounts (favourites are for customers).
@@ -14,6 +15,7 @@ export async function FavoriteButton({ storeId, back }: { storeId: string; back:
   if (!user) {
     return (
       <Link href={loginUrl(back)} className={`${chip} text-stone-700 ring-stone-300 hover:bg-stone-100`}>
+        <Doodle name="heart" size={15} className="mr-1.5 text-brand" />
         {t.loginToSave}
       </Link>
     );
@@ -34,6 +36,7 @@ export async function FavoriteButton({ storeId, back }: { storeId: string; back:
           isFavorite ? "bg-brand-light text-brand-dark ring-brand-light" : "text-stone-700 ring-stone-300 hover:bg-stone-100"
         }`}
       >
+        <Doodle name="heart" size={15} filled={isFavorite} className="mr-1.5 text-brand" />
         {isFavorite ? t.added : t.add}
       </button>
     </form>
