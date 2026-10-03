@@ -4,6 +4,8 @@ import { PartnerForm } from "@/components/partners/PartnerForm";
 import { getI18n } from "@/i18n/server";
 import { platformFeePercent } from "@/lib/earnings";
 import { priceLevels, valueMultiplier } from "@/lib/pricing";
+import { foundingPartners, yearlyFee } from "@/lib/fees";
+import { foundingPlacesLeft } from "@/lib/founding";
 import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,9 +21,11 @@ export default async function PartnersPage({ searchParams }: PageProps<"/partner
   const t = dict.partners;
   const { sent } = await searchParams;
   const fee = platformFeePercent();
+  const placesLeft = await foundingPlacesLeft();
+  const feeVars = { percent: fee, fee: f.price(yearlyFee()), total: foundingPartners(), n: placesLeft };
   const levels = priceLevels().map((level) => f.price(level.price)).join(", ");
   const faq = [
-    { q: t.faqCostQ, a: fee > 0 ? fill(t.faqCostSet, { percent: fee }) : t.faqCostUnset },
+    { q: t.faqCostQ, a: fill(placesLeft > 0 ? dict.fees.faqCost : dict.fees.faqCostNoPlaces, feeVars) },
     { q: t.faqPriceQ, a: fill(t.faqPriceA, { levels, multiplier: valueMultiplier() }) },
     ...t.faq,
   ];
@@ -33,6 +37,12 @@ export default async function PartnersPage({ searchParams }: PageProps<"/partner
           <p className="text-sm font-semibold uppercase tracking-widest">{t.eyebrow}</p>
           <h1 className="mt-3 max-w-3xl text-4xl font-bold leading-tight sm:text-5xl">{t.heading}</h1>
           <p className="mt-4 max-w-2xl text-lg">{t.sub}</p>
+          {/* "First 50 stores: a year without the fee. Places left: 37" */}
+          {placesLeft > 0 && (
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 font-semibold ring-1 ring-white/40">
+              <Doodle name="star" size={18} filled /> {fill(dict.fees.partnersBadge, feeVars)}
+            </p>
+          )}
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#request" className="rounded-xl bg-white px-5 py-3 font-semibold text-brand-dark hover:bg-brand-light">{t.ctaForm}</a>
             <Link href="/signup?as=store" className="rounded-xl px-5 py-3 font-semibold text-white ring-2 ring-white/80 hover:bg-white/10">{t.ctaSignup}</Link>

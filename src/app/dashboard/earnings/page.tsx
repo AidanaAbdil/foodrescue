@@ -5,6 +5,8 @@ import { getI18n } from "@/i18n/server";
 import { earningsReport, isPeriod, PERIODS } from "@/lib/earnings";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { requireOwner } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
+import { feeStatus, foundingPartners, yearlyFee } from "@/lib/fees";
 import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,6 +22,7 @@ export default async function EarningsPage({ searchParams }: PageProps<"/dashboa
   const { period: requested } = await searchParams;
   const period = isPeriod(requested) ? requested : "month";
   const report = await earningsReport(user.id, period);
+  const stores = await prisma.store.findMany({ where: { ownerId: user.id, status: "APPROVED" }, orderBy: { createdAt: "asc" } });
   const lastDay = new Date(report.to.getTime() - 1);
 
   return (
@@ -64,6 +67,21 @@ export default async function EarningsPage({ searchParams }: PageProps<"/dashboa
             : t.noFee}
         </p>
         <p>{t.payoutNote}</p>
+        {/* Yearly fee: free (founding partners), paid, or due. */}
+        {stores.map((store) => {
+          const status = feeStatus(store);
+          const text =
+            status.kind === "FREE"
+              ? fill(dict.fees.storeFree, { number: store.foundingNumber ?? "—", total: foundingPartners(), date: f.date(status.until) })
+              : status.kind === "PAID"
+                ? fill(dict.fees.storePaid, { date: f.date(status.until) })
+                : fill(dict.fees.storeDue, { fee: f.price(yearlyFee()) });
+          return (
+            <p key={store.id} className={status.kind === "DUE" ? "font-medium text-amber-800" : "font-medium text-brand-dark"}>
+              {stores.length > 1 && <>{store.name}: </>}{text}
+            </p>
+          );
+        })}
         {report.waiting > 0 && <p>{fill(t.waiting, { n: report.waiting })}</p>}
         {report.noShows > 0 && <p>{fill(t.noShows, { n: report.noShows })}</p>}
         {report.refunded > 0 && <p>{fill(t.refunded, { n: report.refunded })}</p>}

@@ -6,6 +6,7 @@ import "server-only";
 import { dayKey } from "@/i18n/shared";
 import { type Period, periodRange, platformFeePercent } from "@/lib/earnings";
 import { prisma } from "@/lib/prisma";
+import { feeStatus } from "@/lib/fees";
 
 export type StoreRow = {
   id: string;
@@ -29,6 +30,10 @@ export async function platformReport(period: Period) {
   const inPeriod = { pickupStart: { gte: from, lt: to } };
   const feePercent = platformFeePercent();
 
+  const [yearlyFees, approvedStores] = await Promise.all([
+    prisma.membershipPayment.aggregate({ where: { paidAt: { gte: from, lt: to } }, _sum: { amount: true } }),
+    prisma.store.findMany({ where: { status: "APPROVED" }, select: { feeFreeUntil: true, feePaidUntil: true } }),
+  ]);
   const [orders, abandoned, newCustomers, newStores, pendingStores, stores, reviews, complaints] = await Promise.all([
     // Every order that was paid at some point (including refunded ones).
     prisma.order.findMany({
@@ -140,6 +145,8 @@ export async function platformReport(period: Period) {
     customers: { new: newCustomers, active: buys.size, repeat },
     stores: { new: newStores, active: storeRows.filter((r) => r.sales > 0).length, pending: pendingStores },
     complaints: complaints.length,
+    yearlyFees: yearlyFees._sum.amount ?? 0,
+    feesDue: approvedStores.filter((store) => feeStatus(store, now).kind === "DUE").length,
     byCity: [...byCity.entries()].map(([city, v]) => ({ city, ...v })).sort((a, b) => b.sales - a.sales),
     days,
     storeRows,

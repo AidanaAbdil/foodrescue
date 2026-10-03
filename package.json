@@ -19,6 +19,7 @@
     "db:search": "tsx scripts/refresh-search.ts",
     "demo:stores": "tsx scripts/add-demo-stores.ts",
     "prices:apply": "tsx scripts/apply-price-levels.ts",
+    "fees:founding": "tsx scripts/assign-founding.ts",
     "test": "playwright test",
     "test:report": "playwright show-report"
   },

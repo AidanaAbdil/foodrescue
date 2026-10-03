@@ -6,6 +6,8 @@
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { logAdmin } from "@/lib/admin-log";
+import { nextPaidUntil, yearlyFee } from "@/lib/fees";
+import { claimFoundingPlace } from "@/lib/founding";
 import { refundForReport, storeCancelOrder } from "@/lib/payments/service";
 import { notifyReportResolved } from "@/lib/push";
 import { prisma } from "@/lib/prisma";
@@ -20,7 +22,8 @@ export async function approveStore(formData: FormData) {
   const store = await prisma.store.findUnique({ where: { id: text(formData, "storeId") } });
   if (store) {
     await prisma.store.update({ where: { id: store.id }, data: { status: "APPROVED", rejectionReason: null, reviewedAt: new Date() } });
-    await logAdmin(admin.id, "store.approve", { type: "store", id: store.id }, store.name);
+    const founding = await claimFoundingPlace(store.id); // first stores: a free year
+    await logAdmin(admin.id, "store.approve", { type: "store", id: store.id }, founding ? `${store.name} (№${founding})` : store.name);
   }
   refresh(); // also redraws the header count
   redirect("/admin");
@@ -139,4 +142,22 @@ export async function handlePartnerRequest(formData: FormData) {
   }
   refresh();
   redirect("/admin#partners");
+}
+
+// Record a yearly fee the store paid (outside the app for now). Covers the
+// year after whatever is already covered.
+export async function recordYearlyFee(formData: FormData) {
+  const admin = await requireAdmin();
+  const store = await prisma.store.findUnique({ where: { id: text(formData, "storeId") } });
+  if (store) {
+    const coversUntil = nextPaidUntil(store);
+    const amount = yearlyFee();
+    await prisma.$transaction([
+      prisma.store.update({ where: { id: store.id }, data: { feePaidUntil: coversUntil } }),
+      prisma.membershipPayment.create({ data: { storeId: store.id, amount, coversUntil, adminId: admin.id } }),
+    ]);
+    await logAdmin(admin.id, "fee.paid", { type: "store", id: store.id }, `${store.name}: ${amount / 100} ₸ → ${coversUntil.toISOString().slice(0, 10)}`);
+  }
+  refresh();
+  redirect("/admin/fees");
 }

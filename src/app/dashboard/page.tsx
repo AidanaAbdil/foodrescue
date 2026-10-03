@@ -19,6 +19,7 @@ import { requireOwner } from "@/lib/session";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { CANCEL_REASONS } from "@/lib/orders";
 import { roundRating } from "@/lib/feedback";
+import { feeStatus, yearlyFee } from "@/lib/fees";
 import { Doodle } from "@/components/Doodle";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -130,6 +131,16 @@ export default async function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* Yearly fee due (after the free year or the last payment). */}
+      {stores
+        .filter((store) => store.status === "APPROVED" && feeStatus(store).kind === "DUE")
+        .map((store) => (
+          <p key={`fee-${store.id}`} role="note" className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200">
+            <Doodle name="coin" size={16} className="mr-1.5" />
+            {stores.length > 1 && <>{store.name}: </>}{fill(dict.fees.storeDue, { fee: f.price(yearlyFee()) })}
+          </p>
+        ))}
 
       {/* Review status: new stores wait for an admin; rejected ones say why. */}
       {stores

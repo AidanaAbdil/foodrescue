@@ -164,6 +164,10 @@ model Store {
   imageUrl     String?
   phone        String? // "+77011234567" (see src/lib/phone.ts); required in the form
   openingHours String? // free text, e.g. "Пн–Пт 08:00–20:00"
+  // Yearly fee (src/lib/fees.ts). The first stores approved get a free year.
+  foundingNumber Int? // 1–50 for the first stores approved ("founding partners")
+  feeFreeUntil   DateTime? // end of the free year
+  feePaidUntil   DateTime? // yearly fee paid up to here
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -180,6 +184,7 @@ model Store {
   schedules BagSchedule[]
   favorites Favorite[]
   reviews   Review[]
+  membershipPayments MembershipPayment[]
 
   @@index([ownerId])
   @@index([city])
@@ -371,4 +376,19 @@ model PartnerRequest {
   handledAt   DateTime?
 
   @@index([status])
+}
+
+// A yearly fee a store paid (outside the app for now: bank transfer, Kaspi),
+// recorded by an admin. Extends Store.feePaidUntil by a year.
+model MembershipPayment {
+  id          String   @id @default(cuid())
+  amount      Int // tiyn
+  paidAt      DateTime @default(now())
+  coversUntil DateTime // the store's new feePaidUntil
+  adminId     String // who recorded it (see AdminLog too)
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([paidAt])
 }

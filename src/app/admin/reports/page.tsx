@@ -51,7 +51,13 @@ export default async function ReportsPage({ searchParams }: PageProps<"/admin/re
         <StatCard template={t.commission} value={f.price(r.commission)} />
         <StatCard template={t.payout} value={f.price(r.payout)} />
         <StatCard template={t.refunds} value={f.price(r.refunds.amount)} />
+        <StatCard template={dict.fees.reportYearly} value={f.price(r.yearlyFees)} />
       </div>
+      {r.feesDue > 0 && (
+        <p className="mt-2 text-sm font-medium text-amber-800">
+          <Link href="/admin/fees" className="underline underline-offset-2">{fill(dict.fees.reportDue, { n: r.feesDue })}</Link>
+        </p>
+      )}
       <p className="mt-2 text-sm text-stone-600">
         {r.feePercent > 0 ? fill(t.feeLine, { percent: r.feePercent }) : t.noFee} {fill(t.refundsCount, { n: r.refunds.count })}. {t.payoutNote}
       </p>

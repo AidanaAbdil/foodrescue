@@ -10,11 +10,11 @@ export const PERIODS = ["week", "month", "last-month"] as const;
 export type Period = (typeof PERIODS)[number];
 export const isPeriod = (value: unknown): value is Period => PERIODS.includes(value as Period);
 
-// The service's commission in percent, from .env (PLATFORM_FEE_PERCENT=10).
-// Not set = no commission yet.
+// The service's commission on every bag sold, in percent: 20 unless .env
+// says otherwise (PLATFORM_FEE_PERCENT=15; 0 = no commission). See src/lib/fees.ts.
 export function platformFeePercent() {
-  const value = Number(process.env.PLATFORM_FEE_PERCENT ?? 0);
-  return Number.isFinite(value) && value > 0 && value < 100 ? value : 0;
+  const value = Number(process.env.PLATFORM_FEE_PERCENT ?? 20);
+  return Number.isFinite(value) && value >= 0 && value < 100 ? value : 20;
 }
 
 // Midnight in Kazakhstan on a calendar day; day/month may overflow (day 0 = last day of previous month).

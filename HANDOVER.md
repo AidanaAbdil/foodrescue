@@ -288,6 +288,22 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Commission + yearly fee, founding partners (2026-10-03)
+- Decision: **20% commission** on each bag (PLATFORM_FEE_PERCENT now defaults to 20) **plus a yearly
+  fee of 25 000 ₸**; **the first 50 stores approved get their first year free**. All in .env:
+  `PLATFORM_FEE_PERCENT`, `YEARLY_FEE_TENGE`, `FOUNDING_PARTNERS`, `FOUNDING_FREE_MONTHS` (src/lib/fees.ts).
+- Store fields: `foundingNumber`, `feeFreeUntil`, `feePaidUntil`; `MembershipPayment` rows. Approving a
+  store for the first time calls `claimFoundingPlace` (src/lib/founding.ts): next number + free year
+  while places are left. `npm run fees:founding` gives places to stores approved before this existed
+  (already run on dev.db: №1–17, 33 left). A fresh database at launch starts at №1.
+- Yearly fees are paid **outside the app** for now (transfer/Kaspi): admin → "Взносы" (/admin/fees)
+  lists stores (due first), "Оплачено: +1 год" (confirm) extends `feePaidUntil` from whatever is already
+  covered, records the payment and logs `fee.paid`. Nobody is hidden automatically when unpaid.
+- Stores see their status on the Earnings page and a reminder on the dashboard when it's due. The
+  platform report shows yearly fees received and how many stores owe. "Для заведений" shows the
+  commission, fee and "places left" (banner + FAQ).
+- Tests: tests/e2e/fees.spec.ts (55 tests in total; the last test fills all 50 places in test.db).
+
 ### Fixed bag prices (2026-10-03)
 - Decision: like Too Good To Go, stores pick one of a few **fixed price levels**; the food inside must
   be worth at least **2× the price** (≥ 50% off). Settings in `src/lib/pricing.ts`, overridable in .env:
