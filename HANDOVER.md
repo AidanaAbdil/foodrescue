@@ -533,7 +533,7 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
-**Future direction (her idea, 2026-10-03, not now):** once there are iOS/Android apps, the website
+**Future direction (the owner's idea, 2026-10-03, not now):** once there are iOS/Android apps, the website
 could stop showing stores for ordering and become a front door: mission, impact, "For businesses",
 FAQ, app download links. Keep on the web anyway: the store dashboard, admin, and bag/store pages for
 shared links (open the app if installed, else show the bag with download buttons). Until there is an
