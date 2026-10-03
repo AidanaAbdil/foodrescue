@@ -53,9 +53,9 @@ export const getCurrentUser = cache(async () => {
   const session = await prisma.session.findUnique({
     where: { tokenHash: hashToken(token) },
     // Select only safe fields: never send passwordHash anywhere.
-    include: { user: { select: { id: true, name: true, email: true, role: true, consentVersion: true } } },
+    include: { user: { select: { id: true, name: true, email: true, role: true, consentVersion: true, blockedAt: true } } },
   });
-  if (!session) return null;
+  if (!session || session.user.blockedAt) return null; // blocked users are logged out everywhere
 
   if (session.expiresAt < new Date()) {
     await prisma.session.delete({ where: { id: session.id } });

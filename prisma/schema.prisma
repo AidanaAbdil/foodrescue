@@ -68,6 +68,8 @@ model User {
   // Account deleted by its owner: personal details are wiped (name, email,
   // password), order history is kept anonymously. See deleteAccount.
   deletedAt      DateTime?
+  blockedAt      DateTime? // blocked by an admin: can't log in
+  blockedReason  String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -79,6 +81,7 @@ model User {
   passwordResets    PasswordResetToken[]
   favorites         Favorite[]
   pushSubscriptions PushSubscription[]
+  adminLogs         AdminLog[] // actions taken as an admin
 }
 
 // A device (phone/computer browser) that asked for push notifications.
@@ -98,7 +101,8 @@ model PushSubscription {
 
 // A customer's favourite store (♡).
 model Favorite {
-  createdAt DateTime @default(now())
+  createdAt  DateTime  @default(now())
+  notifiedAt DateTime? // last "new bag" push for this store, at most one per 12 hours
 
   userId  String
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -205,6 +209,7 @@ model SurpriseBag {
   pickupStart       DateTime
   pickupEnd         DateTime
   isActive          Boolean  @default(true) // store can hide a listing
+  hiddenByAdminAt   DateTime? // hidden by an admin; the store can't put it back on sale
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -262,6 +267,7 @@ model Order {
   pickupCode  String      @unique // short code the customer shows at the store
   expiresAt   DateTime? // payment deadline while PENDING_PAYMENT
   cancelledBy String? // CANCELLED orders: "customer", "store" or "admin"
+  reminderSentAt DateTime? // "pickup starts soon" push sent
   cancelReason String? // store cancellations: "SOLD_OUT", "CLOSING" or "OTHER" (shown to the customer)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -332,4 +338,19 @@ model ProblemReport {
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([status])
+}
+
+// What admins did, for accountability: approvals, refunds, blocks, hidden bags…
+model AdminLog {
+  id         String   @id @default(cuid())
+  action     String // e.g. "store.approve", "user.block", "bag.hide", "report.refund"
+  targetType String // "store", "user", "bag", "order", "report"
+  targetId   String
+  details    String? // human-readable: the store's name, a reason…
+  createdAt  DateTime @default(now())
+
+  adminId String
+  admin   User   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
 }

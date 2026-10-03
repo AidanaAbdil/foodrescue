@@ -12,6 +12,7 @@ import { parsePrice } from "@/lib/format";
 import { normalizePhone } from "@/lib/phone";
 import { isCancelReason } from "@/lib/orders";
 import { parseHours } from "@/lib/hours";
+import { notifyFavoritesAboutBag } from "@/lib/push";
 import { bagSearchText, storeSearchText } from "@/lib/search";
 import { serializeAllergens } from "@/lib/labels";
 import { isValidCoords } from "@/lib/geo";
@@ -219,9 +220,10 @@ export async function saveBag(_prev: FormState, formData: FormData): Promise<For
       data: { ...common, searchText: bagSearchText(common), quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
     });
   } else {
-    await prisma.surpriseBag.create({
+    const created = await prisma.surpriseBag.create({
       data: { ...common, searchText: bagSearchText(common), quantityAvailable: quantity, pickupStart: pickupStart!, pickupEnd: pickupEnd! },
     });
+    await notifyFavoritesAboutBag(created.id); // "❤️ New bag" to customers who favourited the store
   }
   // Replaced or removed the photo: delete the old file if nothing uses it now.
   if (previousImage && previousImage !== imageUrl) await deleteUploadIfUnused(previousImage);
@@ -237,7 +239,7 @@ export async function toggleSchedule(formData: FormData) {
   if (schedule) {
     const isActive = !schedule.isActive;
     await prisma.bagSchedule.update({ where: { id: schedule.id }, data: { isActive } });
-    await prisma.surpriseBag.updateMany({ where: untouchedUpcoming(schedule.id), data: { isActive } });
+    await prisma.surpriseBag.updateMany({ where: { ...untouchedUpcoming(schedule.id), hiddenByAdminAt: null }, data: { isActive } });
     if (isActive) await publishScheduledBags([schedule.id]);
   }
   redirect("/dashboard");
@@ -262,7 +264,8 @@ export async function deleteSchedule(formData: FormData) {
 export async function toggleBagActive(formData: FormData) {
   const user = await requireOwner();
   const bagId = text(formData, "bagId");
-  const bag = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id } } });
+  // A bag hidden by the admins stays hidden.
+  const bag = await prisma.surpriseBag.findFirst({ where: { id: bagId, store: { ownerId: user.id }, hiddenByAdminAt: null } });
   if (bag) await prisma.surpriseBag.update({ where: { id: bag.id }, data: { isActive: !bag.isActive } });
   redirect("/dashboard");
 }

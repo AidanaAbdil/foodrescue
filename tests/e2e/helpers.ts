@@ -1,5 +1,6 @@
 // Shared helpers for the automated tests. Tests set up what they need
 // straight in the test database (test.db), then use the site like a person.
+import { createECDH, randomBytes } from "node:crypto";
 import { type Page, expect } from "@playwright/test";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "../../src/generated/prisma/client";
@@ -80,6 +81,21 @@ export async function createPaidOrder(customerId: string, bagId: string) {
 export async function createFinishedOrder(customerId: string, bagId: string, status: "COLLECTED" | "NO_SHOW") {
   const order = await createPaidOrder(customerId, bagId);
   return db.order.update({ where: { id: order.id }, data: { status } });
+}
+
+// A push subscription for a (pretend) browser, so the user counts as "has
+// notifications on". Sending to it fails quietly; tests check what was claimed.
+export async function addFakePushSubscription(userId: string) {
+  const ecdh = createECDH("prime256v1");
+  return db.pushSubscription.create({
+    data: {
+      userId,
+      endpoint: `https://push.invalid/${randomBytes(8).toString("hex")}`,
+      p256dh: ecdh.generateKeys().toString("base64url"),
+      auth: randomBytes(16).toString("base64url"),
+      locale: "ru",
+    },
+  });
 }
 
 export async function login(page: Page, email: string) {

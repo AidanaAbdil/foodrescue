@@ -97,3 +97,57 @@ export async function notifyReportResolved(orderId: string, refunded: boolean) {
     console.error("Report notification failed", error);
   }
 }
+
+// "⏰ Pickup soon: Тёплый хлеб · Хлебный сюрприз · Today, 18:00–20:00 · пр. Абая, 52. Code TX-4821".
+export async function notifyPickupSoon(orderId: string) {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: orderId }, include: { bag: { include: { store: true } } } });
+    if (!order) return;
+    await notifyUser(order.userId, (dict, f) => ({
+      title: fill(dict.push.pickupSoonTitle, { store: order.bag.store.name }),
+      body: fill(dict.push.pickupSoonBody, {
+        bag: order.bag.title,
+        window: f.pickupWindow(order.bag.pickupStart, order.bag.pickupEnd),
+        address: order.bag.store.address,
+        code: order.pickupCode,
+      }),
+      url: "/orders",
+      tag: `soon-${order.id}`,
+    }));
+  } catch (error) {
+    console.error("Pickup reminder failed", error);
+  }
+}
+
+// "❤️ New bag: Тёплый хлеб" to customers who favourited the store, at most
+// once per 12 hours per store, so a store publishing several bags isn't spam.
+export const FAVORITE_QUIET_HOURS = 12;
+export async function notifyFavoritesAboutBag(bagId: string) {
+  try {
+    const bag = await prisma.surpriseBag.findUnique({ where: { id: bagId }, include: { store: true } });
+    if (!bag || bag.store.status !== "APPROVED" || !bag.isActive || bag.hiddenByAdminAt || bag.quantityAvailable < 1) return;
+    const quietSince = new Date(Date.now() - FAVORITE_QUIET_HOURS * 60 * 60 * 1000);
+    const due = { storeId: bag.storeId, OR: [{ notifiedAt: null }, { notifiedAt: { lt: quietSince } }] };
+    const favorites = await prisma.favorite.findMany({
+      where: { ...due, user: { deletedAt: null, blockedAt: null, pushSubscriptions: { some: {} } } },
+      select: { userId: true },
+    });
+    for (const { userId } of favorites) {
+      // Claim first, so two bags published at once don't both notify.
+      const { count } = await prisma.favorite.updateMany({ where: { ...due, userId }, data: { notifiedAt: new Date() } });
+      if (count === 0) continue;
+      await notifyUser(userId, (dict, f) => ({
+        title: fill(dict.push.favoriteTitle, { store: bag.store.name }),
+        body: fill(dict.push.favoriteBody, {
+          bag: bag.title,
+          window: f.pickupWindow(bag.pickupStart, bag.pickupEnd),
+          price: f.price(bag.price),
+        }),
+        url: `/bags/${bag.id}`,
+        tag: `bag-${bag.id}`,
+      }));
+    }
+  } catch (error) {
+    console.error("Favourite-store notification failed", error);
+  }
+}

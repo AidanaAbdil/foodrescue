@@ -103,6 +103,10 @@ export async function login(_prev: AuthFormState, formData: FormData): Promise<A
   }
 
   await clearAttempts("login", email);
+  // Blocked by an admin: say so (only after the right password, so it reveals nothing to strangers).
+  if (user.blockedAt) {
+    return { errors: { form: fill(dict.errors.blocked, { reason: user.blockedReason ?? "—" }) }, values: { email } };
+  }
   await createSession(user.id);
   redirect(safeReturnPath(formData.get("next")));
 }

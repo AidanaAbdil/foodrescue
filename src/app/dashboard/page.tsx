@@ -383,15 +383,18 @@ export default async function DashboardPage() {
                         >
                           {t.edit}
                         </Link>
-                        <form action={toggleBagActive}>
-                          <input type="hidden" name="bagId" value={bag.id} />
-                          <button
-                            type="submit"
-                            className="rounded-lg px-3 py-1.5 font-medium text-stone-700 hover:bg-stone-100"
-                          >
-                            {bag.isActive ? t.hide : t.show}
-                          </button>
-                        </form>
+                        {/* A bag the admins hid can't be put back on sale by the store. */}
+                        {!bag.hiddenByAdminAt && (
+                          <form action={toggleBagActive}>
+                            <input type="hidden" name="bagId" value={bag.id} />
+                            <button
+                              type="submit"
+                              className="rounded-lg px-3 py-1.5 font-medium text-stone-700 hover:bg-stone-100"
+                            >
+                              {bag.isActive ? t.hide : t.show}
+                            </button>
+                          </form>
+                        )}
                       </div>
                     </li>
                   );
@@ -448,9 +451,10 @@ function StatusBadge({ status, className = "" }: { status: { label: string; clas
   );
 }
 
-type BagStatus = "LIVE" | "HIDDEN" | "SOLD_OUT" | "ENDED";
+type BagStatus = "LIVE" | "HIDDEN" | "BLOCKED" | "SOLD_OUT" | "ENDED";
 
 function bagStatus(bag: SurpriseBag, now: Date): BagStatus {
+  if (bag.hiddenByAdminAt) return "BLOCKED"; // hidden by the service's admins
   if (bag.pickupEnd <= now) return "ENDED";
   if (!bag.isActive) return "HIDDEN";
   if (bag.quantityAvailable === 0) return "SOLD_OUT";
@@ -460,6 +464,7 @@ function bagStatus(bag: SurpriseBag, now: Date): BagStatus {
 const STATUS_STYLES: Record<BagStatus, string> = {
   LIVE: "bg-accent text-white",
   HIDDEN: "bg-stone-200 text-stone-700",
+  BLOCKED: "bg-red-100 text-red-800",
   SOLD_OUT: "bg-stone-800 text-white",
   ENDED: "bg-stone-100 text-stone-500",
 };

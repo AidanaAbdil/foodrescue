@@ -288,6 +288,34 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Background timer, reminders, favourite alerts (2026-10-03)
+- `src/instrumentation.ts` → `src/lib/background.ts`: a timer inside the server, every minute
+  (`BACKGROUND_EVERY_SECONDS`, tests use 2; `BACKGROUND_JOBS=off` disables; skipped during build;
+  `unref()` so it never keeps a process alive). Runs housekeeping (expire unpaid orders, retry
+  refunds, publish regular bags) and pickup reminders. Every job claims rows first (updateMany
+  with a condition), so several servers never double-send.
+- Pickup reminders (`src/lib/reminders.ts`): RESERVED orders whose pickup starts within 30 min
+  (and started ≤15 min ago), ordered more than 10 min ago, `Order.reminderSentAt` null → push
+  "⏰ Скоро выдача" (`notifyPickupSoon`).
+- Favourite stores (`notifyFavoritesAboutBag` in push.ts): when a bag is created in the dashboard or
+  published by a regular bag, customers who favourited the (approved) store and have push on get
+  "❤️ Новый пакет", at most once per 12 h per store (`Favorite.notifiedAt`). The Favourites page has
+  the 🔔 button.
+
+### Admin tools (2026-10-03)
+- /admin top links: 🔎 Поиск, 📊 Отчёты, 🗒 Журнал.
+- `/admin/search?q=`: users (email, or name with case variants, since SQLite ignores case only for
+  English letters), orders (pickup code), bags (searchText). Actions: block/unblock a user (with a
+  reason), cancel+refund a reserved order, hide/unhide a bag.
+- Blocking (`User.blockedAt/blockedReason`): sessions deleted, `getCurrentUser` treats them as logged
+  out, login shows the reason (only after the right password). Admins can't be blocked. A blocked
+  owner's stores become REJECTED with the reason; unblocking does not re-approve them.
+- Hidden bags (`SurpriseBag.hiddenByAdminAt` + isActive false): the store sees "Скрыт администрацией",
+  has no show button, and `toggleBagActive`/`toggleSchedule` leave it hidden.
+- `AdminLog` (src/lib/admin-log.ts): every admin action (store approve/reject, refunds, report
+  decisions, block/unblock, hide/unhide) with admin, details and time; `/admin/log` shows the last 200.
+- Tests: notifications.spec.ts, admin-tools.spec.ts (43 tests in total).
+
 ### Platform report for the owner (2026-10-03)
 - /admin → "📊 Отчёты" (`/admin/reports?period=week|month|last-month`), admins only.
   `src/lib/platform-report.ts` (reuses periodRange/platformFeePercent from earnings.ts; orders count
@@ -506,8 +534,8 @@ Still open:
   Then add a provider in `src/lib/payments/` + a webhook route calling `confirmPayment`/`failPayment`
   (verify signatures!). With `PAYMENT_PROVIDER=test` in production, ordering fails with a plain
   500 error by design (no stock is held).
-- No background jobs: expiries, refund retries and upload clean-up run during page requests.
-  Fine at this size; use a scheduled job once deployed.
+- Background timer runs every minute inside the server (see "Background timer"). Upload clean-up
+  still runs during uploads.
 - **Store notifications:** push for new orders is built (see "Push notifications for stores").
   Still to do from the staff-app idea: She prefers a **staff app** approach (like Too Good To Go's store app): staff
   install the app on a phone/tablet, get push notifications for new orders and a "pack N bags

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BagCard } from "@/components/BagCard";
+import { PushToggle } from "@/components/PushToggle";
+import { pushPublicKey } from "@/lib/push";
 import { getI18n } from "@/i18n/server";
 import { runHousekeeping } from "@/lib/housekeeping";
 import { prisma } from "@/lib/prisma";
@@ -41,7 +43,11 @@ export default async function FavoritesPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
-      <h1 className="text-3xl font-bold">♥ {t.title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold">♥ {t.title}</h1>
+        {/* "❤️ New bag" alerts from these stores (src/lib/push.ts, notifyFavoritesAboutBag). */}
+        <PushToggle publicKey={pushPublicKey()} hint={dict.push.favoritesHint} />
+      </div>
       {favorites.length === 0 ? (
         <p className="mt-6 rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-12 text-center text-stone-600">
           {t.empty}

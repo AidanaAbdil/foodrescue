@@ -64,9 +64,17 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     <main className="mx-auto w-full max-w-5xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold">{t.title}</h1>
-        <Link href="/admin/reports" className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50">
-          {dict.report.link}
-        </Link>
+        <nav className="flex flex-wrap gap-2">
+          {[
+            ["/admin/search", dict.adminTools.searchLink],
+            ["/admin/reports", dict.report.link],
+            ["/admin/log", dict.adminTools.logLink],
+          ].map(([href, label]) => (
+            <Link key={href} href={href} className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-stone-800 ring-1 ring-stone-300 hover:bg-stone-50">
+              {label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
       {error === "reason" && (

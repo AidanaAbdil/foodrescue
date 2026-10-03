@@ -8,6 +8,7 @@ import type { BagSchedule } from "@/generated/prisma/client";
 import { dayKey, parseLocalDateTime } from "@/i18n/shared";
 import { prisma } from "@/lib/prisma";
 import { bagSearchText } from "@/lib/search";
+import { notifyFavoritesAboutBag } from "@/lib/push";
 
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const; // ISO: 1 = Monday … 7 = Sunday
 
@@ -65,7 +66,7 @@ export async function publishScheduledBags(scheduleIds?: string[]) {
       const window = windowFor(schedule, date);
       if (!window || window.end <= now) continue; // already over today
       try {
-        await prisma.surpriseBag.create({
+        const created = await prisma.surpriseBag.create({
           data: {
             ...bagFieldsFrom(schedule),
             quantityAvailable: schedule.quantity,
@@ -75,6 +76,7 @@ export async function publishScheduledBags(scheduleIds?: string[]) {
             scheduleDate: date,
           },
         });
+        await notifyFavoritesAboutBag(created.id);
       } catch (error) {
         // Another request published it at the same moment (unique constraint): fine.
         // Anything else is a real problem: log it, and keep publishing the rest.

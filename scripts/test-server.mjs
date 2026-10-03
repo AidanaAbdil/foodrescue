@@ -13,6 +13,7 @@ export const TEST_ENV = {
   ALLOW_TEST_PAYMENTS: "true",
   APP_URL: "http://localhost:3100",
   PLATFORM_FEE_PERCENT: "10", // so the tests check the commission maths
+  BACKGROUND_EVERY_SECONDS: "2", // reminders etc. every 2 s instead of every minute
 };
 const env = { ...process.env, ...TEST_ENV };
 
