@@ -17,6 +17,7 @@
     "demo": "node scripts/demo.mjs",
     "make-admin": "tsx scripts/make-admin.ts",
     "db:search": "tsx scripts/refresh-search.ts",
+    "demo:stores": "tsx scripts/add-demo-stores.ts",
     "test": "playwright test",
     "test:report": "playwright show-report"
   },

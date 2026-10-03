@@ -288,6 +288,13 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Demo stores for testers (2026-10-03)
+- `npm run demo:stores` (scripts/add-demo-stores.ts) adds 10 approved stores (6 Almaty, 4 Astana:
+  bakery, café, sushi, groceries + produce, vegan, pancakes, Kazakh cuisine, cakes, pizza, ramen),
+  each with its own owner account (`…@example.com`, password `password123`) and **daily regular bags**,
+  so there are always bags for today/tomorrow. Skips stores whose owner email exists; touches
+  nothing else. Photos are Unsplash URLs; check they match before real use. Already run on dev.db.
+
 ### Background timer, reminders, favourite alerts (2026-10-03)
 - `src/instrumentation.ts` → `src/lib/background.ts`: a timer inside the server, every minute
   (`BACKGROUND_EVERY_SECONDS`, tests use 2; `BACKGROUND_JOBS=off` disables; skipped during build;
