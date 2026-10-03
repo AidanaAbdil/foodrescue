@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BagCard } from "@/components/BagCard";
+import { RatingBadge } from "@/components/RatingBadge";
+import { publicRatings } from "@/lib/ratings";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { getI18n } from "@/i18n/server";
 import { startOfToday } from "@/i18n/shared";
@@ -53,6 +55,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
   const available = store.bags.filter((bag) => bag.quantityAvailable > 0 && bag.pickupEnd > now);
   const soldOut = store.bags.filter((bag) => bag.quantityAvailable === 0);
   const hasLocation = store.latitude != null && store.longitude != null;
+  const rating = (await publicRatings([store.id])).get(store.id);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -63,6 +66,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
           </span>
           <div>
             <h1 className="text-3xl font-bold leading-tight">{store.name}</h1>
+            <RatingBadge rating={rating} className="mt-1 text-base" />
             <p className="mt-1 text-stone-600">
               {store.address}, {cityName(dict.cities, store.city)}
               {hasLocation && (
@@ -127,7 +131,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
         ) : (
           <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {available.map((bag) => (
-              <BagCard key={bag.id} bag={bag} />
+              <BagCard key={bag.id} bag={bag} rating={rating} />
             ))}
           </div>
         )}
@@ -138,7 +142,7 @@ export default async function StorePage({ params }: PageProps<"/stores/[id]">) {
           <h2 className="text-xl font-bold">{t.soldOutToday}</h2>
           <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {soldOut.map((bag) => (
-              <BagCard key={bag.id} bag={bag} />
+              <BagCard key={bag.id} bag={bag} rating={rating} />
             ))}
           </div>
         </section>

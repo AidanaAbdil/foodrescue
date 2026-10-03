@@ -288,6 +288,20 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Ratings and "report a problem" (2026-10-03)
+- `Review` (1–5 stars + optional private comment, one per order, `storeId` copied for averages) and
+  `ProblemReport` (kind QUALITY / NOT_AS_DESCRIBED / NO_FOOD / OTHER + text; status OPEN /
+  REFUNDED / CLOSED; one per order). Rules in `src/lib/feedback.ts`: rate only COLLECTED orders;
+  report COLLECTED, NO_SHOW, or RESERVED after pickup started; both for 7 days after pickup.
+- My orders: `OrderFeedback` (stars, comment, report form). Actions in src/app/actions/feedback.ts.
+- Public "★ 4.6 (12)" (`RatingBadge`, `publicRatings` in src/lib/ratings.ts) on bag cards, the store
+  list, store and bag pages, only with ≥ 3 ratings. Comments are only shown to the store (dashboard
+  "Отзывы покупателей") and admins; nothing public to moderate.
+- Admin: "Жалобы" at the top of /admin. "Вернуть деньги" → `refundForReport` (cancels a still-reserved
+  order, refunds; failed refunds are retried by housekeeping), or "Закрыть без возврата". The customer
+  sees the outcome and gets a push. Open reports count in the header's "Админ (n)".
+- Tests: tests/e2e/feedback.spec.ts (now 29 tests in total).
+
 ### Automated tests (Playwright) (2026-10-03)
 - `npm test` runs 24 end-to-end tests in tests/e2e (see tests/e2e/README.md): customer ordering,
   payments, declines, refunds, oversell; store hand-over/cancel/no-show, earnings + CSV, sign-up →
@@ -434,7 +448,7 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
-All "must-haves" are done (2026-10-03). Next candidates: ratings + "report a problem", a customer
+All "must-haves" are done (2026-10-03). Next candidates: a customer
 impact counter, a map view, and UI improvements (ask the user which screens first).
 
 **Open at the end of 2026-10-02:**

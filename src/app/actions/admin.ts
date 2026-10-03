@@ -4,7 +4,8 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
-import { storeCancelOrder } from "@/lib/payments/service";
+import { refundForReport, storeCancelOrder } from "@/lib/payments/service";
+import { notifyReportResolved } from "@/lib/push";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
@@ -38,4 +39,21 @@ export async function cancelAndRefund(formData: FormData) {
   await storeCancelOrder(text(formData, "orderId"), "admin");
   refresh(); // also redraws the header count
   redirect("/admin#orders");
+}
+
+// A problem report: refund the customer, or close it without a refund.
+export async function resolveReport(formData: FormData) {
+  await requireAdmin();
+  const decision = text(formData, "decision") === "refund" ? "REFUNDED" : "CLOSED";
+  const report = await prisma.problemReport.findUnique({ where: { id: text(formData, "reportId") } });
+  // Only open reports, and only once (two admins clicking at the same time).
+  const { count } = report
+    ? await prisma.problemReport.updateMany({ where: { id: report.id, status: "OPEN" }, data: { status: decision, resolvedAt: new Date() } })
+    : { count: 0 };
+  if (report && count === 1) {
+    if (decision === "REFUNDED") await refundForReport(report.orderId);
+    await notifyReportResolved(report.orderId, decision === "REFUNDED");
+  }
+  refresh();
+  redirect("/admin#reports");
 }

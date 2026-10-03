@@ -18,6 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOwner } from "@/lib/session";
 import { ConfirmSubmit } from "@/components/ConfirmSubmit";
 import { CANCEL_REASONS } from "@/lib/orders";
+import { roundRating } from "@/lib/feedback";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.dashboard };
@@ -26,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function DashboardPage() {
   const user = await requireOwner();
   await runHousekeeping();
-  const { dict, f, fill } = await getI18n();
+  const { dict, f, fill, locale } = await getI18n();
   const t = dict.dashboard;
 
   const stores = await prisma.store.findMany({
@@ -74,6 +75,18 @@ export default async function DashboardPage() {
       where: { status: "COLLECTED", updatedAt: { gte: todayStart }, bag: { store: { ownerId: user.id } } },
     }),
     latestPaidOrder(user.id),
+  ]);
+
+  // Customers' ratings of this owner's stores (comments are private to the store and admins).
+  const reviewWhere = { store: { ownerId: user.id } };
+  const [reviewStats, reviews] = await Promise.all([
+    prisma.review.aggregate({ where: reviewWhere, _avg: { rating: true }, _count: true }),
+    prisma.review.findMany({
+      where: reviewWhere,
+      include: { order: { select: { bag: { select: { title: true, pickupStart: true } } } } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
   ]);
 
   const allBags = stores.flatMap((store) => store.bags);
@@ -386,6 +399,40 @@ export default async function DashboardPage() {
               )}
             </ul>
           </div>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-xl font-bold">{dict.feedback.reviewsTitle}</h2>
+        {reviewStats._count === 0 ? (
+          <p className="mt-2 text-sm text-stone-500">{dict.feedback.noReviews}</p>
+        ) : (
+          <>
+            <p className="mt-1 text-stone-700">
+              <span className="text-amber-400" aria-hidden>★ </span>
+              {fill(dict.feedback.averageLine, {
+                rating: roundRating(reviewStats._avg.rating ?? 0).toLocaleString(locale === "en" ? "en" : "ru", { minimumFractionDigits: 1 }),
+                n: reviewStats._count,
+              })}
+            </p>
+            <p className="text-sm text-stone-500">{dict.feedback.reviewsHint}</p>
+            <ul className="mt-4 divide-y divide-stone-100 rounded-2xl bg-white ring-1 ring-stone-200">
+              {reviews.map((review) => (
+                <li key={review.id} className="p-4 text-sm">
+                  <p className="flex flex-wrap items-baseline gap-x-3">
+                    <span className="text-amber-400" aria-label={`${review.rating} / 5`}>
+                      {"★".repeat(review.rating)}
+                      <span className="text-stone-300">{"★".repeat(5 - review.rating)}</span>
+                    </span>
+                    <span className="text-stone-500">
+                      {review.order.bag.title} · {f.date(review.order.bag.pickupStart)}
+                    </span>
+                  </p>
+                  {review.comment && <p className="mt-1 whitespace-pre-line text-stone-800">{review.comment}</p>}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
     </main>

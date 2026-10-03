@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { approveStore, cancelAndRefund, rejectStore } from "@/app/actions/admin";
+import { approveStore, cancelAndRefund, rejectStore, resolveReport } from "@/app/actions/admin";
+import { isProblemKind } from "@/lib/feedback";
 import type { Store, StoreStatus } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
 import { runHousekeeping } from "@/lib/housekeeping";
@@ -24,6 +25,21 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const { error } = await searchParams;
   const { dict, f, fill } = await getI18n();
   const t = dict.admin;
+
+  const reportInclude = {
+    order: {
+      include: {
+        user: { select: { name: true, email: true } },
+        bag: { select: { title: true, pickupStart: true, pickupEnd: true, store: { select: { name: true } } } },
+        payment: { select: { status: true, amount: true } },
+      },
+    },
+  };
+  const [openReports, resolvedReports] = await Promise.all([
+    prisma.problemReport.findMany({ where: { status: "OPEN" }, include: reportInclude, orderBy: { createdAt: "asc" } }),
+    prisma.problemReport.findMany({ where: { status: { not: "OPEN" } }, include: reportInclude, orderBy: { resolvedAt: "desc" }, take: 10 }),
+  ]);
+  const fb = dict.feedback;
 
   const [stores, orders] = await Promise.all([
     prisma.store.findMany({
@@ -53,7 +69,71 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         </p>
       )}
 
-      <section className="mt-8">
+      {/* Problem reports first: a customer is waiting for an answer. */}
+      <section id="reports" className="mt-8 scroll-mt-20">
+        <h2 className="text-xl font-bold">
+          {fb.reportsTitle} <span className="text-stone-400">({openReports.length})</span>
+        </h2>
+        <p className="mt-1 text-sm text-stone-500">{fb.reportsHint}</p>
+        {openReports.length === 0 ? (
+          <p className="mt-3 text-stone-500">{fb.noReports}</p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {openReports.map((report) => (
+              <li key={report.id} className="rounded-2xl bg-white p-5 ring-1 ring-red-200">
+                <p className="text-sm text-stone-500">
+                  <span className="font-mono font-semibold text-stone-800">{report.order.pickupCode}</span> ·{" "}
+                  {report.order.bag.store.name} · {report.order.bag.title} ·{" "}
+                  {f.pickupWindow(report.order.bag.pickupStart, report.order.bag.pickupEnd)}
+                </p>
+                <p className="mt-1 text-sm text-stone-500">
+                  {t.customer}: {report.order.user.name} ({report.order.user.email}) · {dict.orders.status[report.order.status === "RESERVED" ? "MISSED" : report.order.status]}
+                </p>
+                <p className="mt-3 font-semibold">{isProblemKind(report.kind) ? fb.kinds[report.kind] : report.kind}</p>
+                <p className="mt-1 whitespace-pre-line text-stone-800">{report.text}</p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  {report.order.payment?.status === "PAID" ? (
+                    <>
+                      <form action={resolveReport}>
+                        <input type="hidden" name="reportId" value={report.id} />
+                        <input type="hidden" name="decision" value="refund" />
+                        <button type="submit" className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">
+                          {fb.refund} · {f.price(report.order.payment.amount)}
+                        </button>
+                      </form>
+                    </>
+                  ) : (
+                    <span className="text-sm text-stone-500">{fb.notPaid}</span>
+                  )}
+                  <form action={resolveReport}>
+                    <input type="hidden" name="reportId" value={report.id} />
+                    <input type="hidden" name="decision" value="close" />
+                    <button type="submit" className="rounded-lg px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100">
+                      {fb.close}
+                    </button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {resolvedReports.length > 0 && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-medium text-stone-600">{fb.recentlyResolved}</summary>
+            <ul className="mt-2 space-y-1 text-sm text-stone-600">
+              {resolvedReports.map((report) => (
+                <li key={report.id}>
+                  <span className="font-mono">{report.order.pickupCode}</span> · {report.order.bag.store.name} ·{" "}
+                  {isProblemKind(report.kind) ? fb.kinds[report.kind] : report.kind} ·{" "}
+                  <span className="font-medium">{fb.status[report.status as keyof typeof fb.status] ?? report.status}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </section>
+
+      <section className="mt-10">
         <h2 className="text-xl font-bold">
           {t.pending} <span className="text-stone-400">({pending.length})</span>
         </h2>

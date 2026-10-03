@@ -15,13 +15,20 @@ import { formatPhone } from "@/lib/phone";
 import { BagCard } from "@/components/BagCard";
 import { PushToggle } from "@/components/PushToggle";
 import { isCancelReason } from "@/lib/orders";
+import { canRate, canReport } from "@/lib/feedback";
+import { OrderFeedback } from "@/components/OrderFeedback";
 import { pushPublicKey } from "@/lib/push";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getI18n()).dict.meta.orders };
 }
 
-type OrderWithBag = Order & { bag: SurpriseBag & { store: Store }; payment: Payment | null };
+type OrderWithBag = Order & {
+  bag: SurpriseBag & { store: Store };
+  payment: Payment | null;
+  review: { rating: number } | null;
+  report: { status: string } | null;
+};
 
 export default async function OrdersPage({ searchParams }: PageProps<"/orders">) {
   const user = await requireUser("/orders");
@@ -33,7 +40,12 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
 
   const orders = await prisma.order.findMany({
     where: { userId: user.id },
-    include: { bag: { include: { store: true } }, payment: true },
+    include: {
+      bag: { include: { store: true } },
+      payment: true,
+      review: { select: { rating: true } },
+      report: { select: { status: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
@@ -184,7 +196,7 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
     <li
       className={`flex gap-4 rounded-2xl bg-white p-4 ring-1 ${
         highlight ? "ring-2 ring-accent" : "ring-stone-200"
-      } ${isUpcoming || isPending ? "" : "opacity-75"}`}
+      } ${isUpcoming || isPending || canRate(order) || canReport(order) ? "" : "opacity-75"}`}
     >
       <Link href={`/bags/${bag.id}`} className="relative size-20 shrink-0 overflow-hidden rounded-xl bg-brand-light sm:size-24">
         {bag.imageUrl ? (
@@ -257,6 +269,15 @@ async function OrderCard({ order, highlight = false }: { order: OrderWithBag; hi
             </form>
           )}
         </div>
+        {(canRate(order) || canReport(order) || order.review || order.report) && (
+          <OrderFeedback
+            orderId={order.id}
+            review={order.review}
+            report={order.report}
+            canRate={canRate(order)}
+            canReport={canReport(order)}
+          />
+        )}
       </div>
     </li>
   );

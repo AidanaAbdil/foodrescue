@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { RatingBadge } from "@/components/RatingBadge";
+import { publicRatings } from "@/lib/ratings";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ReserveForm } from "@/components/ReserveForm";
@@ -85,6 +87,7 @@ export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
                 {bag.store.name.charAt(0)}
               </span>
               <span className="group-hover:text-brand-dark group-hover:underline">{bag.store.name}</span>
+              <RatingBadge rating={(await publicRatings([bag.store.id])).get(bag.store.id)} />
             </Link>
             {approved && <FavoriteButton storeId={bag.store.id} back={`/bags/${bag.id}`} />}
           </div>

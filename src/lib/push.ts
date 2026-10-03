@@ -81,3 +81,19 @@ export async function notifyStoreCancelled(orderId: string) {
     console.error("Cancellation notification failed", error);
   }
 }
+
+// "Your report on order TX-4821 was reviewed · We'll refund you in full" to the customer.
+export async function notifyReportResolved(orderId: string, refunded: boolean) {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) return;
+    await notifyUser(order.userId, (dict) => ({
+      title: fill(dict.feedback.pushTitle, { code: order.pickupCode }),
+      body: refunded ? dict.feedback.pushRefunded : dict.feedback.pushClosed,
+      url: "/orders",
+      tag: `report-${order.id}`,
+    }));
+  } catch (error) {
+    console.error("Report notification failed", error);
+  }
+}

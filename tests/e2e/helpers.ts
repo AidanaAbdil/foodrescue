@@ -75,6 +75,12 @@ export async function createPaidOrder(customerId: string, bagId: string) {
   });
 }
 
+// A paid order with a given outcome, e.g. "COLLECTED" or "NO_SHOW".
+export async function createFinishedOrder(customerId: string, bagId: string, status: "COLLECTED" | "NO_SHOW") {
+  const order = await createPaidOrder(customerId, bagId);
+  return db.order.update({ where: { id: order.id }, data: { status } });
+}
+
 export async function login(page: Page, email: string) {
   await page.goto("/login");
   const form = page.locator("form").filter({ has: page.locator('input[name="email"]') });

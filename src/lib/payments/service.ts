@@ -29,11 +29,15 @@ export async function paymentHousekeeping() {
   await retryPendingRefunds();
 }
 
-// Paid payments whose order was cancelled or expired still owe the customer
-// their money (the refund call failed before). Try again, a few at a time.
+// Paid payments whose order was cancelled or expired, or whose problem report
+// an admin refunded, still owe the customer their money (the refund call
+// failed before). Try again, a few at a time.
 async function retryPendingRefunds() {
   const owed = await prisma.payment.findMany({
-    where: { status: "PAID", order: { status: { in: ["CANCELLED", "EXPIRED"] } } },
+    where: {
+      status: "PAID",
+      OR: [{ order: { status: { in: ["CANCELLED", "EXPIRED"] } } }, { order: { report: { status: "REFUNDED" } } }],
+    },
     select: { id: true },
     take: 10,
   });
@@ -176,4 +180,15 @@ async function refundPayment(paymentId: string) {
     where: { id: paymentId, status: "PAID" },
     data: { status: "REFUNDED", refundedAt: new Date() },
   });
+}
+
+// Admin refund after a problem report (the order may already be collected).
+// Returns true if the money is being returned.
+export async function refundForReport(orderId: string) {
+  const payment = await prisma.payment.findUnique({ where: { orderId } });
+  if (!payment || payment.status !== "PAID") return false;
+  // A still-reserved order (store was closed) is cancelled so it can't be handed over later.
+  await prisma.order.updateMany({ where: { id: orderId, status: "RESERVED" }, data: { status: "CANCELLED", cancelledBy: "admin" } });
+  await refundPayment(payment.id);
+  return true;
 }

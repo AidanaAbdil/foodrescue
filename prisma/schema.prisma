@@ -175,6 +175,7 @@ model Store {
   bags      SurpriseBag[]
   schedules BagSchedule[]
   favorites Favorite[]
+  reviews   Review[]
 
   @@index([ownerId])
   @@index([city])
@@ -273,6 +274,8 @@ model Order {
   bag   SurpriseBag @relation(fields: [bagId], references: [id], onDelete: Restrict)
 
   payment Payment?
+  review  Review?
+  report  ProblemReport?
 
   @@index([userId])
   @@index([bagId])
@@ -296,4 +299,37 @@ model Payment {
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerPaymentId])
+}
+
+// A customer's 1–5 star rating of a collected order. One per order.
+// The comment is only shown to the store and admins.
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int // 1–5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // Copied from the order's bag so a store's average is one simple query.
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId])
+}
+
+// "Report a problem" with an order. An admin looks at it and either refunds
+// the customer or closes it. One per order.
+model ProblemReport {
+  id         String    @id @default(cuid())
+  kind       String // QUALITY, NOT_AS_DESCRIBED, NO_FOOD, OTHER (src/lib/feedback.ts)
+  text       String
+  status     String    @default("OPEN") // OPEN, REFUNDED, CLOSED
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
 }

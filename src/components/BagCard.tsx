@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Store, SurpriseBag } from "@/generated/prisma/client";
 import { FoodLabels } from "@/components/FoodLabels";
+import { RatingBadge } from "@/components/RatingBadge";
+import type { StoreRating } from "@/lib/ratings";
 import { getI18n } from "@/i18n/server";
 import { CATEGORY_EMOJI } from "@/lib/categories";
 import { discountPercent } from "@/lib/format";
@@ -9,10 +11,11 @@ import { discountPercent } from "@/lib/format";
 type Props = {
   bag: SurpriseBag & { store: Store };
   distance?: number; // km from the customer, when "near me" is on
+  rating?: StoreRating; // the store's public rating, if it has one
 };
 
 // One surprise bag in the listing grid; the whole card links to its page.
-export async function BagCard({ bag, distance }: Props) {
+export async function BagCard({ bag, distance, rating }: Props) {
   const { dict, f, plural } = await getI18n();
   const emoji = CATEGORY_EMOJI[bag.category];
   const soldOut = bag.quantityAvailable === 0;
@@ -59,6 +62,7 @@ export async function BagCard({ bag, distance }: Props) {
             {bag.store.name.charAt(0)}
           </span>
           <p className="truncate text-sm font-medium text-stone-600">{bag.store.name}</p>
+          <RatingBadge rating={rating} />
           {distance !== undefined && (
             <span className="ml-auto shrink-0 text-sm font-medium text-brand-dark">{f.distance(distance)}</span>
           )}

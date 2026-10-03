@@ -3,6 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { BagCard } from "@/components/BagCard";
 import { InstallHint } from "@/components/InstallHint";
+import { RatingBadge } from "@/components/RatingBadge";
+import { publicRatings } from "@/lib/ratings";
 import { AutoSubmitSelect } from "@/components/search/AutoSubmitSelect";
 import { NearMeButton } from "@/components/search/NearMeButton";
 import { StatCard } from "@/components/StatCard";
@@ -152,6 +154,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     if (near) directory = directory.sort(byDistance).slice(0, show);
   }
 
+  // "★ 4.6 (12)" for stores with enough ratings.
+  const ratings = await publicRatings([
+    ...shown.map(({ bag }) => bag.storeId),
+    ...soldOut.map((bag) => bag.storeId),
+    ...directory.map(({ store }) => store.id),
+  ]);
+
   // Build a link to this page with some filters changed (undefined = remove).
   const current = {
     tab: tab === "stores" ? "stores" : undefined,
@@ -294,7 +303,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <>
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {shown.map(({ bag, distance }) => (
-                <BagCard key={bag.id} bag={bag} distance={distance} />
+                <BagCard key={bag.id} bag={bag} distance={distance} rating={ratings.get(bag.storeId)} />
               ))}
             </div>
 
@@ -307,7 +316,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 <p className="text-sm text-stone-500">{t.soldOutHint}</p>
                 <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {soldOut.map((bag) => (
-                    <BagCard key={bag.id} bag={bag} />
+                    <BagCard key={bag.id} bag={bag} rating={ratings.get(bag.storeId)} />
                   ))}
                 </div>
               </div>
@@ -330,6 +339,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
                         <span className="truncate font-semibold">{store.name}</span>
+                        <RatingBadge rating={ratings.get(store.id)} className="mr-auto" />
                         {distance !== undefined && (
                           <span className="shrink-0 text-sm text-brand-dark">{f.distance(distance)}</span>
                         )}
