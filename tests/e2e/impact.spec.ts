@@ -17,7 +17,7 @@ test("a customer's impact counts only bags actually picked up", async ({ page })
   const card = page.locator("section").filter({ hasText: "Ваш вклад" });
   await expect(card.locator("p").filter({ hasText: "Спасено пакетов" })).toContainText("2");
   await expect(card.locator("p").filter({ hasText: "Сэкономлено" })).toContainText(/4\s000\s₸/);
-  await expect(card.locator("p").filter({ hasText: "Меньше выбросов" })).toContainText("≈ 5 кг");
+  await expect(card.getByText(/CO₂/)).toHaveCount(0); // no unsourced CO₂ figure
 });
 
 test("no impact card before the first pickup", async ({ page }) => {

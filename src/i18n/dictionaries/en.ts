@@ -247,9 +247,6 @@ export const en: Dictionary = {
     title: "Your impact",
     bags: "Bags rescued {n}",
     money: "Money saved {n}",
-    co2: "CO₂ emissions avoided {n}",
-    kg: "≈ {n} kg",
-    note: "Emissions are an estimate: about {n} kg of CO₂ per rescued bag.",
     community: "Bags rescued so far {n}",
   },
   auth: {

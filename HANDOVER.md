@@ -306,9 +306,10 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
 - OpenStreetMap tiles; switch to a tile provider (e.g. 2GIS) before heavy traffic.
 
 ### Impact counter (2026-10-03)
-- My orders: "🌱 Ваш вклад" card (bags rescued, money saved vs. full price, CO₂ avoided) once a
-  customer has a COLLECTED order. `src/lib/impact.ts`; `CO2_KG_PER_BAG = 2.5` is an assumption
-  (shown as an estimate on the page): replace it when there's a sourced figure.
+- My orders: "🌱 Ваш вклад" card (bags rescued, money saved vs. full price) once a customer has a
+  COLLECTED order. `src/lib/impact.ts`. **No CO₂ figure on purpose** (the user decided, 2026-10-03):
+  2,5 kg/bag was the FAO world average per kg of wasted food times an unknown bag weight.
+  Add it back only with a sourced method (e.g. stores enter bag weight × a published factor).
 - Homepage hero: "Уже спасено пакетов {n}" = all COLLECTED bags (shown when > 0).
 - Tests: tests/e2e/impact.spec.ts (32 tests in total).
 

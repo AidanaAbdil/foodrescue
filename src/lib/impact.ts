@@ -3,9 +3,9 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 
-// CO₂ avoided per rescued bag, in kg. An estimate (wasted food's footprint
-// from growing, transport and landfill); adjust when you have a better figure.
-export const CO2_KG_PER_BAG = 2.5;
+// No CO₂ figure on purpose: without knowing how much food a bag holds (and
+// what kind), any number would be a guess. Add it back with a sourced method,
+// e.g. stores entering bag weight × a published emission factor.
 
 // Only orders actually handed over count.
 export async function customerImpact(userId: string) {
@@ -17,7 +17,6 @@ export async function customerImpact(userId: string) {
   return {
     bags,
     saved: orders.reduce((sum, o) => sum + o.bag.originalPrice * o.quantity - o.totalPrice, 0), // tiyn
-    co2Kg: bags * CO2_KG_PER_BAG,
   };
 }
 
