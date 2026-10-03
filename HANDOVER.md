@@ -288,6 +288,22 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Automated tests (Playwright) (2026-10-03)
+- `npm test` runs 24 end-to-end tests in tests/e2e (see tests/e2e/README.md): customer ordering,
+  payments, declines, refunds, oversell; store hand-over/cancel/no-show, earnings + CSV, sign-up →
+  admin approval, one-off → regular bag; access control (other owners' bags/orders, pending stores,
+  roles, login rate limit); homepage search/tabs/show more/languages/link previews.
+- `scripts/test-server.mjs`: deletes and recreates **test.db** (`prisma migrate deploy` + seed),
+  builds into `.next-test` (`NEXT_DIST_DIR`), serves on port 3100 with test payments. dev.db is
+  never touched. Prisma refuses `migrate reset` when an AI agent runs it, so the script deletes
+  only the test file instead.
+- Tests create their own data via Prisma (`tests/e2e/helpers.ts`), one worker (shared SQLite).
+- Uses the installed Chrome (`channel: "chrome"`), so no browser download.
+- package.json is `"type": "module"` (Playwright needs it to load the generated Prisma client).
+- Checked that the tests can fail: breaking the owner filter in earnings made a test fail. Note:
+  breaking the refund alone does NOT fail anything, because housekeeping re-tries refunds for
+  cancelled-but-paid orders on the next page load (by design).
+
 ### Cities, map & store list
 - `Store.city` holds a code from `src/lib/cities.ts` (ALMATY, ASTANA; names in `dict.cities`,
   shown via `cityName`). Store form uses a select; `saveStore` rejects anything else. Existing
@@ -418,8 +434,8 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
-**Planned for the next session** ("must-haves" not done yet): an automated test suite (Playwright: ordering,
-payments/refunds, admin, owner actions).
+All "must-haves" are done (2026-10-03). Next candidates: ratings + "report a problem", a customer
+impact counter, a map view, and UI improvements (ask the user which screens first).
 
 **Open at the end of 2026-10-02:**
 - **Push on her own devices is not confirmed yet.** As of the end of the session, `PushSubscription` was

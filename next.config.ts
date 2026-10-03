@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // The automated tests build into their own folder (see scripts/test-server.mjs).
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   images: {
     // next/image only loads remote photos from hosts listed here.
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
