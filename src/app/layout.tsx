@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 import { I18nProvider } from "@/i18n/client";
 import { getI18n } from "@/i18n/server";
+import { siteUrl } from "@/lib/mailer";
 import "./globals.css";
 
 // cyrillic-ext includes the extra Kazakh letters (ә, ғ, қ, ң, ө, ұ, ү, һ, і).
@@ -20,9 +21,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin", "cyrillic"],
 });
 
+const OG_LOCALE = { ru: "ru_KZ", kk: "kk_KZ", en: "en_US" } as const;
+
 export async function generateMetadata(): Promise<Metadata> {
-  const { dict } = await getI18n();
+  const { locale, dict } = await getI18n();
   return {
+    // Link previews need full addresses (https://…/bags/1/opengraph-image).
+    metadataBase: new URL(await siteUrl()),
+    openGraph: { siteName: "FoodRescue", type: "website", locale: OG_LOCALE[locale] },
     // Pages set their own title; "%s · FoodRescue" adds the brand after it.
     title: { default: dict.meta.title, template: "%s · FoodRescue" },
     description: dict.meta.description,

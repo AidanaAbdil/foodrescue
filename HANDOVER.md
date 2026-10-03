@@ -278,6 +278,16 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
 - "Скачать CSV" → `/dashboard/earnings/export?period=…`: `;`-separated with a BOM for Excel; cells
   starting with = + - @ are escaped (CSV formula injection).
 
+### Link previews (Open Graph) (2026-10-03)
+- `opengraph-image.tsx` in src/app (site card), bags/[id] (photo, title, price, −%, pickup date,
+  address) and stores/[id] (name, address, bags on sale). Shared renderer `src/lib/og.tsx`
+  (`next/og` ImageResponse, 1200×630) with Noto Sans from `assets/fonts` (OFL; covers Kazakh + ₸).
+- Uploaded WebP photos and missing photos show the store's first letter instead (the renderer
+  can't draw WebP; emoji would need an outside service).
+- Root layout sets `metadataBase` from `siteUrl()` (APP_URL, or the request's host, so the demo
+  tunnel works). Stores under review get the general card and no title/description.
+- Previews show the real date, not "Today", because chat apps cache them.
+
 ### Cities, map & store list
 - `Store.city` holds a code from `src/lib/cities.ts` (ALMATY, ASTANA; names in `dict.cities`,
   shown via `cityName`). Store form uses a select; `saveStore` rejects anything else. Existing
@@ -409,8 +419,7 @@ abandoned-upload clean-up, and a first production build (`npm run build` passes;
 smoke-tested).
 
 **Planned for the next session** ("must-haves" not done yet): an automated test suite (Playwright: ordering,
-payments/refunds, admin, owner actions), and link previews (Open Graph images/titles for bag and
-store pages, so shared links show a card in WhatsApp/Telegram).
+payments/refunds, admin, owner actions).
 
 **Open at the end of 2026-10-02:**
 - **Push on her own devices is not confirmed yet.** As of the end of the session, `PushSubscription` was

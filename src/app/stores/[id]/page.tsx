@@ -16,10 +16,13 @@ import { formatPhone } from "@/lib/phone";
 export async function generateMetadata({ params }: PageProps<"/stores/[id]">): Promise<Metadata> {
   const { id } = await params;
   const [store, { dict }] = await Promise.all([
-    prisma.store.findUnique({ where: { id }, select: { name: true, city: true } }),
+    prisma.store.findUnique({ where: { id }, select: { name: true, city: true, address: true, description: true, status: true } }),
     getI18n(),
   ]);
-  return { title: store ? `${store.name} · ${cityName(dict.cities, store.city)}` : dict.meta.notFound };
+  if (!store || store.status !== "APPROVED") return { title: dict.meta.notFound };
+  const title = `${store.name} · ${cityName(dict.cities, store.city)}`;
+  const description = [store.description, store.address].filter(Boolean).join(" · ");
+  return { title, description, openGraph: { title, description, siteName: "FoodRescue", type: "website" } };
 }
 
 // A store's own page: always reachable (even when sold out), so customers can

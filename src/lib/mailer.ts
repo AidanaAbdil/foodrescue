@@ -23,7 +23,7 @@ export async function sendEmail(email: Email) {
   throw new Error(`Unknown EMAIL_PROVIDER "${process.env.EMAIL_PROVIDER}"`);
 }
 
-// The site's address for links in emails: APP_URL if set (recommended once
+// The site's address for links in emails and link previews: APP_URL if set (recommended once
 // deployed), otherwise worked out from the current request.
 export async function siteUrl() {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");

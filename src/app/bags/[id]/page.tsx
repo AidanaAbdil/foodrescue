@@ -17,11 +17,15 @@ import { cityName } from "@/lib/cities";
 
 export async function generateMetadata({ params }: PageProps<"/bags/[id]">) {
   const { id } = await params;
-  const [bag, { dict }] = await Promise.all([
+  const [bag, { dict, f }] = await Promise.all([
     prisma.surpriseBag.findUnique({ where: { id }, include: { store: true } }),
     getI18n(),
   ]);
-  return { title: bag ? `${bag.title} · ${bag.store.name}` : dict.meta.bagNotFound };
+  // Stores under review stay private: no name or title in the page head.
+  if (!bag || bag.store.status !== "APPROVED") return { title: dict.meta.bagNotFound };
+  const title = `${bag.title} · ${bag.store.name}`;
+  const description = `${f.price(bag.price)} (${f.price(bag.originalPrice)}) · ${dict.bag.pickup}: ${f.date(bag.pickupStart)}, ${f.time(bag.pickupStart)}–${f.time(bag.pickupEnd)} · ${bag.store.address}, ${cityName(dict.cities, bag.store.city)}`;
+  return { title, description, openGraph: { title, description, siteName: "FoodRescue", type: "website" } };
 }
 
 export default async function BagPage({ params }: PageProps<"/bags/[id]">) {
