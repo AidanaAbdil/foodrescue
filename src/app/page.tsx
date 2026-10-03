@@ -5,6 +5,7 @@ import { BagCard } from "@/components/BagCard";
 import { InstallHint } from "@/components/InstallHint";
 import { RatingBadge } from "@/components/RatingBadge";
 import { publicRatings } from "@/lib/ratings";
+import { communityBagsRescued } from "@/lib/impact";
 import { AutoSubmitSelect } from "@/components/search/AutoSubmitSelect";
 import { NearMeButton } from "@/components/search/NearMeButton";
 import { StatCard } from "@/components/StatCard";
@@ -76,7 +77,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // Stores with something on sale right now come first in the store list.
   const liveBag = { isActive: true, quantityAvailable: { gt: 0 }, pickupEnd: { gt: now } };
 
-  const [bagTotal, storeTotal, heroBags] = await Promise.all([
+  const [bagTotal, storeTotal, heroBags, rescued] = await Promise.all([
     prisma.surpriseBag.count({ where: available }),
     prisma.store.count({ where: storeSearch }),
     // The hero's "N bags · save X" numbers cover everything on sale.
@@ -84,6 +85,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       where: { isActive: true, quantityAvailable: { gt: 0 }, pickupEnd: { gt: now }, store: { status: "APPROVED" } },
       select: { price: true, originalPrice: true, quantityAvailable: true },
     }),
+    communityBagsRescued(),
   ]);
   const totalSavings = heroBags.reduce((sum, bag) => sum + (bag.originalPrice - bag.price) * bag.quantityAvailable, 0);
 
@@ -195,6 +197,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <div className="mt-8 flex flex-wrap gap-4">
             <StatCard variant="onBrand" template={t.statBags} value={heroBags.length} />
             <StatCard variant="onBrand" template={t.statSavings} value={f.price(totalSavings)} />
+            {rescued > 0 && <StatCard variant="onBrand" template={dict.impact.community} value={rescued} />}
           </div>
         </div>
       </section>

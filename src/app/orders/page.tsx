@@ -14,6 +14,8 @@ import { cityName } from "@/lib/cities";
 import { formatPhone } from "@/lib/phone";
 import { BagCard } from "@/components/BagCard";
 import { PushToggle } from "@/components/PushToggle";
+import { StatCard } from "@/components/StatCard";
+import { CO2_KG_PER_BAG, customerImpact } from "@/lib/impact";
 import { isCancelReason } from "@/lib/orders";
 import { canRate, canReport } from "@/lib/feedback";
 import { OrderFeedback } from "@/components/OrderFeedback";
@@ -48,6 +50,8 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
     },
     orderBy: { createdAt: "desc" },
   });
+
+  const impact = await customerImpact(user.id);
 
   const now = new Date();
   const upcoming = orders.filter(
@@ -91,6 +95,21 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
         <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-red-700">
           {declined ? t.declined : t.tooLate}
         </p>
+      )}
+
+      {impact.bags > 0 && (
+        <section className="mt-6 rounded-2xl bg-brand-light/60 p-5 ring-1 ring-accent/20">
+          <h2 className="font-semibold text-brand-dark">🌱 {dict.impact.title}</h2>
+          {/* Phones: two cards side by side, CO₂ underneath across the full width. */}
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+            <StatCard template={dict.impact.bags} value={impact.bags} />
+            <StatCard template={dict.impact.money} value={f.price(impact.saved)} />
+            <div className="col-span-2 sm:col-span-1">
+              <StatCard template={dict.impact.co2} value={fill(dict.impact.kg, { n: f.number(impact.co2Kg) })} />
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-stone-500">{fill(dict.impact.note, { n: f.number(CO2_KG_PER_BAG) })}</p>
+        </section>
       )}
 
       {recentlyCancelled.map((order) => (

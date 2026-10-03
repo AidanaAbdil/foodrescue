@@ -288,6 +288,13 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### Impact counter (2026-10-03)
+- My orders: "🌱 Ваш вклад" card (bags rescued, money saved vs. full price, CO₂ avoided) once a
+  customer has a COLLECTED order. `src/lib/impact.ts`; `CO2_KG_PER_BAG = 2.5` is an assumption
+  (shown as an estimate on the page): replace it when there's a sourced figure.
+- Homepage hero: "Уже спасено пакетов {n}" = all COLLECTED bags (shown when > 0).
+- Tests: tests/e2e/impact.spec.ts (32 tests in total).
+
 ### Ratings and "report a problem" (2026-10-03)
 - `Review` (1–5 stars + optional private comment, one per order, `storeId` copied for averages) and
   `ProblemReport` (kind QUALITY / NOT_AS_DESCRIBED / NO_FOOD / OTHER + text; status OPEN /
@@ -448,8 +455,7 @@ Fixed on 2026-10-02: store editing, login rate limiting, password reset, refund 
 abandoned-upload clean-up, and a first production build (`npm run build` passes; `next start`
 smoke-tested).
 
-All "must-haves" are done (2026-10-03). Next candidates: a customer
-impact counter, a map view, and UI improvements (ask the user which screens first).
+All "must-haves" are done (2026-10-03). Next candidates: a map view, and UI improvements (ask the user which screens first).
 
 **Open at the end of 2026-10-02:**
 - **Push on her own devices is not confirmed yet.** As of the end of the session, `PushSubscription` was

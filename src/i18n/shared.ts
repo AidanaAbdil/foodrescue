@@ -52,6 +52,7 @@ export function formatters(locale: Locale, dict: Dictionary) {
     price: (tiyn: number) => money.format(tiyn / 100),
     time: (date: Date) => time.format(date),
     date: (date: Date) => shortDate.format(date), // "пт, 3 окт."
+    number: (n: number) => new Intl.NumberFormat(intl, { maximumFractionDigits: 1 }).format(n), // "12,5"
     // "Today", "Tomorrow", or a short date.
     day: (date: Date) => {
       const days = Math.round(
