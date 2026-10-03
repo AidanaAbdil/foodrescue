@@ -20,6 +20,8 @@ export async function Header() {
   // The same links power the desktop nav and the phone menu.
   const links = [
     { href: "/#how-it-works", label: t.howItWorks },
+    // Stores and admins already have their own pages; show it to everyone else.
+    ...(user?.role === "STORE_OWNER" || user?.role === "ADMIN" ? [] : [{ href: "/partners", label: t.forBusiness }]),
     ...(user?.role === "STORE_OWNER"
       ? [{ href: "/dashboard", label: withCount(t.dashboard) }]
       : []),

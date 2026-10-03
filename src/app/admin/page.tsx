@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { approveStore, cancelAndRefund, rejectStore, resolveReport } from "@/app/actions/admin";
+import { approveStore, cancelAndRefund, handlePartnerRequest, rejectStore, resolveReport } from "@/app/actions/admin";
+import { isBusinessKind } from "@/lib/partners";
 import { isProblemKind } from "@/lib/feedback";
 import type { Store, StoreStatus } from "@/generated/prisma/client";
 import { getI18n } from "@/i18n/server";
@@ -41,6 +42,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     prisma.problemReport.findMany({ where: { status: { not: "OPEN" } }, include: reportInclude, orderBy: { resolvedAt: "desc" }, take: 10 }),
   ]);
   const fb = dict.feedback;
+  const [newPartners, handledPartners] = await Promise.all([
+    prisma.partnerRequest.findMany({ where: { status: "NEW" }, orderBy: { createdAt: "asc" } }),
+    prisma.partnerRequest.findMany({ where: { status: { not: "NEW" } }, orderBy: { handledAt: "desc" }, take: 10 }),
+  ]);
+  const pt = dict.partners;
 
   const [stores, orders] = await Promise.all([
     prisma.store.findMany({
@@ -140,6 +146,61 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                   <span className="font-mono">{report.order.pickupCode}</span> · {report.order.bag.store.name} ·{" "}
                   {isProblemKind(report.kind) ? fb.kinds[report.kind] : report.kind} ·{" "}
                   <span className="font-medium">{fb.status[report.status as keyof typeof fb.status] ?? report.status}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+      </section>
+
+      {/* Stores asking to join (from /partners): call them back. */}
+      <section id="partners" className="mt-10 scroll-mt-20">
+        <h2 className="text-xl font-bold">
+          {pt.adminTitle} <span className="text-stone-400">({newPartners.length})</span>
+        </h2>
+        <p className="mt-1 text-sm text-stone-500">{pt.adminHint}</p>
+        {newPartners.length === 0 ? (
+          <p className="mt-3 text-stone-500">{pt.adminNone}</p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {newPartners.map((request) => (
+              <li key={request.id} className="rounded-2xl bg-white p-5 ring-1 ring-stone-200">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-semibold">
+                    {request.storeName} <span className="font-normal text-stone-500">· {isBusinessKind(request.kind) ? pt.kinds[request.kind] : request.kind} · {cityName(dict.cities, request.city)}</span>
+                  </p>
+                  <span className="text-sm text-stone-500">{f.date(request.createdAt)}, {f.time(request.createdAt)}</span>
+                </div>
+                <p className="mt-1 text-sm">
+                  {request.contactName} ·{" "}
+                  <a href={`tel:${request.phone}`} className="font-semibold text-brand-dark underline underline-offset-2">📞 {formatPhone(request.phone)}</a>
+                  {request.email && <> · <a href={`mailto:${request.email}`} className="text-brand-dark underline underline-offset-2">{request.email}</a></>}
+                </p>
+                {request.message && <p className="mt-2 whitespace-pre-line text-sm text-stone-700">{request.message}</p>}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(["CONTACTED", "CLOSED"] as const).map((status) => (
+                    <form key={status} action={handlePartnerRequest}>
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <input type="hidden" name="status" value={status} />
+                      <button type="submit" className={status === "CONTACTED"
+                        ? "rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                        : "rounded-lg px-4 py-2 text-sm font-medium text-stone-700 ring-1 ring-stone-300 hover:bg-stone-100"}>
+                        {status === "CONTACTED" ? pt.contacted : pt.close}
+                      </button>
+                    </form>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        {handledPartners.length > 0 && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-medium text-stone-600">{pt.recent}</summary>
+            <ul className="mt-2 space-y-1 text-sm text-stone-600">
+              {handledPartners.map((request) => (
+                <li key={request.id}>
+                  {request.storeName} · {formatPhone(request.phone)} · <span className="font-medium">{pt.status[request.status as keyof typeof pt.status] ?? request.status}</span>
                 </li>
               ))}
             </ul>

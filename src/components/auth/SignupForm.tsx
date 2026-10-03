@@ -9,7 +9,8 @@ import { FormField, submitButtonClass } from "./FormField";
 
 
 // `next` = where to go after success (e.g. back to the bag being reserved).
-export function SignupForm({ next }: { next: string }) {
+// `initialRole` = which account type starts selected.
+export function SignupForm({ next, initialRole = "CUSTOMER" }: { next: string; initialRole?: "CUSTOMER" | "STORE_OWNER" }) {
   const [state, action, pending] = useActionState(signup, undefined);
   const t = useI18n().dict.auth;
   const roles = [
@@ -17,7 +18,7 @@ export function SignupForm({ next }: { next: string }) {
     { value: "STORE_OWNER", emoji: "🏪", title: t.ownerTitle, text: t.ownerText },
   ];
   const errors = state?.errors;
-  const role = state?.values?.role ?? "CUSTOMER";
+  const role = state?.values?.role ?? initialRole;
 
   return (
     <form action={action} className="space-y-4">

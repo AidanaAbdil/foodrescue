@@ -288,6 +288,18 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### "For businesses" page and partner requests (2026-10-03)
+- `/partners` (header link "Для заведений" for visitors and customers): benefits, 4 steps for stores,
+  FAQ (the cost answer uses PLATFORM_FEE_PERCENT, else "terms when you join"), request form, and
+  "Sign up right away" → `/signup?as=store` (store role preselected).
+- Form → `submitPartnerRequest` (src/app/actions/partners.ts): validation, phone normalised, hidden
+  "website" honeypot (bots get a fake success), 5 requests per IP per hour (rate-limit kind
+  "partner"). Saved as `PartnerRequest` (NEW / CONTACTED / CLOSED).
+- Admin: "Заявки заведений" section on /admin (tap-to-call phone, "Связались" / "Закрыть", logged
+  as partner.contacted / partner.closed); NEW requests count in the "Админ (n)" badge.
+- Homepage "Как это работает" now has two columns: customers and businesses (+ "Стать партнёром").
+- Tests: tests/e2e/partners.spec.ts (47 tests in total).
+
 ### Demo stores for testers (2026-10-03)
 - `npm run demo:stores` (scripts/add-demo-stores.ts) adds 10 approved stores (6 Almaty, 4 Astana:
   bakery, café, sushi, groceries + produce, vegan, pancakes, Kazakh cuisine, cakes, pizza, ramen),

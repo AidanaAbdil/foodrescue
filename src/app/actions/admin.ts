@@ -127,3 +127,16 @@ export async function unhideBag(formData: FormData) {
   refresh();
   redirect(back(formData, "/admin/search"));
 }
+
+// Partner requests: "we called them" or "closed" (not interested, duplicate…).
+export async function handlePartnerRequest(formData: FormData) {
+  const admin = await requireAdmin();
+  const status = text(formData, "status") === "CONTACTED" ? "CONTACTED" : "CLOSED";
+  const request = await prisma.partnerRequest.findUnique({ where: { id: text(formData, "requestId") } });
+  if (request && request.status !== status) {
+    await prisma.partnerRequest.update({ where: { id: request.id }, data: { status, handledAt: new Date() } });
+    await logAdmin(admin.id, status === "CONTACTED" ? "partner.contacted" : "partner.closed", { type: "partner", id: request.id }, `${request.storeName}, ${request.phone}`);
+  }
+  refresh();
+  redirect("/admin#partners");
+}

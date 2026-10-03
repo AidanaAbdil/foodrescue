@@ -354,3 +354,21 @@ model AdminLog {
 
   @@index([createdAt])
 }
+
+// "Become a partner" requests from the /partners page. An admin calls them
+// back and marks them CONTACTED or CLOSED.
+model PartnerRequest {
+  id          String    @id @default(cuid())
+  storeName   String
+  contactName String
+  phone       String // normalised, e.g. +77011234567
+  email       String?
+  city        String // ALMATY / ASTANA (src/lib/cities.ts)
+  kind        String // BAKERY, CAFE, RESTAURANT, SHOP, OTHER
+  message     String?
+  status      String    @default("NEW") // NEW, CONTACTED, CLOSED
+  createdAt   DateTime  @default(now())
+  handledAt   DateTime?
+
+  @@index([status])
+}

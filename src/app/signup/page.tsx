@@ -12,7 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
   // Where to send the user afterwards, e.g. /login?next=/bags/abc
-  const next = safeReturnPath((await searchParams).next);
+  const params = await searchParams;
+  const next = safeReturnPath(params.next);
+  // /signup?as=store opens with "I have a business" selected (from the partners page).
+  const initialRole = params.as === "store" ? "STORE_OWNER" : "CUSTOMER";
   if (await getCurrentUser()) redirect(next);
   const t = (await getI18n()).dict.auth;
 
@@ -29,7 +32,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
         </>
       }
     >
-      <SignupForm next={next} />
+      <SignupForm next={next} initialRole={initialRole} />
     </AuthCard>
   );
 }

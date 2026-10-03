@@ -459,19 +459,41 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       <section id="how-it-works" className="mx-auto w-full max-w-6xl scroll-mt-20 px-4 pt-16">
         <h2 className="text-2xl font-bold">{t.howTitle}</h2>
-        <ol className="mt-6 grid gap-6 sm:grid-cols-3">
-          {t.steps.map((step, i) => (
-            <li key={step.title} className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
-              <span className="text-3xl" aria-hidden>
-                {STEP_EMOJI[i]}
-              </span>
-              <h3 className="mt-3 font-semibold">
-                {i + 1}. {step.title}
-              </h3>
-              <p className="mt-1 text-sm text-stone-600">{step.text}</p>
-            </li>
-          ))}
-        </ol>
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          {/* For customers */}
+          <div className="rounded-2xl bg-white p-6 ring-1 ring-stone-200">
+            <h3 className="text-lg font-semibold text-brand-dark">{t.forCustomers}</h3>
+            <ol className="mt-4 space-y-4">
+              {t.steps.map((step, i) => (
+                <li key={step.title} className="flex gap-4">
+                  <span className="text-3xl" aria-hidden>{STEP_EMOJI[i]}</span>
+                  <span>
+                    <span className="block font-semibold">{i + 1}. {step.title}</span>
+                    <span className="block text-sm text-stone-600">{step.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+          {/* For businesses */}
+          <div className="rounded-2xl bg-brand-light/60 p-6 ring-1 ring-accent/20">
+            <h3 className="text-lg font-semibold text-brand-dark">{t.forPartners}</h3>
+            <ol className="mt-4 space-y-4">
+              {t.partnerSteps.map((step, i) => (
+                <li key={step.title} className="flex gap-4">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent font-bold text-white" aria-hidden>{i + 1}</span>
+                  <span>
+                    <span className="block font-semibold">{step.title}</span>
+                    <span className="block text-sm text-stone-600">{step.text}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <Link href="/partners" className="mt-5 inline-block rounded-xl bg-accent px-5 py-2.5 font-semibold text-white hover:opacity-90">
+              {t.becomePartner}
+            </Link>
+          </div>
+        </div>
       </section>
 
       <InstallHint />

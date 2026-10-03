@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export const ADMIN_ACTIONS = [
   "store.approve", "store.reject", "order.refund", "report.refund", "report.close",
-  "user.block", "user.unblock", "bag.hide", "bag.unhide",
+  "user.block", "user.unblock", "bag.hide", "bag.unhide", "partner.contacted", "partner.closed",
 ] as const;
 export type AdminAction = (typeof ADMIN_ACTIONS)[number];
 

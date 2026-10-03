@@ -9,6 +9,7 @@ export const LIMITS = {
   login: { max: 5, windowMinutes: 15 }, // wrong passwords per email
   "login-ip": { max: 20, windowMinutes: 15 }, // failed logins per IP (many emails)
   reset: { max: 3, windowMinutes: 60 }, // reset emails per address
+  partner: { max: 5, windowMinutes: 60 }, // partner requests per IP
 } as const;
 type Kind = keyof typeof LIMITS;
 
