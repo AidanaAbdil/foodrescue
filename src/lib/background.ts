@@ -1,6 +1,6 @@
 // A timer inside the server that runs every minute, so things happen on time
 // even when nobody has the site open:
-//   - "pickup starts soon" reminders (src/lib/reminders.ts)
+//   - "pickup starts soon" reminders for customers, "pack N bags" for stores (src/lib/reminders.ts)
 //   - housekeeping: expire unpaid orders, retry refunds, publish regular bags
 // Started from src/instrumentation.ts. With several servers, each runs it;
 // every job claims its rows first, so nothing is done twice.
@@ -15,8 +15,9 @@ async function tick() {
   try {
     const { runHousekeeping } = await import("./housekeeping");
     await runHousekeeping();
-    const { sendPickupReminders } = await import("./reminders");
+    const { sendPackReminders, sendPickupReminders } = await import("./reminders");
     await sendPickupReminders();
+    await sendPackReminders();
   } catch (error) {
     console.error("Background jobs failed", error);
   } finally {

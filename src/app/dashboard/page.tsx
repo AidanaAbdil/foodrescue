@@ -77,6 +77,17 @@ export default async function DashboardPage() {
     latestPaidOrder(user.id),
   ]);
 
+  // "To pack": how many of each bag for each pickup time still ahead.
+  const toPack = new Map<string, { start: Date; bag: string; n: number }>();
+  for (const order of pickups) {
+    if (order.bag.pickupEnd <= now) continue;
+    const key = order.bag.id;
+    const row = toPack.get(key) ?? { start: order.bag.pickupStart, bag: order.bag.title, n: 0 };
+    row.n += order.quantity;
+    toPack.set(key, row);
+  }
+  const packList = [...toPack.values()].sort((a, b) => a.start.getTime() - b.start.getTime());
+
   // Customers' ratings of this owner's stores (comments are private to the store and admins).
   const reviewWhere = { store: { ownerId: user.id } };
   const [reviewStats, reviews] = await Promise.all([
@@ -191,6 +202,20 @@ export default async function DashboardPage() {
       <section className="mt-10">
         <h2 className="text-xl font-bold">{t.pickupsTitle}</h2>
         <p className="text-sm text-stone-500">{t.pickupsHint}</p>
+        {packList.length > 0 && (
+          <div className="mt-4 rounded-2xl bg-brand-light/60 p-4 ring-1 ring-accent/20">
+            <h3 className="flex items-center gap-2 font-semibold text-brand-dark">
+              <Doodle name="bag" size={20} />{t.toPackTitle}
+            </h3>
+            <ul className="mt-2 space-y-1 text-sm">
+              {packList.map((row) => (
+                <li key={`${row.bag}-${row.start.getTime()}`}>
+                  <span className="font-semibold tabular-nums">{f.day(row.start)}, {f.time(row.start)}</span> · {fill(t.toPackItem, { bag: row.bag, n: row.n })}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {pickups.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white py-8 text-center text-stone-500">
             {t.noPickups}

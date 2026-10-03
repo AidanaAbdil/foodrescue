@@ -77,6 +77,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               <Logo />
               <p>{dict.footer.tagline}</p>
               <nav className="flex gap-4">
+                <Link href="/help" className="hover:text-brand-dark hover:underline">{dict.footer.help}</Link>
                 <Link href="/privacy" className="hover:text-brand-dark hover:underline">{dict.footer.privacy}</Link>
                 <Link href="/terms" className="hover:text-brand-dark hover:underline">{dict.footer.terms}</Link>
               </nav>

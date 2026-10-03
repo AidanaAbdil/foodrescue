@@ -151,3 +151,17 @@ export async function notifyFavoritesAboutBag(bagId: string) {
     console.error("Favourite-store notification failed", error);
   }
 }
+
+// "📦 Time to pack bags for 18:00 · Хлебный сюрприз × 3, Сладкая коробка × 1" to the store owner.
+export async function notifyPackReminder(ownerId: string, pickupStart: Date, items: { bag: string; n: number }[]) {
+  try {
+    await notifyUser(ownerId, (dict, f) => ({
+      title: fill(dict.push.packTitle, { time: f.time(pickupStart) }),
+      body: fill(dict.push.packBody, { items: items.map((item) => fill(dict.push.packItem, item)).join(", ") }),
+      url: "/dashboard",
+      tag: `pack-${ownerId}-${pickupStart.getTime()}`,
+    }));
+  } catch (error) {
+    console.error("Pack reminder failed", error);
+  }
+}

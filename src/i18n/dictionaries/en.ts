@@ -51,6 +51,7 @@ export const en: Dictionary = {
     language: "Language",
   },
   footer: {
+    help: "Help",
     tagline: "Good food belongs in bellies, not bins.",
     demo: "Demo version: payments are test-only, no money is charged.",
     privacy: "Privacy",
@@ -416,6 +417,58 @@ export const en: Dictionary = {
     reportYearly: "Yearly fees {n}",
     reportDue: "Stores with the fee due: {n}",
   },
+  help: {
+    title: "Help",
+    sub: "Answers to customers' common questions.",
+    sections: [
+      {
+        title: "How it works",
+        items: [
+          { q: "What is a surprise bag?", a: "Stores fill a bag with food they didn't sell that day. The exact contents aren't known in advance, which is why it's a surprise. The description says what's usually inside, plus allergens and labels." },
+          { q: "How much does a bag cost?", a: "Prices are fixed: {levels}. The food inside is worth at least {multiplier}× that at the store's usual prices." },
+          { q: "Why are there few or no bags?", a: "Stores add bags once they know how much food will be left. Add your favourite stores and turn on notifications — we'll tell you about new bags." },
+        ],
+      },
+      {
+        title: "Ordering and payment",
+        items: [
+          { q: "How do I order?", a: "Open a bag, tap “Continue to payment” and pay online. While you pay, the bag is held for you for {hold} minutes." },
+          { q: "Can I order several bags?", a: "Yes, up to {max} bags in one order, if they're available." },
+          { q: "Where is my pickup code?", a: "In “My orders”. Show it at the store during the pickup time." },
+        ],
+      },
+      {
+        title: "Pickup",
+        items: [
+          { q: "When do I collect my order?", a: "During the pickup time in your order. We'll remind you with a notification 30 minutes before it starts." },
+          { q: "I'm running late. What do I do?", a: "Call the store: the number is on the store's page and in your order." },
+          { q: "I missed my pickup", a: "If you don't come during the pickup time, there's no refund: the food was set aside for you." },
+        ],
+      },
+      {
+        title: "Cancellations and refunds",
+        items: [
+          { q: "How do I cancel?", a: "In “My orders”, before the pickup time starts. You get a full refund to your payment method." },
+          { q: "The store can't hand over my order", a: "Then the order is cancelled and you get a full refund. You'll see the reason and get a notification." },
+          { q: "Something is wrong with my bag", a: "Within {days} days after pickup, tap “Report a problem” on the order. We'll look into it and refund you if needed." },
+        ],
+      },
+      {
+        title: "Account and more",
+        items: [
+          { q: "How do I turn on notifications?", a: "Tap “Notifications on this device” in “My orders” or “Favourites”. On iPhone, first add the site to your Home Screen and open it from there." },
+          { q: "I have an allergy", a: "Check the allergens in the bag's description and ask the store about the contents before collecting." },
+          { q: "How do I delete my account?", a: "Tap your name → “Account” → delete account. Order history is kept without your personal details, as the law requires." },
+        ],
+      },
+    ],
+    contactTitle: "Didn't find an answer?",
+    contactText: "Write to us — we'll reply as soon as we can.",
+    email: "Email",
+    phone: "Phone",
+    telegram: "Telegram",
+    forBusiness: "Own a store? Answers for businesses →",
+  },
   auth: {
     loginTitle: "Welcome back",
     loginSubtitle: "Log in to reserve surprise bags.",
@@ -482,6 +535,8 @@ export const en: Dictionary = {
     statCollected: "Collected today {n}",
     pickupsTitle: "Upcoming pickups",
     pickupsHint: "Check the customer's code, hand over the bag, then mark it collected.",
+    toPackTitle: "To pack",
+    toPackItem: "{bag} × {n}",
     noPickups: "No reservations waiting right now.",
     runningLate: "running late",
     markCollected: "Mark collected",
@@ -736,6 +791,9 @@ export const en: Dictionary = {
     pickupSoonBody: "{bag} · {window} · {address}. Code {code}",
     favoriteTitle: "❤️ New bag: {store}",
     favoriteBody: "{bag} · {window} · {price}",
+    packTitle: "📦 Time to pack bags for {time}",
+    packBody: "{items}",
+    packItem: "{bag} × {n}",
   },
   location: {
     label: "Location on the map (optional)",

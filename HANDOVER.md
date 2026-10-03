@@ -288,6 +288,16 @@ cleaned up whenever someone uploads. Sample data uses Unsplash (allowed in `next
   tunnel works). Stores under review get the general card and no title/description.
 - Previews show the real date, not "Today", because chat apps cache them.
 
+### "Pack N bags" reminder and help page (2026-10-03)
+- Stores: `sendPackReminders` (src/lib/reminders.ts, run by the background timer) sends one push per
+  owner and pickup time, `PACK_REMINDER_MINUTES` (default 60) before pickup, for bags with paid orders:
+  "📦 Пора собирать пакеты к 18:00 · Хлебный сюрприз — 3 шт.". `SurpriseBag.packReminderSentAt` makes it
+  once only. The dashboard shows "Собрать к выдаче" (counts per bag and pickup time).
+- `/help` (footer + phone menu): customer FAQ in 5 sections; answers fill in the real rules (price levels,
+  multiplier, 15-minute hold, max 3 per order, 7 days for complaints). Contact box appears when
+  `SUPPORT_EMAIL`, `SUPPORT_PHONE` and/or `SUPPORT_TELEGRAM` are set in .env. Links to /partners.
+- Tests: notifications.spec.ts (pack reminder), help.spec.ts (57 tests in total).
+
 ### Commission + yearly fee, founding partners (2026-10-03)
 - Decision: **20% commission** on each bag (PLATFORM_FEE_PERCENT now defaults to 20) **plus a yearly
   fee of 25 000 ₸**; **the first 50 stores approved get their first year free**. All in .env:

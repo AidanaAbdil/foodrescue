@@ -50,3 +50,26 @@ test("a new bag notifies customers who favourited the store, at most once per 12
   await addBag("Второй пакет"); // within 12 hours: no second notification
   expect(await notifiedAt()).toEqual(first);
 });
+
+test("stores get one 'pack your bags' reminder before a pickup with orders", async ({ page }) => {
+  const { owner, store } = await createOwnerWithStore("Упаковочная");
+  const customer = await createCustomer();
+  const soon = await createBag(store.id, { title: "Скоро выдача", startsInHours: 40 / 60 });
+  await createPaidOrder(customer.id, soon.id);
+  await createPaidOrder(customer.id, soon.id);
+  const noOrders = await createBag(store.id, { title: "Без заказов", startsInHours: 40 / 60 });
+  const later = await createBag(store.id, { title: "Вечером", startsInHours: 3 });
+  await createPaidOrder(customer.id, later.id);
+  const packed = async (id: string) => (await db.surpriseBag.findUniqueOrThrow({ where: { id } })).packReminderSentAt;
+
+  await expect.poll(() => packed(soon.id), { timeout: 15_000 }).not.toBeNull();
+  expect(await packed(noOrders.id)).toBeNull();
+  expect(await packed(later.id)).toBeNull();
+
+  // The dashboard lists what to pack.
+  await login(page, owner.email);
+  await page.goto("/dashboard");
+  const toPack = page.locator("div").filter({ has: page.getByRole("heading", { name: "Собрать к выдаче" }) }).last();
+  await expect(toPack).toContainText("Скоро выдача — 2 шт.");
+  await expect(toPack).toContainText("Вечером — 1 шт.");
+});

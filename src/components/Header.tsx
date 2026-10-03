@@ -88,7 +88,7 @@ export async function Header() {
           {/* Phones: everything in a ☰ menu */}
           <MobileMenu
             label={t.menu}
-            links={user ? [...links, { href: "/account", label: t.account }] : links}
+            links={[...links, ...(user ? [{ href: "/account", label: t.account }] : []), { href: "/help", label: dict.footer.help }]}
             user={user ? { name: user.name } : null}
             logoutLabel={t.logout}
           />

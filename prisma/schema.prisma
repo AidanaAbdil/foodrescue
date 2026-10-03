@@ -215,6 +215,7 @@ model SurpriseBag {
   pickupEnd         DateTime
   isActive          Boolean  @default(true) // store can hide a listing
   hiddenByAdminAt   DateTime? // hidden by an admin; the store can't put it back on sale
+  packReminderSentAt DateTime? // "pack N bags" push sent to the store (src/lib/reminders.ts)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
